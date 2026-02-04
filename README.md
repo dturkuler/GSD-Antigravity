@@ -84,22 +84,34 @@ cd GSD-Antigravity
 py .agent/skills/gsd-converter/scripts/convert.py gsd
 ```
 
+
+
+### 🔄 Updating the GSD Skill
+
+**Option 1: Via GSD-Converter Skill**
+When a new version of GSD is released, you can refresh your local installation by running the `gsd-converter` script again. This will automatically:
+- **Clean**: Delete the existing `.agent/skills/gsd/` folder to ensure a clean slate.
+- **Fetch**: Download the latest source files via `npx`.
+- **Rebuild**: Re-apply Antigravity branding and path refactoring to generate the updated skill set.
+
+**Option 2: In-App (Easiest)**
+```bash
+in antigravity prompt
+gsd:update
+```
+
+**Option 3: CLI**
+```bash
+py .agent/skills/gsd-converter/scripts/convert.py gsd
+```
+
+
 ### 3️⃣ Start Your First Project
 ```bash
 # Within the Antigravity interface:
 gsd:new-project
 ```
 
-### 🔄 Updating the GSD Skill
-When a new version of GSD is released, you can refresh your local installation by running the `gsd-converter` script again. This will automatically:
-- **Clean**: Delete the existing `.agent/skills/gsd/` folder to ensure a clean slate.
-- **Fetch**: Download the latest source files via `npx`.
-- **Rebuild**: Re-apply Antigravity branding and path refactoring to generate the updated skill set.
-
-```bash
-# To update:
-py .agent/skills/gsd-converter/scripts/convert.py gsd
-```
 
 ---
 
