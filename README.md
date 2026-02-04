@@ -1,4 +1,4 @@
-# 🌌 GSD-Antigravity: The Spec-Driven Engine
+# 🌌 GSD-to-Antigravity Converter
 
 ![GSD Workflow Concept](gsd_workflow_concept_1770173213268.png)
 
@@ -6,7 +6,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Antigravity Compatible](https://img.shields.io/badge/Antigravity-Compatible-purple.svg?logo=google&logoColor=white)](https://github.com/google-deepmind/antigravity)
 
-**GSD-Antigravity** is a high-performance, hierarchical orchestration system for the Antigravity AI framework. It replaces chaotic prompt-engineering with a **rigid, spec-driven development cycle**, transforming high-level intent into production-grade software with mathematical precision.
+**GSD-to-Antigravity Converter** is a high-performance migration utility for the Antigravity AI framework. It transforms standard GSD (Get Shit Done) installations into portable Antigravity Skills by automating path refactoring, rebranding, and skill packaging.
 
 ---
 
