@@ -87,7 +87,7 @@ py .agent/skills/gsd-converter/scripts/convert.py gsd
 ### 3️⃣ Start Your First Project
 ```bash
 # Within the Antigravity interface:
-/gsd:new-project
+gsd:new-project
 ```
 
 ### 🔄 Updating the GSD Skill
