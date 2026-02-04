@@ -21,3 +21,5 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+.agent/skills/gsd/
+.gitignore

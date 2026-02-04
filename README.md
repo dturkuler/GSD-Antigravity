@@ -1,12 +1,11 @@
 # 🌌 GSD-to-Antigravity Converter
 
-![GSD Workflow Concept](gsd_workflow_concept_1770173213268.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Antigravity Compatible](https://img.shields.io/badge/Antigravity-Compatible-purple.svg?logo=google&logoColor=white)](https://github.com/google-deepmind/antigravity)
 
-**GSD-to-Antigravity Converter** is a high-performance migration utility for the Antigravity AI framework. It transforms standard GSD (Get Shit Done) installations into portable Antigravity Skills by automating path refactoring, rebranding, and skill packaging.
+**GSD-to-Antigravity Converter** is a high-performance migration utility for the Antigravity AI framework. It transforms standard [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done/tree/main) installations into portable Antigravity Skills by automating path refactoring, rebranding, and skill packaging.
 
 ---
 
