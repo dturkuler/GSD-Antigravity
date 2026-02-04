@@ -1,0 +1,20 @@
+{
+    "name": "gsd-antigravity-kit",
+    "version": "1.0.0",
+    "description": "Installer for GSD-Antigravity skills",
+    "main": "index.js",
+    "bin": {
+        "gsd-antigravity-kit": "bin/install.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "antigravity",
+        "gsd",
+        "automation",
+        "skills"
+    ],
+    "author": "Antigravity Team",
+    "license": "MIT"
+}
