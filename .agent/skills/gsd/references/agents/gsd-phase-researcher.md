@@ -295,7 +295,7 @@ Orchestrator provides: phase number/name, description/goal, requirements, constr
 
 Load phase context using init command:
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init phase-op "${PHASE}")
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init phase-op "${PHASE}")
 ```
 
 Extract from init JSON: `phase_dir`, `padded_phase`, `phase_number`, `commit_docs`.
@@ -368,7 +368,7 @@ Write to: `$PHASE_DIR/$PADDED_PHASE-RESEARCH.md`
 ## Step 6: Commit Research (optional)
 
 ```bash
-node ./.antigravity/get-shit-done/bin/gsd-tools.js commit "docs($PHASE): research phase domain" --files "$PHASE_DIR/$PADDED_PHASE-RESEARCH.md"
+node .agent/skills/gsd/bin/gsd-tools.js commit "docs($PHASE): research phase domain" --files "$PHASE_DIR/$PADDED_PHASE-RESEARCH.md"
 ```
 
 ## Step 7: Return Structured Result

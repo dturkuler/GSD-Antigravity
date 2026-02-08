@@ -49,7 +49,8 @@ def migrate_files(source_base, target_base):
         ('get-shit-done/references', 'references/docs'),
         ('get-shit-done/workflows', 'references/workflows'),
         ('agents', 'references/agents'),
-        ('get-shit-done/templates', 'assets/templates')
+        ('get-shit-done/templates', 'assets/templates'),
+        ('get-shit-done/bin', 'bin')
     ]
     
     for src_rel, tgt_rel in mappings:
@@ -83,7 +84,7 @@ def refactor_content(target_base):
         (r'\./\.claude/agents/', 'references/agents/'),
         (r'\./\.claude/get-shit-done/templates/', 'assets/templates/'),
         (r'\./\.claude/get-shit-done/workflows/', 'references/workflows/'),
-        # Textual replacements
+        (r'\./\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
         (r'\bClaude Code\b', 'Antigravity'),
         (r'\bClaude\b', 'Antigravity'),
         (r'\bclaude\b', 'antigravity'),

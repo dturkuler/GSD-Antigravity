@@ -26,7 +26,7 @@ Documents are reference material for Antigravity when planning/executing. Always
 Load codebase mapping context:
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init map-codebase)
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init map-codebase)
 ```
 
 Extract from init JSON: `mapper_model`, `commit_docs`, `codebase_dir`, `existing_maps`, `has_maps`, `codebase_dir_exists`.
@@ -262,7 +262,7 @@ Continue to commit_codebase_map.
 Commit the codebase map:
 
 ```bash
-node ./.antigravity/get-shit-done/bin/gsd-tools.js commit "docs: map existing codebase" --files .planning/codebase/*.md
+node .agent/skills/gsd/bin/gsd-tools.js commit "docs: map existing codebase" --files .planning/codebase/*.md
 ```
 
 Continue to offer_next.

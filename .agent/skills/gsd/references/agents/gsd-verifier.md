@@ -54,7 +54,7 @@ Set `is_re_verification = false`, proceed with Step 1.
 ```bash
 ls "$PHASE_DIR"/*-PLAN.md 2>/dev/null
 ls "$PHASE_DIR"/*-SUMMARY.md 2>/dev/null
-node ./.antigravity/get-shit-done/bin/gsd-tools.js roadmap get-phase "$PHASE_NUM"
+node .agent/skills/gsd/bin/gsd-tools.js roadmap get-phase "$PHASE_NUM"
 grep -E "^| $PHASE_NUM" .planning/REQUIREMENTS.md 2>/dev/null
 ```
 
@@ -118,7 +118,7 @@ For each truth:
 Use gsd-tools for artifact verification against must_haves in PLAN frontmatter:
 
 ```bash
-ARTIFACT_RESULT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js verify artifacts "$PLAN_PATH")
+ARTIFACT_RESULT=$(node .agent/skills/gsd/bin/gsd-tools.js verify artifacts "$PLAN_PATH")
 ```
 
 Parse JSON result: `{ all_passed, passed, total, artifacts: [{path, exists, issues, passed}] }`
@@ -167,7 +167,7 @@ Key links are critical connections. If broken, the goal fails even with all arti
 Use gsd-tools for key link verification against must_haves in PLAN frontmatter:
 
 ```bash
-LINKS_RESULT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js verify key-links "$PLAN_PATH")
+LINKS_RESULT=$(node .agent/skills/gsd/bin/gsd-tools.js verify key-links "$PLAN_PATH")
 ```
 
 Parse JSON result: `{ all_verified, verified, total, links: [{from, to, via, verified, detail}] }`
@@ -235,12 +235,12 @@ Identify files modified in this phase from SUMMARY.md key-files section, or extr
 
 ```bash
 # Option 1: Extract from SUMMARY frontmatter
-SUMMARY_FILES=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js summary-extract "$PHASE_DIR"/*-SUMMARY.md --fields key-files)
+SUMMARY_FILES=$(node .agent/skills/gsd/bin/gsd-tools.js summary-extract "$PHASE_DIR"/*-SUMMARY.md --fields key-files)
 
 # Option 2: Verify commits exist (if commit hashes documented)
 COMMIT_HASHES=$(grep -oE "[a-f0-9]{7,40}" "$PHASE_DIR"/*-SUMMARY.md | head -10)
 if [ -n "$COMMIT_HASHES" ]; then
-  COMMITS_VALID=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js verify commits $COMMIT_HASHES)
+  COMMITS_VALID=$(node .agent/skills/gsd/bin/gsd-tools.js verify commits $COMMIT_HASHES)
 fi
 
 # Fallback: grep for files

@@ -34,20 +34,20 @@ Normalize phase input in step 1 before any directory lookups.
 ## 0. Initialize Context
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init phase-op "$ARGUMENTS")
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init phase-op "$ARGUMENTS")
 ```
 
 Extract from init JSON: `phase_dir`, `phase_number`, `phase_name`, `phase_found`, `commit_docs`, `has_research`.
 
 Resolve researcher model:
 ```bash
-RESEARCHER_MODEL=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js resolve-model gsd-phase-researcher --raw)
+RESEARCHER_MODEL=$(node .agent/skills/gsd/bin/gsd-tools.js resolve-model gsd-phase-researcher --raw)
 ```
 
 ## 1. Validate Phase
 
 ```bash
-PHASE_INFO=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js roadmap get-phase "${phase_number}")
+PHASE_INFO=$(node .agent/skills/gsd/bin/gsd-tools.js roadmap get-phase "${phase_number}")
 ```
 
 **If `found` is false:** Error and exit. **If `found` is true:** Extract `phase_number`, `phase_name`, `goal` from JSON.

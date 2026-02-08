@@ -28,14 +28,14 @@ Then verify each level against the actual codebase.
 Load phase operation context:
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init phase-op "${PHASE_ARG}")
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init phase-op "${PHASE_ARG}")
 ```
 
 Extract from init JSON: `phase_dir`, `phase_number`, `phase_name`, `has_plans`, `plan_count`.
 
 Then load phase details and list plans/summaries:
 ```bash
-node ./.antigravity/get-shit-done/bin/gsd-tools.js roadmap get-phase "${phase_number}"
+node .agent/skills/gsd/bin/gsd-tools.js roadmap get-phase "${phase_number}"
 grep -E "^| ${phase_number}" .planning/REQUIREMENTS.md 2>/dev/null
 ls "$phase_dir"/*-SUMMARY.md "$phase_dir"/*-PLAN.md 2>/dev/null
 ```
@@ -50,7 +50,7 @@ Use gsd-tools to extract must_haves from each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  MUST_HAVES=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js frontmatter get "$plan" --field must_haves)
+  MUST_HAVES=$(node .agent/skills/gsd/bin/gsd-tools.js frontmatter get "$plan" --field must_haves)
   echo "=== $plan ===" && echo "$MUST_HAVES"
 done
 ```
@@ -84,7 +84,7 @@ Use gsd-tools for artifact verification against must_haves in each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  ARTIFACT_RESULT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js verify artifacts "$plan")
+  ARTIFACT_RESULT=$(node .agent/skills/gsd/bin/gsd-tools.js verify artifacts "$plan")
   echo "=== $plan ===" && echo "$ARTIFACT_RESULT"
 done
 ```
@@ -116,7 +116,7 @@ Use gsd-tools for key link verification against must_haves in each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  LINKS_RESULT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js verify key-links "$plan")
+  LINKS_RESULT=$(node .agent/skills/gsd/bin/gsd-tools.js verify key-links "$plan")
   echo "=== $plan ===" && echo "$LINKS_RESULT"
 done
 ```

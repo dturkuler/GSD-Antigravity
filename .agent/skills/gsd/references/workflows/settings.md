@@ -12,8 +12,8 @@ Read all files referenced by the invoking prompt's execution_context before star
 Ensure config exists and load current state:
 
 ```bash
-node ./.antigravity/get-shit-done/bin/gsd-tools.js config-ensure-section
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js state load)
+node .agent/skills/gsd/bin/gsd-tools.js config-ensure-section
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js state load)
 ```
 
 Creates `.planning/config.json` with defaults if missing and loads current config values.

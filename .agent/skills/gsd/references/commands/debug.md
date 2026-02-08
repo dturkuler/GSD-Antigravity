@@ -31,12 +31,12 @@ ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -5
 ## 0. Initialize Context
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js state load)
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js state load)
 ```
 
 Extract `commit_docs` from init JSON. Resolve debugger model:
 ```bash
-DEBUGGER_MODEL=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js resolve-model gsd-debugger --raw)
+DEBUGGER_MODEL=$(node .agent/skills/gsd/bin/gsd-tools.js resolve-model gsd-debugger --raw)
 ```
 
 ## 1. Check Active Sessions

@@ -111,7 +111,7 @@ Phase: "API documentation"
 Phase number from argument (required).
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init phase-op "${PHASE}")
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init phase-op "${PHASE}")
 ```
 
 Parse JSON for: `commit_docs`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_plans`, `has_verification`, `plan_count`, `roadmap_exists`, `planning_exists`.
@@ -388,7 +388,7 @@ Created: .planning/phases/${PADDED_PHASE}-${SLUG}/${PADDED_PHASE}-CONTEXT.md
 Commit phase context (uses `commit_docs` from init internally):
 
 ```bash
-node ./.antigravity/get-shit-done/bin/gsd-tools.js commit "docs(${padded_phase}): capture phase context" --files "${phase_dir}/${padded_phase}-CONTEXT.md"
+node .agent/skills/gsd/bin/gsd-tools.js commit "docs(${padded_phase}): capture phase context" --files "${phase_dir}/${padded_phase}-CONTEXT.md"
 ```
 
 Confirm: "Committed: docs(${padded_phase}): capture phase context"

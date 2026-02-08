@@ -29,7 +29,7 @@ Exit.
 Load phase operation context:
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init phase-op "0")
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init phase-op "0")
 ```
 
 Check `roadmap_exists` from init JSON. If false:
@@ -44,7 +44,7 @@ Exit.
 **Delegate the phase addition to gsd-tools:**
 
 ```bash
-RESULT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js phase add "${description}")
+RESULT=$(node .agent/skills/gsd/bin/gsd-tools.js phase add "${description}")
 ```
 
 The CLI handles:

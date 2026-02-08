@@ -11,21 +11,21 @@ Read all files referenced by the invoking prompt's execution_context before star
 ## 0. Initialize Milestone Context
 
 ```bash
-INIT=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js init milestone-op)
+INIT=$(node .agent/skills/gsd/bin/gsd-tools.js init milestone-op)
 ```
 
 Extract from init JSON: `milestone_version`, `milestone_name`, `phase_count`, `completed_phases`, `commit_docs`.
 
 Resolve integration checker model:
 ```bash
-CHECKER_MODEL=$(node ./.antigravity/get-shit-done/bin/gsd-tools.js resolve-model gsd-integration-checker --raw)
+CHECKER_MODEL=$(node .agent/skills/gsd/bin/gsd-tools.js resolve-model gsd-integration-checker --raw)
 ```
 
 ## 1. Determine Milestone Scope
 
 ```bash
 # Get phases in milestone (sorted numerically, handles decimals)
-node ./.antigravity/get-shit-done/bin/gsd-tools.js phases list
+node .agent/skills/gsd/bin/gsd-tools.js phases list
 ```
 
 - Parse version from arguments or detect current from ROADMAP.md
