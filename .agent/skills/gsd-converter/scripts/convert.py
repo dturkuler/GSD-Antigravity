@@ -28,7 +28,7 @@ def run_gsd_install():
     try:
         # We use shell=True because npx is often a shell script/cmd on Windows
         result = subprocess.run(
-            ["npx", "get-shit-done-cc", "--claude", "--local", "--force-statusline"],
+            ["npx", "-y", "get-shit-done-cc", "--claude", "--local", "--force-statusline"],
             check=True,
             capture_output=True,
             text=True,

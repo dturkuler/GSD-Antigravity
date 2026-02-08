@@ -21,5 +21,7 @@ env/
 # OS
 .DS_Store
 Thumbs.db
-.agent/skills/gsd/
+#.agent/skills/gsd/
 .gitignore
+#.claude
+__tobedeleted/
