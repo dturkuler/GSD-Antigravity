@@ -96,11 +96,20 @@ $env:GODEBUG="http2client=0"
 ```
 
 ### Phase 6: NPM Publication
-If the project is a package, publish it to the NPM registry.
+If the project is a package, publish it to the NPM registry to enable `npx` usage.
 
 **Command**:
 ```powershell
+# For public packages
 npm publish
+
+# OR for scoped packages (e.g., @user/package)
+# npm publish --access public
+```
+
+**Verification**:
+```powershell
+npm info gsd-antigravity-kit version
 ```
 
 ### Phase 7: Release Cleanup
