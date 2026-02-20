@@ -1,143 +1,92 @@
-# 🌌 GSD-to-Antigravity Converter
-
+# 🌌 GSD-Antigravity Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Antigravity Compatible](https://img.shields.io/badge/Antigravity-Compatible-purple.svg?logo=google&logoColor=white)](https://github.com/google-deepmind/antigravity)
+[![NPM Version](https://img.shields.io/npm/v/gsd-antigravity-kit.svg?logo=npm)](https://www.npmjs.com/package/gsd-antigravity-kit)
 
-**GSD-to-Antigravity Converter** is a high-performance migration utility for the Antigravity AI framework. It transforms standard [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done/tree/main) installations into portable Antigravity Skills by automating path refactoring, rebranding, and skill packaging.
-
----
-
-## 💎 Core Philosophy: The GSD Cycle
-
-Most AI development fails because it jumps straight from **intent** to **code**. GSD-Antigravity enforces a non-negotiable protocol:
-
-1.  **Plan Phase**: Deep-probe requirements, surface hidden assumptions, and generate a serialized `.planning/PLAN.md`.
-2.  **Execute Phase**: Atomic, wave-based implementation where agents follow the plan without deviation.
-3.  **Verify Phase**: Conversational User Acceptance Testing (UAT) to ensure the implementation matches the original intent.
+**GSD-Antigravity Kit** is the official bootstrapping and management utility for the [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done) protocol within the Antigravity AI framework. It serves as a high-performance **Installer** and **Skill Manager** that provision, optimizes, and maintains GSD skills in your AG environment.
 
 ---
 
-## ✨ Key Features
+## � What is this project?
 
-### 🛠️ Hierarchical Planning
-Automatically generates deeply nested project structures, including requirements, architectures, and pitfall analyses before coding begins.
+This repository contains the **gsd-antigravity-kit**. It is not the GSD protocol itself, but the bridge that brings it to Antigravity. It handles:
 
-### 🤖 Multi-Agent Orchestration
-Spawns specialized sub-agents with distinct personas:
-- **Researchers**: Investigate 2025-standard tech stacks and ecosystem pitfalls.
-- **Roadmappers**: Build multi-phase project arcs.
-- **Plan Checkers**: Audit plans to catch logic gaps before execution.
-
-### 🔄 Legacy Migration (`gsd-converter`)
-Includes a zero-config automation script to migrate standard GSD installations into the portable Antigravity Skill format.
-
-### 🛠️ Advanced Tooling (`gsd-tools.cjs`)
-The core engine has been enhanced with enterprise-grade features, **automatically injected by `gsd-converter`** during the migration process:
-- **Smart Inclusion System**: Use the `--include` flag to selectively embed planning files (state, roadmap, requirements) into sub-agent context.
-- **Automated Artifact Discovery**: Intelligent lookup of phase-specific documents (DESIGN, TASKS, IMPLEMENTATION) across the project hierarchy.
-- **Optimized Model Profiles**: Pre-tuned configurations for quality, balance, and budget across different GSD personas.
+1.  **Automated Provisioning**: Installs the `.agent/skills/` infrastructure.
+2.  **Legacy Conversion**: Fetches standard GSD releases and transforms them into portable AG Skills.
+3.  **Enterprise Refactoring**: Injects advanced capabilities like selective inclusions and artifact discovery into the GSD engine.
+4.  **AG-Native Rebranding**: Seamlessly refactors all internal prompts and commands to follow Antigravity-specific naming conventions.
 
 ---
 
-## 🧰 The GSD Toolbox
+## 💎 The GSD Experience (Powered by this Kit)
 
-Once installed, the following primary commands drive your project:
+Once this kit installs the GSD Skill, it enables the **GSD Cycle** in your project:
 
-| Command | Action | Deep Philosophy |
-| :--- | :--- | :--- |
-| `gsd:new-project` | **Initialize** | Context gathering → Research → Roadmap |
-| `gsd:plan-phase` | **Blueprint** | Resolve ambiguity into actionable tasks |
-| `gsd:execute-phase` | **Build** | Wave-based, parallel agent execution |
-| `gsd:verify-work` | **UAT** | Human-in-the-loop verification |
-| `gsd:map-codebase` | **Audit** | Reverse-engineer existing architecture |
-| `gsd:progress` | **Status** | State management and next-step routing |
+1.  **Phase 1: Plan**: Deep-probe requirements, surface hidden assumptions, and generate a serialized `.planning/PLAN.md`.
+2.  **Phase 2: Execute**: Atomic, wave-based implementation where agents follow the plan without deviation.
+3.  **Phase 3: Verify**: Conversational UAT to ensure the implementation matches the original intent.
+
+### 🛠️ Advanced Tooling (Kit-Exclusives)
+The kit automatically enhances the core `gsd-tools.cjs` engine with:
+- **Smart Inclusion Engine**: Use `--include` flags to selectively embed context.
+- **Hierarchical Artifact Discovery**: Automated lookup of phase-specific documents across nested directories.
+- **Persona Profiles**: Pre-tuned AI model configurations (Quality, Balance, Budget) optimized for AG.
 
 ---
 
-## 🚀 Speed-to-Code
+## 🚀 Installation & Setup
 
-### 1️⃣ Prerequisites
-- **Antigravity** core installed.
-- **Node.js** (for npx) & **Python 3.8+**.
+Installation is handled via `npx` to automatically provision your current project root:
 
-### 2️⃣ Installation & Setup
-
-Installation is handled via `npx` to automatically provision the `.agent` folder into your current project:
-
+### 1️⃣ Provision the Kit
 ```bash
 # In your project root:
 npx gsd-antigravity-kit
 ```
 
-# Then initialize the GSD engine:
+### 2️⃣ Initialize the GSD Engine
+Run the converter script provided by the kit to fetch and package the GSD protocol:
 
-**Option 1: In-App (Recommended)**
-Run `.agent/skills/gsd-converter/SKILL.md` directly in the Antigravity prompt.
+**Option 1: In-AG Prompt (Recommended)**
+```text
+/gsd-converter
+```
 
 **Option 2: CLI**
 ```bash
 py .agent/skills/gsd-converter/scripts/convert.py gsd
 ```
 
-**Option 3: Manual Clone**
-Alternatively, you can clone the repository manually:
-```bash
-git clone https://github.com/glittercowboy/GSD-Antigravity.git
-cd GSD-Antigravity
-py .agent/skills/gsd-converter/scripts/convert.py gsd
-```
-
-
-
-### 🔄 Updating the GSD Skill
-
-**Option 1: Via GSD-Converter Skill**
-When a new version of GSD is released, you can refresh your local installation by running the `gsd-converter` script again. This will automatically:
-- **Clean**: Delete the existing `.agent/skills/gsd/` folder to ensure a clean slate.
-- **Fetch**: Download the latest source files via `npx`.
-- **Rebuild**: Re-apply Antigravity branding and path refactoring to generate the updated skill set.
-
-**Option 2: In-App (Easiest)**
-```bash
-in antigravity prompt
-gsd:update
-```
-
-**Option 3: CLI**
-```bash
-py .agent/skills/gsd-converter/scripts/convert.py gsd
-```
-
-
-### 3️⃣ Start Your First Project
-```bash
-# Within the Antigravity interface:
-gsd:new-project
-```
-
-
 ---
 
-## 📂 Project Architecture
+## � Project Architecture
+
+This repository is structured to separate the kit's logic from the generated skill:
 
 ```text
 .
 ├── .agent/
 │   └── skills/
-│       ├── gsd/           # Generated GSD Skill (Commands & Agents)
-│       └── gsd-converter/ # Migration Tools
-├── README.md              # You are here
-├── LICENSE                # MIT
-└── CONTRIBUTING.md        # How to extend GSD
+│       ├── gsd-converter/ # The Conversion Logic (The "Kit" Engine)
+│       └── gsd/           # The Managed GSD Skill (Generated/Modified by Kit)
+├── bin/                   # NPX Entrypoints
+├── docs/                  # Kit Documentation & Knowledgebase
+└── package.json           # Distribution Metadata
 ```
 
 ---
 
-## 🙏 Acknowledgements
+## 🙏 Credits & Acknowledgements
 
-A huge thank you to **[glittercowboy](https://github.com/glittercowboy)** for the original [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done/tree/main) system. His visionary work on spec-driven hierarchical planning provided the essential logic and inspiration for this Antigravity adaptation.
+The **GSD-Antigravity Kit** stands on the shoulders of giants. We owe a debt of gratitude to the original creators who pioneered the spec-driven development movement:
+
+### 🌟 The GSD Protocol
+The core logic, philosophy, and original script engine were created by **[glittercowboy](https://github.com/glittercowboy)**. Without the original [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done) system, this kit would have no engine to manage.
+
+- **Source Code**: [GitHub Repository](https://github.com/glittercowboy/get-shit-done)
+- **Documentation**: [The GSD Handbook](https://github.com/glittercowboy/get-shit-done/tree/main/.claude/get-shit-done)
 
 ---
 
+*Engineered for excellence by the Antigravity Team. 🌌*
