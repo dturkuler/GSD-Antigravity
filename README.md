@@ -33,6 +33,12 @@ Spawns specialized sub-agents with distinct personas:
 ### 🔄 Legacy Migration (`gsd-converter`)
 Includes a zero-config automation script to migrate standard GSD installations into the portable Antigravity Skill format.
 
+### 🛠️ Advanced Tooling (`gsd-tools.cjs`)
+The core engine has been enhanced with enterprise-grade features, **automatically injected by `gsd-converter`** during the migration process:
+- **Smart Inclusion System**: Use the `--include` flag to selectively embed planning files (state, roadmap, requirements) into sub-agent context.
+- **Automated Artifact Discovery**: Intelligent lookup of phase-specific documents (DESIGN, TASKS, IMPLEMENTATION) across the project hierarchy.
+- **Optimized Model Profiles**: Pre-tuned configurations for quality, balance, and budget across different GSD personas.
+
 ---
 
 ## 🧰 The GSD Toolbox
