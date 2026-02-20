@@ -37,7 +37,15 @@ This skill provides the logic and resources to package a locally installed GSD s
    - Updates `Task()` prompt paths for subagents.
    - **Rebranding**: Automatically converts "Claude" and "Claude Code" mentions to "Antigravity" throughout all migrated files.
 
-7. **Packaging**: Generates a comprehensive `SKILL.md` using the `assets/gsd_skill_template.md` template, ensuring compliance with skill-developer best practices.
+7. **Optimization** (gsd-tools.cjs):
+    - Runs `optimize-gsd-tools.cjs` to apply DRY refactoring:
+      - Converts 4-space indentation to 2-space + LF line endings (~25KB savings).
+      - Condenses the 124-line header comment to 12 lines.
+      - Injects `parseIncludeFlag()`, `discoverPhaseArtifacts()`, `applyIncludes()`, and `buildPhaseBase()` helpers.
+      - Refactors `cmdInitExecutePhase`, `cmdInitPlanPhase`, `cmdInitProgress` to use helpers.
+      - Adds `--include` flag support for selective file content embedding.
+
+8. **Packaging**: Generates a comprehensive `SKILL.md` using the `assets/gsd_skill_template.md` template, ensuring compliance with skill-developer best practices.
 
 ## Usage
 

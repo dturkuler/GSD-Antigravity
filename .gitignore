@@ -25,3 +25,5 @@ Thumbs.db
 .gitignore
 #.claude
 __tobedeleted/
+release_manager/
+docs/DEV_KNOWLEDGEBASE.md

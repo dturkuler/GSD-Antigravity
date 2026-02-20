@@ -106,6 +106,35 @@ def refactor_content(target_base):
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(new_content)
 
+def optimize_gsd_tools(target_base):
+    """Post-process gsd-tools.cjs with DRY helpers, 2-space indent, and condensed header."""
+    gsd_tools_path = os.path.join(target_base, 'bin', 'gsd-tools.cjs')
+    if not os.path.exists(gsd_tools_path):
+        print("  ⚠️ gsd-tools.cjs not found in bin/, skipping optimization")
+        return
+    
+    print("🔧 Optimizing gsd-tools.cjs...")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    optimizer_path = os.path.join(script_dir, 'optimize-gsd-tools.cjs')
+    
+    if not os.path.exists(optimizer_path):
+        print(f"  ⚠️ Optimizer script not found at {optimizer_path}")
+        return
+    
+    try:
+        result = subprocess.run(
+            ["node", optimizer_path, gsd_tools_path],
+            check=True,
+            capture_output=True,
+            text=True,
+            shell=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"  ❌ Optimizer failed: {e}")
+        print(f"  Output: {e.stdout}")
+        print(f"  Errors: {e.stderr}")
+
 def scan_commands(target_base):
     commands_dir = os.path.join(target_base, 'references', 'commands')
     commands = []
@@ -213,6 +242,7 @@ def main():
     # 3. Perform migration and refactoring
     migrate_files(args.source, target_base)
     refactor_content(target_base)
+    optimize_gsd_tools(target_base)
     create_skill_md(target_base, skill_name)
     
     print(f"\n✨ Skill '{skill_name}' is ready at {target_base}")

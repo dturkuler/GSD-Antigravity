@@ -13,8 +13,9 @@ Detect whether GSD is installed locally or globally by checking both locations:
 
 ```bash
 # Check local first (takes priority)
-if [ -f "./.antigravity/get-shit-done/VERSION" ]; then
-  cat "./.antigravity/get-shit-done/VERSION"
+# Paths templated at install time for runtime compatibility
+if [ -f ./.antigravity/get-shit-done/VERSION ]; then
+  cat ./.antigravity/get-shit-done/VERSION
   echo "LOCAL"
 elif [ -f ./.antigravity/get-shit-done/VERSION ]; then
   cat ./.antigravity/get-shit-done/VERSION
@@ -167,6 +168,7 @@ rm -f ./.antigravity/cache/gsd-update-check.json
 ```bash
 rm -f ./.antigravity/cache/gsd-update-check.json
 ```
+(Paths are templated at install time for runtime compatibility)
 </step>
 
 <step name="display_result">

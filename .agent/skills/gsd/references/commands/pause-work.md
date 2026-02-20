@@ -19,9 +19,12 @@ Routes to the pause-work workflow which handles:
 </objective>
 
 <execution_context>
-@.planning/STATE.md
 @references/workflows/pause-work.md
 </execution_context>
+
+<context>
+State and phase progress are gathered in-workflow with targeted reads.
+</context>
 
 <process>
 **Follow the pause-work workflow** from `@references/workflows/pause-work.md`.
