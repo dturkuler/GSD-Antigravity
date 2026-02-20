@@ -141,12 +141,3 @@ A huge thank you to **[glittercowboy](https://github.com/glittercowboy)** for th
 
 ---
 
-## 🔗 Resources & Support
-
-- 📜 **Documentation**: [docs/](.agent/skills/gsd/references/docs/)
-- 🗺️ **Roadmap Management**: [ROADMAP.md](.agent/skills/gsd/assets/templates/roadmap.md)
-- 💬 **Community**: Join our Discord for GSD strategy and pattern sharing.
-
----
-
-*Engineered for excellence by the Antigravity Team. 🌌*
