@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.1] - 2026-02-27
+
+### Changed
+- **Sync with GSD 1.21.1**: Updated core skill to match GSD's latest patch, including Windows path fixes and milestone calculation improvements.
+- **Badge Update**: Synchronized README version badges.
+
 ## [1.21.0] - 2026-02-27
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: gsd
-version: 1.21.0
+version: 1.21.1
 description: "Antigravity GSD (Get Stuff Done) - A spec-driven hierarchical planning and execution system. Triggers on project planning, phase management, and GSD slash commands."
 ---
 
