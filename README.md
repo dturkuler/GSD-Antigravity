@@ -3,12 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Antigravity Compatible](https://img.shields.io/badge/Antigravity-Compatible-purple.svg?logo=google&logoColor=white)](https://github.com/google-deepmind/antigravity)
 [![NPM Version](https://img.shields.io/npm/v/gsd-antigravity-kit.svg?logo=npm)](https://www.npmjs.com/package/gsd-antigravity-kit)
+[![Release Version](https://img.shields.io/badge/Release-v1.21.0-blue?style=flat-square)](https://github.com/dturkuler/GSD-Antigravity/releases/latest)
 
 **GSD-Antigravity Kit** is the official bootstrapping and management utility for the [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done) protocol within the Antigravity AI framework. It serves as a high-performance **Installer** and **Skill Manager** that provision, optimizes, and maintains GSD skills in your AG environment.
 
 ---
 
-## � What is this project?
+##  What is this project?
 
 This repository contains the **gsd-antigravity-kit**. It is not the GSD protocol itself, but the bridge that brings it to Antigravity. It handles:
 

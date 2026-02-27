@@ -61,7 +61,8 @@ npm version patch --no-git-tag-version
     *   **Input**: Read `CHANGELOG.md` and `git log` for "Fixed" items.
     *   **Analysis**: For each fix, identify **Context**, **Issue**, **Root Cause**, and **Technical Fix**.
     *   **Output**: Append details under the version header in `docs/DEV_KNOWLEDGEBASE.md`.
-3.  **README**: Update `README.md` if any instructions or version badges need changing.
+3.  **README**: Update `README.md` version badges and release summary.
+    *   **Action**: Search for `[![Release Version]` and update the version string in the badge URL.
 4.  **Verification**: Do not run Git commits or `gh release` until these files are saved and verified.
 
 ### Phase 3: Archive & Package
@@ -138,7 +139,7 @@ Get-ChildItem "$packageName`_v*.zip" | Sort-Object LastWriteTime -Descending | S
 - [ ] **Phase 2: Documentation Synchronization**
     - [ ] Update `CHANGELOG.md`
     - [ ] Update `docs/DEV_KNOWLEDGEBASE.md` (Root Cause Analysis for fixes)
-    - [ ] Update `README.md`
+    - [ ] Update `README.md` (Update version badge: `[![Release Version]`)
 - [ ] **Phase 3: Archive & Package**
     - [ ] Create ZIP archive: `gsd-antigravity-kit_v1.0.X.zip`
 - [ ] **Phase 4: Release Execution**
