@@ -1,5 +1,6 @@
 ---
 name: {skill_name}
+version: {version}
 description: "Antigravity GSD (Get Stuff Done) - A spec-driven hierarchical planning and execution system. Triggers on project planning, phase management, and GSD slash commands."
 ---
 
@@ -18,7 +19,7 @@ This skill should be used when:
 4.  **Managing State**: Tracking progress through defined phases (Plan -> Execute -> Verify).
 
 **Triggers:**
-- Keywords: "plan phase", "execute phase", "new project spec", "gsd"
+- Keywords: "plan phase", "execute phase", "new project spec", "gsd", "gsd-tools"
 - Commands: 
 {command_triggers}
 

@@ -296,6 +296,35 @@ Verified patterns from official sources:
    - What's unclear: [the gap]
    - Recommendation: [how to handle]
 
+## Validation Architecture
+
+> Skip this section entirely if workflow.nyquist_validation is false in .planning/config.json
+
+### Test Framework
+| Property | Value |
+|----------|-------|
+| Framework | {framework name + version} |
+| Config file | {path or "none — see Wave 0"} |
+| Quick run command | `{command}` |
+| Full suite command | `{command}` |
+
+### Phase Requirements → Test Map
+| Req ID | Behavior | Test Type | Automated Command | File Exists? |
+|--------|----------|-----------|-------------------|-------------|
+| REQ-XX | {behavior} | unit | `pytest tests/test_{module}.py::test_{name} -x` | ✅ / ❌ Wave 0 |
+
+### Sampling Rate
+- **Per task commit:** `{quick run command}`
+- **Per wave merge:** `{full suite command}`
+- **Phase gate:** Full suite green before `/gsd:verify-work`
+
+### Wave 0 Gaps
+- [ ] `{tests/test_file.py}` — covers REQ-{XX}
+- [ ] `{tests/conftest.py}` — shared fixtures
+- [ ] Framework install: `{command}` — if none detected
+
+*(If no gaps: "None — existing test infrastructure covers all phase requirements")*
+
 ## Sources
 
 ### Primary (HIGH confidence)
@@ -335,6 +364,8 @@ INIT=$(node .agent/skills/gsd/bin/gsd-tools.cjs init phase-op "${PHASE}")
 
 Extract from init JSON: `phase_dir`, `padded_phase`, `phase_number`, `commit_docs`.
 
+Also read `.planning/config.json` — if `workflow.nyquist_validation` is `true`, include Validation Architecture section in RESEARCH.md. If `false`, skip it.
+
 Then read CONTEXT.md if exists:
 ```bash
 cat "$phase_dir"/*-CONTEXT.md 2>/dev/null
@@ -367,7 +398,20 @@ Based on phase description, identify what needs investigating:
 
 For each domain: Context7 first → Official docs → WebSearch → Cross-verify. Document findings with confidence levels as you go.
 
-## Step 4: Quality Check
+## Step 4: Validation Architecture Research (if nyquist_validation enabled)
+
+**Skip if** workflow.nyquist_validation is false.
+
+### Detect Test Infrastructure
+Scan for: test config files (pytest.ini, jest.config.*, vitest.config.*), test directories (test/, tests/, __tests__/), test files (*.test.*, *.spec.*), package.json test scripts.
+
+### Map Requirements to Tests
+For each phase requirement: identify behavior, determine test type (unit/integration/smoke/e2e/manual-only), specify automated command runnable in < 30 seconds, flag manual-only with justification.
+
+### Identify Wave 0 Gaps
+List missing test files, framework config, or shared fixtures needed before implementation.
+
+## Step 5: Quality Check
 
 - [ ] All domains investigated
 - [ ] Negative claims verified
@@ -375,7 +419,7 @@ For each domain: Context7 first → Official docs → WebSearch → Cross-verify
 - [ ] Confidence levels assigned honestly
 - [ ] "What might I have missed?" review
 
-## Step 5: Write RESEARCH.md
+## Step 6: Write RESEARCH.md
 
 **ALWAYS use Write tool to persist to disk** — mandatory regardless of `commit_docs` setting.
 
@@ -414,13 +458,13 @@ Write to: `$PHASE_DIR/$PADDED_PHASE-RESEARCH.md`
 
 ⚠️ `commit_docs` controls git only, NOT file writing. Always write first.
 
-## Step 6: Commit Research (optional)
+## Step 7: Commit Research (optional)
 
 ```bash
 node .agent/skills/gsd/bin/gsd-tools.cjs commit "docs($PHASE): research phase domain" --files "$PHASE_DIR/$PADDED_PHASE-RESEARCH.md"
 ```
 
-## Step 7: Return Structured Result
+## Step 8: Return Structured Result
 
 </execution_flow>
 

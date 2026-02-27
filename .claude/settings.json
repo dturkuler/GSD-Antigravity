@@ -9,6 +9,16 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/gsd-context-monitor.js"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

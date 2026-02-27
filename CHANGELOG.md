@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-02-27
+
+### Added
+- **Dynamic `gsd-tools` Discovery**:
+  - `gsd-converter` now dynamically parses `gsd-tools.cjs` comments to generate up-to-date Antigravity command documentation.
+  - Automates the inclusion of new GSD commands without manual script updates.
+- **Enhanced Path Refactoring**:
+  - Implemented robust regex-based path mapping to handle all `.claude` and shell-relative path variants (`@./.claude`, `~/.claude`, etc.).
+  - Ensures a 100% self-contained skill environment in Antigravity.
+- **Automatic Cleanup**:
+  - The converter now automatically purges legacy `.bak` and temporary files during the migration process.
+
+### Changed
+- **Release Manager Sync**: Updated the release workflow to enforce GSD synchronization and dynamic help verification before tagging.
+- **GSD Skill Architecture**: Refactored the internal skill structure to mirror GSD 1.21.0's modular `hooks/` and `bin/lib/` organization.
+
 ## [1.0.2] - 2026-02-20
 
 ### Added

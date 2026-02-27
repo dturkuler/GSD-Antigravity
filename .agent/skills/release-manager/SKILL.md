@@ -28,14 +28,19 @@ To provide a deterministic, multi-phase procedure for transitioning the codebase
 ### Phase 0: Readiness Check (CRITICAL)
 Before starting a release, ensure the following:
 1.  **Git Cleanliness**: Ensure `git status` is clean (no uncommitted changes except release prep).
-2.  **Tests**: Run `npm test` if tests are defined.
-3.  **Auth Check (GitHub)**:
+2.  **GSD Sync**: Run the converter to ensure `.agent/skills/gsd` is up-to-date with the latest `gsd-tools` discovery logic.
+    ```powershell
+    py .agent/skills/gsd-converter/scripts/convert.py gsd
+    ```
+3.  **Dynamic Documentation Check**: Verify `\.agent\skills\gsd\references\commands\gsd-tools.md` contains the expected command list.
+4.  **Tests**: Run `npm test` if tests are defined.
+5.  **Auth Check (GitHub)**:
     ```powershell
     $ghPath = ".\.agent\skills\release-manager\bin\gh.exe"
     if (-not (Test-Path $ghPath)) { $ghPath = "gh" }
     & $ghPath auth status
     ```
-4.  **Auth Check (NPM)**:
+6.  **Auth Check (NPM)**:
     ```powershell
     npm whoami
     ```
@@ -66,10 +71,10 @@ Create the release artifact for GitHub (Source Zip):
     $package = Get-Content package.json | ConvertFrom-Json
     $ver = $package.version
     ```
-2.  **Archive**: Zip the repository content, excluding `node_modules`, `.git`, and other temporary files.
+2.  **Archive**: Zip the repository content. We exclude local project data (`.planning`, `.antigravity`, `__tobedeleted`) and temporary Git files to keep the release clean.
     ```powershell
     $packageName = $package.name
-    Compress-Archive -Path . -DestinationPath "$packageName`_v$ver.zip" -Force -Exclude "node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning"
+    Compress-Archive -Path . -DestinationPath "$packageName`_v$ver.zip" -Force -Exclude "node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak"
     ```
 
 ### Phase 4: Release Execution
@@ -123,6 +128,8 @@ Get-ChildItem "$packageName`_v*.zip" | Sort-Object LastWriteTime -Descending | S
 ## 🛠️ Interactive Checklist
 - [ ] **Phase 0: Readiness Check**
     - [ ] Git Cleanliness
+    - [ ] GSD Sync (`convert.py gsd`)
+    - [ ] Verify `gsd-tools.md` is dynamic/updated
     - [ ] `npm test` (if applicable)
     - [ ] `gh auth status`
     - [ ] `npm whoami`

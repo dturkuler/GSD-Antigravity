@@ -50,7 +50,8 @@ def migrate_files(source_base, target_base):
         ('get-shit-done/workflows', 'references/workflows'),
         ('agents', 'references/agents'),
         ('get-shit-done/templates', 'assets/templates'),
-        ('get-shit-done/bin', 'bin')
+        ('get-shit-done/bin', 'bin'),
+        ('hooks', 'bin/hooks')
     ]
     
     for src_rel, tgt_rel in mappings:
@@ -76,35 +77,58 @@ def refactor_content(target_base):
     print("🔧 Refactoring file contents and paths...")
     
     replacements = [
-        (r'@\./\.claude/commands/gsd/', '@references/commands/'),
-        (r'@\./\.claude/get-shit-done/references/', '@references/docs/'),
-        (r'@\./\.claude/get-shit-done/workflows/', '@references/workflows/'),
-        (r'@\./\.claude/get-shit-done/templates/', '@assets/templates/'),
-        (r'@\./\.claude/agents/', '@references/agents/'),
-        (r'\./\.claude/agents/', 'references/agents/'),
-        (r'\./\.claude/get-shit-done/templates/', 'assets/templates/'),
-        (r'\./\.claude/get-shit-done/workflows/', 'references/workflows/'),
-        (r'\./\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
+        (r'@\.?/?\.claude/commands/gsd/', '@references/commands/'),
+        (r'@\.?/?\.claude/get-shit-done/references/', '@references/docs/'),
+        (r'@\.?/?\.claude/get-shit-done/workflows/', '@references/workflows/'),
+        (r'@\.?/?\.claude/get-shit-done/templates/', '@assets/templates/'),
+        (r'@\.?/?\.claude/agents/', '@references/agents/'),
+        (r'\.?/?\.claude/agents/', 'references/agents/'),
+        (r'\.?/?\.claude/get-shit-done/templates/', 'assets/templates/'),
+        (r'\.?/?\.claude/get-shit-done/workflows/', 'references/workflows/'),
+        (r'\.?/?\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
+        (r'\.?/?\.claude/hooks/', '.agent/skills/gsd/bin/hooks/'),
+        (r'@\.?/?\.claude/hooks/', '@bin/hooks/'),
         (r'\bClaude Code\b', 'Antigravity'),
         (r'\bClaude\b', 'Antigravity'),
         (r'\bclaude\b', 'antigravity'),
         (r'\bCLAUDE\b', 'ANTIGRAVITY'),
     ]
     
+    exact_replacements = [
+        ("~/.claude/get-shit-done", ".agent/skills/gsd"),
+        ("~/.claude/agents", "references/agents"),
+        ("@~/.claude/get-shit-done/references/", "@references/docs/"),
+        ("@~/.claude/get-shit-done/templates/", "@assets/templates/"),
+        ("path.join(homeDir, '.claude', 'todos')", "path.join(homeDir, '.gemini', 'antigravity', 'todos')"),
+        ("path.join(homeDir, '.claude', 'cache'", "path.join(homeDir, '.gemini', 'antigravity', 'cache'"),
+        ("path.join(cwd, '.claude', 'get-shit-done'", "path.join(cwd, '.agent', 'skills', 'gsd'"),
+        ("path.join(homeDir, '.claude', 'get-shit-done'", "path.join(homeDir, '.gemini', 'antigravity', 'skills', 'gsd'")
+    ]
+    
     for root, dirs, files in os.walk(target_base):
         for file in files:
-            if file.endswith('.md') or file.endswith('.json'):
-                file_path = os.path.join(root, file)
+            file_path = os.path.join(root, file)
+            # Process content
+            if file.endswith(('.md', '.json', '.js', '.cjs')):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
                 new_content = content
+                for exact, repl in exact_replacements:
+                    new_content = new_content.replace(exact, repl)
+
                 for pattern, replacement in replacements:
                     new_content = re.sub(pattern, replacement, new_content)
                 
                 if new_content != content:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(new_content)
+    
+    # Cleanup .bak files
+    for root, dirs, files in os.walk(target_base):
+        for file in files:
+            if file.endswith('.md.bak'):
+                os.remove(os.path.join(root, file))
 
 def optimize_gsd_tools(target_base):
     """Post-process gsd-tools.cjs with DRY helpers, 2-space indent, and condensed header."""
@@ -135,6 +159,43 @@ def optimize_gsd_tools(target_base):
         print(f"  Output: {e.stdout}")
         print(f"  Errors: {e.stderr}")
 
+def extract_gsd_tools_help(target_base):
+    """Extract usage comments from gsd-tools.cjs for dynamic documentation."""
+    gsd_tools_path = os.path.join(target_base, 'bin', 'gsd-tools.cjs')
+    if not os.path.exists(gsd_tools_path):
+        return "Help information not available."
+    
+    try:
+        with open(gsd_tools_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Match the first JSDoc style comment block found (Atomic Commands through ...)
+        # This matches the block starting with /** and ending with */
+        match = re.search(r'/\*\*(.*?)\*/', content, re.DOTALL)
+        if match:
+            lines = match.group(1).split('\n')
+            extracted = []
+            for line in lines:
+                line = line.strip()
+                if line.startswith('*'):
+                    line = line[1:].strip()
+                # Exclude the title and purpose lines at the top
+                if any(x in line for x in ['GSD Tools', 'Replaces repetitive', 'Centralizes:', 'Usage:']):
+                    continue
+                if line:
+                    # Format section headers as bold (starts with capital, ends with colon)
+                    if re.match(r'^[A-Z].*:$', line):
+                        extracted.append(f"\n#### {line}")
+                    elif line.startswith('['):
+                        # Indent option lines
+                        extracted.append(f"  {line}")
+                    else:
+                        extracted.append(line)
+            return "\n".join(extracted).strip()
+    except Exception as e:
+        print(f"  ⚠️ Failed to extract gsd-tools help: {e}")
+    return "Help information could not be parsed."
+
 def scan_commands(target_base):
     commands_dir = os.path.join(target_base, 'references', 'commands')
     commands = []
@@ -161,7 +222,7 @@ def scan_commands(target_base):
                 commands.append({'name': cmd_name, 'description': description})
     return commands
 
-def create_skill_md(target_base, skill_name):
+def create_skill_md(target_base, skill_name, version):
     skill_md_path = os.path.join(target_base, 'SKILL.md')
     
     # We deliberately overwrite SKILL.md to ensure the command list is always up to date
@@ -187,6 +248,7 @@ def create_skill_md(target_base, skill_name):
         print(f"  ⚠️ Template not found at {template_path}. Using fallback.")
         content = f"""---
 name: {skill_name}
+version: {version}
 description: "Antigravity GSD (Get Stuff Done) - Fallback."
 ---
 # {skill_name}
@@ -202,6 +264,7 @@ Template missing.
         try:
             content = template_content.format(
                 skill_name=skill_name,
+                version=version,
                 title_name=title_name,
                 date=date_str,
                 command_triggers=command_triggers_str,
@@ -241,9 +304,33 @@ def main():
     
     # 3. Perform migration and refactoring
     migrate_files(args.source, target_base)
+    
     refactor_content(target_base)
     optimize_gsd_tools(target_base)
-    create_skill_md(target_base, skill_name)
+
+    # 4. Inject Antigravity-specific command definitions
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Dynamic gsd-tools help extraction
+    gsd_tools_help = extract_gsd_tools_help(target_base)
+
+    custom_assets = [
+        ('gsd-tools.md', 'references/commands/gsd-tools.md'),
+    ]
+    for asset_name, target_rel in custom_assets:
+        asset_path = os.path.join(script_dir, '..', 'assets', asset_name)
+        target_path = os.path.join(target_base, target_rel)
+        if os.path.exists(asset_path):
+            print(f"  🛠️ Injecting custom asset: {asset_name}")
+            if asset_name == 'gsd-tools.md':
+                with open(asset_path, 'r', encoding='utf-8') as f:
+                    template = f.read()
+                with open(target_path, 'w', encoding='utf-8') as f:
+                    f.write(template.replace('{gsd_tools_help}', gsd_tools_help))
+            else:
+                shutil.copy2(asset_path, target_path)
+
+    create_skill_md(target_base, skill_name, new_version)
     
     print(f"\n✨ Skill '{skill_name}' is ready at {target_base}")
     print(f"📊 GSD Version: {old_version} -> {new_version}")

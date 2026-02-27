@@ -312,6 +312,51 @@ issue:
   fix_hint: "Remove search task - belongs in future phase per user decision"
 ```
 
+## Dimension 8: Nyquist Compliance
+
+Skip if: `workflow.nyquist_validation` is false, phase has no RESEARCH.md, or RESEARCH.md has no "Validation Architecture" section. Output: "Dimension 8: SKIPPED (nyquist_validation disabled or not applicable)"
+
+### Check 8a — Automated Verify Presence
+
+For each `<task>` in each plan:
+- `<verify>` must contain `<automated>` command, OR a Wave 0 dependency that creates the test first
+- If `<automated>` is absent with no Wave 0 dependency → **BLOCKING FAIL**
+- If `<automated>` says "MISSING", a Wave 0 task must reference the same test file path → **BLOCKING FAIL** if link broken
+
+### Check 8b — Feedback Latency Assessment
+
+For each `<automated>` command:
+- Full E2E suite (playwright, cypress, selenium) → **WARNING** — suggest faster unit/smoke test
+- Watch mode flags (`--watchAll`) → **BLOCKING FAIL**
+- Delays > 30 seconds → **WARNING**
+
+### Check 8c — Sampling Continuity
+
+Map tasks to waves. Per wave, any consecutive window of 3 implementation tasks must have ≥2 with `<automated>` verify. 3 consecutive without → **BLOCKING FAIL**.
+
+### Check 8d — Wave 0 Completeness
+
+For each `<automated>MISSING</automated>` reference:
+- Wave 0 task must exist with matching `<files>` path
+- Wave 0 plan must execute before dependent task
+- Missing match → **BLOCKING FAIL**
+
+### Dimension 8 Output
+
+```
+## Dimension 8: Nyquist Compliance
+
+| Task | Plan | Wave | Automated Command | Status |
+|------|------|------|-------------------|--------|
+| {task} | {plan} | {wave} | `{command}` | ✅ / ❌ |
+
+Sampling: Wave {N}: {X}/{Y} verified → ✅ / ❌
+Wave 0: {test file} → ✅ present / ❌ MISSING
+Overall: ✅ PASS / ❌ FAIL
+```
+
+If FAIL: return to planner with specific fixes. Same revision loop as other dimensions (max 3 loops).
+
 </verification_dimensions>
 
 <verification_process>
@@ -329,6 +374,8 @@ Orchestrator provides CONTEXT.md content in the verification prompt. If provided
 
 ```bash
 ls "$phase_dir"/*-PLAN.md 2>/dev/null
+# Read research for Nyquist validation data
+cat "$phase_dir"/*-RESEARCH.md 2>/dev/null
 node ./.claude/get-shit-done/bin/gsd-tools.cjs roadmap get-phase "$phase_number"
 ls "$phase_dir"/*-BRIEF.md 2>/dev/null
 ```
