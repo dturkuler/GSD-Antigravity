@@ -25,7 +25,7 @@ fi
 **Run health validation:**
 
 ```bash
-node .agent/skills/gsd/bin/gsd-tools.cjs validate health $REPAIR_FLAG
+node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" validate health $REPAIR_FLAG
 ```
 
 Parse JSON output:
@@ -112,7 +112,7 @@ If yes, re-run with --repair flag and display results.
 Re-run health check without --repair to confirm issues are resolved:
 
 ```bash
-node .agent/skills/gsd/bin/gsd-tools.cjs validate health
+node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" validate health
 ```
 
 Report final status.

@@ -1,6 +1,6 @@
 ---
 name: release-manager
-description: Orchestrate the transition from "ready" to "released" for GSD-Antigravity. Manage version numbers in package.json, update changelogs, build release artifacts, and trigger Git/NPM releases. Triggers on keywords like 'release', 'tagging', 'versioning', 'changelog update', and intents like 'perform a release' or 'prepare v1.0.1'.
+description: Orchestrate the transition from "ready" to "released" for GSD-Antigravity. Manage version numbers in package.json, update changelogs, build release artifacts, and trigger Git tagging, GitHub releases, and NPM package publishing. Triggers on keywords like 'release', 'tagging', 'versioning', 'changelog update', and intents like 'perform a release' or 'prepare v1.0.1'.
 ---
 
 # Release Manager (GSD-Antigravity)
@@ -14,7 +14,7 @@ Comprehensive guide for managing the software release lifecycle for **gsd-antigr
 2.  **WAIT** for an explicit instruction to "Release" or "Tag" before starting Phase 1.
 
 ## Purpose
-To provide a deterministic, multi-phase procedure for transitioning the codebase from a "ready" state to a "tagged and released" state on GitHub and NPM.
+To provide a deterministic, multi-phase procedure for transitioning the codebase from a "ready" state to a "tagged and released" state on GitHub and as a published package on NPM.
 
 ## Prerequisites
 - **GitHub CLI (`gh`)**: 

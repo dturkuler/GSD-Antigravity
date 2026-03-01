@@ -6,17 +6,18 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
-### v1.21.1 (2026-02-27)
-*   **Context:** `gsd-converter` (Kit Engine) & `gsd` Skill Refactoring
-*   **Issue:** Internal path leaks (`.claude/`) and dynamic command documentation drift.
+### v1.22.0 (2026-03-01)
+*   **Context:** `gsd-tools.cjs` (GSD Core Engine Optimization)
+*   **Issue:** Token overhead and high script size (~125KB) impacting agent context limits.
 *   **Root Cause Analysis:** 
-    *   Legacy GSD codebases relied on home-directory paths (`~/.claude/`) and hardcoded script paths that broke when ported to Antigravity's local `.agent/skills/` structure.
-    *   Command documentation was static, requiring manual updates every time the GSD upstream binary added new capabilities.
+    *   Legacy indentation (4 spaces) and large diagnostic headers consumed excessive context space in agent prompts.
+    *   Monolithic inclusion of state and roadmap metadata made context windows unmanageable for long phases.
 *   **How it was fixed:**
-    *   **Advanced Regex Refactoring**: Updated `convert.py` with multi-pass regex to catch all variants of `.claude` (including `@./.claude`, `~/.claude`, etc.) and remap them to the project-relative `.agent/skills/gsd` path.
-    *   **Dynamic Command Extraction**: Implemented a JSDoc parser in the converter that reads `gsd-tools.cjs` help comments directly to generate `gsd-tools.md` at runtime.
-    *   **Windows Path Normalization**: Synced with GSD 1.21.1 upstream fixes to ensure forward-slash consistency and shell argument escaping on Windows hosts.
+    *   **Whitespace Optimization**: Refactored the core engine with 2-space indentation and LF line endings during the migration, reducing the file size by approximately 20-25KB.
+    *   **Modular Inclusions**: Injected `applyIncludes` logic to allow subagents to slice the state file (e.g., `--include roadmap` or `--include state`) instead of loading the entire object.
+    *   **Dynamic Command Discovery**: Automated command list generation in `SKILL.md` to ensure documentation matches the actual capabilities of the CLI tools.
 
+### v1.21.1 (2026-02-27)
 ### v1.0.2 (2026-02-20)
 *   **Context:** `gsd-tools.cjs` (Core Engine)
 *   **Issue:** Legacy script was monolithic, lacked contextual flexibility, and had high token overhead for large phases.

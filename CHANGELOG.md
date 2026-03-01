@@ -5,12 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.21.1] - 2026-02-27
+## [1.22.0] - 2026-03-01
+
+### Added
+- **Smart Inclusion Engine**:
+  - Injected `parseIncludeFlag()`, `applyIncludes()`, and `buildPhaseBase()` into `gsd-tools.cjs` to support the `--include` flag for granular context management.
+  - Added `MODEL_PROFILES` for optimized model selection.
+- **Artifact Discovery**:
+  - Automated phase document lookup via `discoverPhaseArtifacts()` in the core engine.
 
 ### Changed
-- **Sync with GSD 1.21.1**: Updated core skill to match GSD's latest patch, including Windows path fixes and milestone calculation improvements.
-- **Badge Update**: Synchronized README version badges.
+- **GSD Skill Update**: Synchronized with GSD 1.22.0, ensuring full Antigravity rebranding and optimization across all migrated files.
+- **Performance Optimization**: 
+  - Refactored `gsd-tools.cjs` with 2-space indentation and condensed headers, reducing script size by ~25KB.
+  - Improved regex-based path refactoring for more robust environment isolation.
 
+## [1.21.1] - 2026-02-27
 ## [1.21.0] - 2026-02-27
 
 ### Added

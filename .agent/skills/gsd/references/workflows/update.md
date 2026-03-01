@@ -164,16 +164,12 @@ Capture output. If install fails, show error and exit.
 
 Clear the update cache so statusline indicator disappears:
 
-**If LOCAL install:**
 ```bash
+rm -f ./.antigravity/cache/gsd-update-check.json
 rm -f ./.antigravity/cache/gsd-update-check.json
 ```
 
-**If GLOBAL install:**
-```bash
-rm -f ./.antigravity/cache/gsd-update-check.json
-```
-(Paths are templated at install time for runtime compatibility)
+The SessionStart hook (`gsd-check-update.js`) always writes to `./.antigravity/cache/` via `os.homedir()` regardless of install type, so both paths must be cleared to prevent stale update indicators.
 </step>
 
 <step name="display_result">

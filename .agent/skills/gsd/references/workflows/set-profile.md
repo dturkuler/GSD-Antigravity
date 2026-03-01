@@ -23,8 +23,8 @@ if $ARGUMENTS.profile not in ["quality", "balanced", "budget"]:
 Ensure config exists and load current state:
 
 ```bash
-node .agent/skills/gsd/bin/gsd-tools.cjs config-ensure-section
-INIT=$(node .agent/skills/gsd/bin/gsd-tools.cjs state load)
+node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" config-ensure-section
+INIT=$(node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state load)
 ```
 
 This creates `.planning/config.json` with defaults if missing and loads current config.
