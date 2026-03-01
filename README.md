@@ -58,6 +58,11 @@ Run the converter script provided by the kit to fetch and package the GSD protoc
 py .agent/skills/gsd-converter/scripts/convert.py gsd
 ```
 
+### 3️⃣ Manual Installation of GSD Skill (Pre-Converted)
+If you prefer to add the GSD skill to your project manually without using the converter:
+- This kit is periodically updated to maintain parity with the original GSD protocol (you can verify version synchronization via the [GSD Changelog](https://github.com/glittercowboy/get-shit-done/blob/main/CHANGELOG.md)).
+- Simply create a `.agent/skills` directory in your project root and copy the `gsd` folder from this repository into it.
+
 ---
 
 ## 🏗️ Project Architecture
@@ -86,6 +91,8 @@ The core logic, philosophy, and original script engine were created by **[glitte
 
 - **Source Code**: [GitHub Repository](https://github.com/glittercowboy/get-shit-done)
 - **Documentation**: [The GSD Handbook](https://github.com/glittercowboy/get-shit-done/tree/main/.claude/get-shit-done)
+- **Original GSD Changelog and Version**: [Changelog](https://github.com/glittercowboy/get-shit-done/blob/main/CHANGELOG.md)
+
 
 ---
 
