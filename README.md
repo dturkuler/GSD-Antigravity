@@ -9,14 +9,13 @@
 
 ---
 
-##  What is this project?
+## ⚡ Why GSD-Antigravity Kit?
 
-This repository contains the **gsd-antigravity-kit**. It is not the GSD protocol itself, but the bridge that brings it to Antigravity. It handles:
+Standard GSD is powerful, but this kit optimizes it specifically for the Antigravity ecosystem:
 
-1.  **Automated Provisioning**: Installs the `.agent/skills/` infrastructure.
-2.  **Legacy Conversion**: Fetches standard GSD releases and transforms them into portable AG Skills.
-3.  **Enterprise Refactoring**: Injects advanced capabilities like selective inclusions and artifact discovery into the GSD engine.
-4.  **AG-Native Rebranding**: Seamlessly refactors all internal prompts and commands to follow Antigravity-specific naming conventions.
+*   **Token Efficiency**: Refactored core engine uses 2-space indentation and modular inclusions, saving ~25KB of context space per turn.
+*   **Context Control**: The `--include` flag allows sub-agents to request only specific parts of the project state (e.g., just the roadmap).
+*   **Native Integration**: 100% rebranded and path-mapped to live inside the `.agent/skills/` directory, avoiding collision with global installations.
 
 ---
 
@@ -61,7 +60,7 @@ py .agent/skills/gsd-converter/scripts/convert.py gsd
 
 ---
 
-## � Project Architecture
+## 🏗️ Project Architecture
 
 This repository is structured to separate the kit's logic from the generated skill:
 

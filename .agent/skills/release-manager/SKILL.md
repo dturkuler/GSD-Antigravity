@@ -75,7 +75,8 @@ Create the release artifact for GitHub (Source Zip):
 2.  **Archive**: Zip the repository content. We exclude local project data (`.planning`, `.antigravity`, `__tobedeleted`) and temporary Git files to keep the release clean.
     ```powershell
     $packageName = $package.name
-    Compress-Archive -Path . -DestinationPath "$packageName`_v$ver.zip" -Force -Exclude "node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak"
+    $files = Get-ChildItem -Path . -Exclude "node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak"
+    Compress-Archive -Path $files -DestinationPath "$packageName`_v$ver.zip" -Force
     ```
 
 ### Phase 4: Release Execution
