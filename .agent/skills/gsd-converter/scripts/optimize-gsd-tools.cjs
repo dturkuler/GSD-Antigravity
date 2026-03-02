@@ -83,7 +83,7 @@ if (fs.existsSync(gsdToolsPath)) {
 
     const CONDENSED_HEADER = `/**
  * GSD Tools — CLI utility for GSD workflow operations
- * Usage: node gsd-tools.cjs <command> [args] [--raw] [--include field1,field2]
+ * Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--include field1,field2]
  *
  * Commands: state, resolve-model, find-phase, commit, verify-summary, generate-slug,
  *   current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-set,

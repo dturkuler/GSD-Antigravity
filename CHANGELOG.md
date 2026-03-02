@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.3] - 2026-03-03
+
+### Fixed
+- **CLI Path Resolution**: Added explicit warnings across `SKILL.md`, `gsd-tools.md`, and the `gsd-tools.cjs` header that `gsd-tools` is NOT globally installed. AI agents must invoke it as `node .agent/skills/gsd/bin/gsd-tools.cjs <command>` — never as bare `gsd-tools`.
+- **Converter Template**: Updated both the converter asset (`gsd-tools.md` template) and the `gsd_skill_template.md` to include the CLI invocation warning, ensuring future conversions also receive the fix.
+
 ## [1.22.2] - 2026-03-03
 
 ### Fixed

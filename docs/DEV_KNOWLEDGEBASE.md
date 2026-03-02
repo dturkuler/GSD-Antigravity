@@ -6,6 +6,20 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.22.3 (2026-03-03)
+*   **Context:** GSD Skill CLI invocation across SKILL.md, gsd-tools.md, and gsd-tools.cjs
+*   **Issue:** AI agents generated bare `gsd-tools scaffold uat --phase 29` instead of `node .agent/skills/gsd/bin/gsd-tools.cjs scaffold uat --phase 29`, resulting in `Command 'gsd-tools' not found`.
+*   **Root Cause Analysis:** 
+    *   `gsd-tools` is not installed globally via `npm link` or as a PATH binary. It only exists as a local `.cjs` script inside the skill's `bin/` directory.
+    *   The usage header in `gsd-tools.cjs` had `Usage: node gsd-tools.cjs` which was ambiguous — AI agents interpreted this as a globally available command.
+    *   No documentation or reference files explicitly warned that `gsd-tools` must be invoked via `node .agent/skills/gsd/bin/gsd-tools.cjs`.
+*   **How it was fixed:**
+    *   Updated the `gsd-tools.cjs` usage header comment to show the full project-relative path.
+    *   Updated the error message in the fallback `if (!command)` handler.
+    *   Added `CRITICAL` warning blocks to `gsd-tools.md` (both live and converter asset).
+    *   Added Best Practice #5 (`CLI Invocation`) to both `SKILL.md` and `gsd_skill_template.md`.
+    *   Updated the `CONDENSED_HEADER` in `optimize-gsd-tools.cjs` to inject the correct path during future conversions.
+
 ### v1.22.2 (2026-03-03)
 *   **Context:** `optimize-gsd-tools.cjs` (GSD Converter Script)
 *   **Issue:** `parseIncludeFlag` missing in `gsd-tools.cjs` after conversion.

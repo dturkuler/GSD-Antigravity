@@ -17,6 +17,7 @@ Provide direct execution of the `gsd-tools.cjs` CLI for low-level or atomic oper
 Execute the requested `gsd-tools` command using Node.js.
 
 ### Usage
+**CRITICAL**: `gsd-tools` is NOT globally installed. You MUST ALWAYS invoke it using the exact `node` path below. Never run `gsd-tools` alone.
 `node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args]`
 
 ### Available Commands:
