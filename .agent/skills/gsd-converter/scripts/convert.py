@@ -145,9 +145,10 @@ def optimize_gsd_tools(target_base):
         print(f"  ⚠️ Optimizer script not found at {optimizer_path}")
         return
     
+    bin_dir = os.path.dirname(gsd_tools_path)
     try:
         result = subprocess.run(
-            ["node", optimizer_path, gsd_tools_path],
+            ["node", optimizer_path, bin_dir],
             check=True,
             capture_output=True,
             text=True,
