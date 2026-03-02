@@ -139,6 +139,15 @@ if (fs.existsSync(gsdToolsPath)) {
         }
     }
 
+    // Step 9: Fix bare 'gsd-tools' usage string in error fallback
+    if (gsdContent.includes("Usage: gsd-tools <command>")) {
+        gsdContent = gsdContent.replace(
+            "Usage: gsd-tools <command>",
+            "Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command>"
+        );
+        console.log('  ✅ Fixed bare gsd-tools usage string in error fallback');
+    }
+
     fs.writeFileSync(gsdToolsPath, gsdContent, 'utf-8');
 }
 
