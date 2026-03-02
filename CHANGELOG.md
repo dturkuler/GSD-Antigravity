@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.1] - 2026-03-03
+
+### Changed
+- **GSD Skill Update**: Synchronized with GSD 1.22.1, ensuring full Antigravity rebranding and optimization across all migrated files.
+
+### Fixed
+- **Optimizer Path Bug**: Fixed a critical bug in `gsd-converter's` `convert.py` where it passed the file path of `gsd-tools.cjs` instead of the `bin` directory to the optimizer script, causing directory-level processing to fail.
+
 ## [1.22.0] - 2026-03-01
 
 ### Added

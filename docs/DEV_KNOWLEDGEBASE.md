@@ -6,6 +6,16 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.22.1 (2026-03-03)
+*   **Context:** `gsd-converter` (`convert.py`)
+*   **Issue:** Optimizer script failed with `ENOTDIR` error during post-processing.
+*   **Root Cause Analysis:** 
+    *   The `convert.py` script was passing the absolute path of `gsd-tools.cjs` to the `optimize-gsd-tools.cjs` script.
+    *   The optimizer script expects a directory path (the `bin` directory) as it needs to recurse through `bin/` and `bin/lib/` to format all `.cjs` files.
+*   **How it was fixed:**
+    *   Modified `convert.py` to resolve the directory name (`os.path.dirname`) of the `gsd_tools_path` before passing it to the optimizer process.
+    *   This ensures the optimizer successfully finds and formats all modular engine components.
+
 ### v1.22.0 (2026-03-01)
 *   **Context:** `gsd-tools.cjs` (GSD Core Engine Optimization)
 *   **Issue:** Token overhead and high script size (~125KB) impacting agent context limits.
