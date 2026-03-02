@@ -111,10 +111,17 @@ if (fs.existsSync(gsdToolsPath)) {
         }
 
         // Also inject parseIncludeFlag import if it doesn't exist
-        if (!gsdContent.includes('parseIncludeFlag')) {
-            const importPoint = gsdContent.indexOf('const {');
-            if (importPoint !== -1) {
-                gsdContent = gsdContent.slice(0, importPoint) + "const { parseIncludeFlag } = require('./lib/core.cjs');\n" + gsdContent.slice(importPoint);
+        if (!gsdContent.includes('parseIncludeFlag } = require')) {
+            if (gsdContent.includes("const { error } = require('./lib/core.cjs');")) {
+                gsdContent = gsdContent.replace(
+                    "const { error } = require('./lib/core.cjs');",
+                    "const { error, parseIncludeFlag } = require('./lib/core.cjs');"
+                );
+            } else {
+                const importPoint = gsdContent.indexOf('const {');
+                if (importPoint !== -1) {
+                    gsdContent = gsdContent.slice(0, importPoint) + "const { parseIncludeFlag } = require('./lib/core.cjs');\n" + gsdContent.slice(importPoint);
+                }
             }
         }
     }

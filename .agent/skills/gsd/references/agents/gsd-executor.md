@@ -37,7 +37,7 @@ This ensures project-specific patterns, conventions, and best practices are appl
 Load execution context:
 
 ```bash
-INIT=$(node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" init execute-phase "${PHASE}")
+INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init execute-phase "${PHASE}")
 ```
 
 Extract from init JSON: `executor_model`, `commit_docs`, `phase_dir`, `plans`, `incomplete_plans`.
@@ -200,7 +200,7 @@ Do NOT continue reading. Analysis without action is a stuck signal.
 Check if auto mode is active at executor start:
 
 ```bash
-AUTO_CFG=$(node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
+AUTO_CFG=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
 ```
 
 Store the result for checkpoint handling below.
@@ -389,34 +389,34 @@ After SUMMARY.md, update STATE.md using gsd-tools:
 
 ```bash
 # Advance plan counter (handles edge cases automatically)
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state advance-plan
+node ".agent/skills/gsd/bin/gsd-tools.cjs" state advance-plan
 
 # Recalculate progress bar from disk state
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state update-progress
+node ".agent/skills/gsd/bin/gsd-tools.cjs" state update-progress
 
 # Record execution metrics
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state record-metric \
+node ".agent/skills/gsd/bin/gsd-tools.cjs" state record-metric \
   --phase "${PHASE}" --plan "${PLAN}" --duration "${DURATION}" \
   --tasks "${TASK_COUNT}" --files "${FILE_COUNT}"
 
 # Add decisions (extract from SUMMARY.md key-decisions)
 for decision in "${DECISIONS[@]}"; do
-  node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state add-decision \
+  node ".agent/skills/gsd/bin/gsd-tools.cjs" state add-decision \
     --phase "${PHASE}" --summary "${decision}"
 done
 
 # Update session info
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state record-session \
+node ".agent/skills/gsd/bin/gsd-tools.cjs" state record-session \
   --stopped-at "Completed ${PHASE}-${PLAN}-PLAN.md"
 ```
 
 ```bash
 # Update ROADMAP.md progress for this phase (plan counts, status)
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" roadmap update-plan-progress "${PHASE_NUMBER}"
+node ".agent/skills/gsd/bin/gsd-tools.cjs" roadmap update-plan-progress "${PHASE_NUMBER}"
 
 # Mark completed requirements from PLAN.md frontmatter
 # Extract the `requirements` array from the plan's frontmatter, then mark each complete
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" requirements mark-complete ${REQ_IDS}
+node ".agent/skills/gsd/bin/gsd-tools.cjs" requirements mark-complete ${REQ_IDS}
 ```
 
 **Requirement IDs:** Extract from the PLAN.md frontmatter `requirements:` field (e.g., `requirements: [AUTH-01, AUTH-02]`). Pass all IDs to `requirements mark-complete`. If the plan has no requirements field, skip this step.
@@ -434,13 +434,13 @@ node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" requirements mark-complete ${REQ
 
 **For blockers found during execution:**
 ```bash
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" state add-blocker "Blocker description"
+node ".agent/skills/gsd/bin/gsd-tools.cjs" state add-blocker "Blocker description"
 ```
 </state_updates>
 
 <final_commit>
 ```bash
-node "$HOME.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs({phase}-{plan}): complete [plan-name] plan" --files .planning/phases/XX-name/{phase}-{plan}-SUMMARY.md .planning/STATE.md .planning/ROADMAP.md .planning/REQUIREMENTS.md
+node ".agent/skills/gsd/bin/gsd-tools.cjs" commit "docs({phase}-{plan}): complete [plan-name] plan" --files .planning/phases/XX-name/{phase}-{plan}-SUMMARY.md .planning/STATE.md .planning/ROADMAP.md .planning/REQUIREMENTS.md
 ```
 
 Separate from per-task commits — captures execution results only.

@@ -16,8 +16,8 @@ Detect whether GSD is installed locally or globally by checking both locations a
 # Paths templated at install time for runtime compatibility
 LOCAL_VERSION_FILE="./.antigravity/get-shit-done/VERSION"
 LOCAL_MARKER_FILE="references/workflows/update.md"
-GLOBAL_VERSION_FILE="$HOME/.antigravity/get-shit-done/VERSION"
-GLOBAL_MARKER_FILE="$HOMEreferences/workflows/update.md"
+GLOBAL_VERSION_FILE=".agent/skills/gsd/VERSION"
+GLOBAL_MARKER_FILE=".agent/skills/gsd/workflows/update.md"
 
 if [ -f "$LOCAL_VERSION_FILE" ] && [ -f "$LOCAL_MARKER_FILE" ] && grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+' "$LOCAL_VERSION_FILE"; then
   cat "$LOCAL_VERSION_FILE"

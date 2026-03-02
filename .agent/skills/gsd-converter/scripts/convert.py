@@ -95,10 +95,20 @@ def refactor_content(target_base):
     ]
     
     exact_replacements = [
-        ("~/.claude/get-shit-done", ".agent/skills/gsd"),
-        ("~/.claude/agents", "references/agents"),
+        ("@~/.claude/commands/gsd/", "@references/commands/"),
+        ("@$HOME/.claude/commands/gsd/", "@references/commands/"),
         ("@~/.claude/get-shit-done/references/", "@references/docs/"),
+        ("@$HOME/.claude/get-shit-done/references/", "@references/docs/"),
+        ("@~/.claude/get-shit-done/workflows/", "@references/workflows/"),
+        ("@$HOME/.claude/get-shit-done/workflows/", "@references/workflows/"),
         ("@~/.claude/get-shit-done/templates/", "@assets/templates/"),
+        ("@$HOME/.claude/get-shit-done/templates/", "@assets/templates/"),
+        ("@~/.claude/agents/", "@references/agents/"),
+        ("@$HOME/.claude/agents/", "@references/agents/"),
+        ("~/.claude/get-shit-done", ".agent/skills/gsd"),
+        ("$HOME/.claude/get-shit-done", ".agent/skills/gsd"),
+        ("~/.claude/agents", "references/agents"),
+        ("$HOME/.claude/agents", "references/agents"),
         ("path.join(homeDir, '.claude', 'todos')", "path.join(homeDir, '.gemini', 'antigravity', 'todos')"),
         ("path.join(homeDir, '.claude', 'cache'", "path.join(homeDir, '.gemini', 'antigravity', 'cache'"),
         ("path.join(cwd, '.claude', 'get-shit-done'", "path.join(cwd, '.agent', 'skills', 'gsd'"),

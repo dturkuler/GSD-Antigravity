@@ -6,6 +6,16 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.22.2 (2026-03-03)
+*   **Context:** `optimize-gsd-tools.cjs` (GSD Converter Script)
+*   **Issue:** `parseIncludeFlag` missing in `gsd-tools.cjs` after conversion.
+*   **Root Cause Analysis:** 
+    *   The optimizer script checked `!gsdContent.includes('parseIncludeFlag')` to decide whether to inject the `require` statement. 
+    *   Since `parseIncludeFlag` had already been injected earlier in the switch case router, that condition evaluated to false, skipping the import injection.
+*   **How it was fixed:**
+    *   Changed the checking condition to explicitly examine if `parseIncludeFlag } = require` existed rather than just the generic variable string.
+    *   Also modified the injection method to seamlessly inject into the existing `require('./lib/core.cjs')` instead of clumsily appending a new statement.
+
 ### v1.22.1 (2026-03-03)
 *   **Context:** `gsd-converter` (`convert.py`)
 *   **Issue:** Optimizer script failed with `ENOTDIR` error during post-processing.
