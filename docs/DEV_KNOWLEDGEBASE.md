@@ -6,6 +6,19 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.22.4 (2026-03-03)
+*   **Context:** `gsd-converter` (`convert.py` and `optimize-gsd-tools.cjs`)
+*   **Issue:** Terminal output characters mangled (`âœ…`) and version summary overlapped with optimizer logs.
+*   **Root Cause Analysis:** 
+    - Windows terminal encoding defaults (CP1252/437) didn't support UTF-8 checkmarks.
+    - Race condition between `npx` status-line updates (`\r`) and Python `print()` statements.
+    - Subprocess output from `node` was being captured without explicit encoding, leading to character mapping errors.
+*   **How it was fixed:**
+    - **UTF-8 Enforcement**: Added `sys.stdout.reconfigure(encoding='utf-8')` to the converter script.
+    - **Logging Cleanliness**: Improved subprocess output handling with explicit newlines and `sys.stdout.flush()`.
+    - **Resource Deployment**: Explicitly configured the converter to migrate `mapping.md` to the target skill.
+    - **Path Refactoring**: Safely handled Windows backslashes in regex replacements to prevent `undefined` segments.
+
 ### v1.22.3 (2026-03-03)
 *   **Context:** GSD Skill CLI invocation across SKILL.md, gsd-tools.md, and gsd-tools.cjs
 *   **Issue:** AI agents generated bare `gsd-tools scaffold uat --phase 29` instead of `node .agent/skills/gsd/bin/gsd-tools.cjs scaffold uat --phase 29`, resulting in `Command 'gsd-tools' not found`.

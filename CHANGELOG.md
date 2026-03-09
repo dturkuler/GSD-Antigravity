@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.4] - 2026-03-03
+
+### Added
+- **Resource Migration**: Updated `gsd-converter` to explicitly migrate the `mapping.md` documentation into the target `gsd` skill for better user reference.
+
+### Fixed
+- **Terminal & Encoding Polish**: Resolved character mangling (`âœ…`) and output overlap in `gsd-converter` by enforcing UTF-8 and improving stdout flushing.
+- **Robust Path Refactoring**: Improved regex-based path refactoring to handle Windows backslashes more safely, preventing potential `undefined` path segments.
+- **GSD Skill Update**: Synchronized with GSD 1.22.4, ensuring full Antigravity rebranding and optimization across all migrated files.
+
 ## [1.22.3] - 2026-03-03
 
 ### Fixed
