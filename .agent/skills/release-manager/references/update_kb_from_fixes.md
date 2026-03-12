@@ -6,6 +6,7 @@
 ## Input
 1.  **Changelog:** Read `CHANGELOG.md` for the current version to identify "Fixed" items.
 2.  **Git History:** For each fix, search `git log --grep="<fix description>"` or `git diff` to see the actual code change.
+3.  **Chat session history:** analyze chat session history for more details about the issues and their fixes.
 
 ## Analysis Logic
 For each "Fixed" item, determine:

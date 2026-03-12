@@ -6,6 +6,21 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.22.6 (2026-03-13)
+*   **Context:** `gsd-tools.cjs` and `gsd-converter`
+*   **Issue:** Missing detailed CLI help for subcommands; character encoding issues on Windows; hung terminal processes; and deprecated configuration keys.
+*   **Root Cause Analysis:** 
+    - The `gsd-tools.cjs` lacked an internal help system, relying on external documentation that wasn't always accessible to sub-agents.
+    - Windows `cp1252` encoding caused mangling of Unicode status markers in Python and Node.js output.
+    - Synchronous blocking on `stdin` in hooks caused terminal hangs in environments where `stdin` didn't close properly (e.g., Git Bash on Windows).
+    - Hardcoded GSD home paths didn't account for newer "Antigravity" or "Gemini" branding in local configuration directories.
+*   **How it was fixed:**
+    - **Help Manifest**: Implemented a dynamic `help-manifest.json` generation in `convert.py` and a `--help` interceptor in `gsd-tools.cjs`.
+    - **Encoding Stability**: Enforced UTF-8 for `stdout`/`stderr` in `convert.py` and passed `encoding: 'utf-8'` to `execSync`/`spawn` calls.
+    - **Timeout Guards**: Added 3-second `setTimeout` exits for `gsd-statusline.js` and `gsd-context-monitor.js` to prevent deadlock if `stdin` stays open.
+    - **Branding-Neutral Paths**: Refactored config directory lookup to check for `.antigravity`, `.gemini`, and `.opencode`, supporting the `CLAUDE_CONFIG_DIR` environment variable.
+    - **Semantic Migration**: Automatically migrates the `depth` configuration key to the more descriptive `granularity`.
+
 ### v1.22.4 (2026-03-03)
 *   **Context:** `gsd-converter` (`convert.py` and `optimize-gsd-tools.cjs`)
 *   **Issue:** Terminal output characters mangled (`âœ…`) and version summary overlapped with optimizer logs.

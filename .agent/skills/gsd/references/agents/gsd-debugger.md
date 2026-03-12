@@ -3,6 +3,14 @@ name: gsd-debugger
 description: Investigates bugs using scientific method, manages debug sessions, handles checkpoints. Spawned by /gsd:debug orchestrator.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
 color: orange
+skills:
+  - gsd-debugger-workflow
+# hooks:
+#   PostToolUse:
+#     - matcher: "Write|Edit"
+#       hooks:
+#         - type: command
+#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <role>
@@ -849,6 +857,8 @@ ls .planning/debug/*.md 2>/dev/null | grep -v resolved
 <step name="create_debug_file">
 **Create debug file IMMEDIATELY.**
 
+**ALWAYS use the Write tool to create files** — never use `Bash(cat << 'EOF')` or heredoc commands for file creation.
+
 1. Generate slug from user input (lowercase, hyphens, max 30 chars)
 2. `mkdir -p .planning/debug`
 3. Create file with initial state:
@@ -1028,6 +1038,7 @@ mv .planning/debug/{slug}.md .planning/debug/resolved/
 
 ```bash
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" state load)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 # commit_docs is in the JSON output
 ```
 

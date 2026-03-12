@@ -17,6 +17,7 @@ Model profiles control which Antigravity model each GSD agent uses. This allows 
 | gsd-verifier | sonnet | sonnet | haiku |
 | gsd-plan-checker | sonnet | sonnet | haiku |
 | gsd-integration-checker | sonnet | sonnet | haiku |
+| gsd-nyquist-auditor | sonnet | sonnet | haiku |
 
 ## Profile Philosophy
 

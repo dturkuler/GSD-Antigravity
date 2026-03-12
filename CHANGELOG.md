@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.6] - 2026-03-13
+
+### Added
+- **Help System Integration**: `gsd-converter` now generates a `help-manifest.json` and injects a dynamic help system into `gsd-tools.cjs`. Users can run `node gsd-tools.cjs --help <command>` for detailed subcommand usage.
+- **Nyquist Validation**: Retroactive validation is now supported via `gsd:validate-phase`. `nyquist_validation` is now enabled by default in new project templates.
+
+### Changed
+- **Config Directory Discovery**: Improved robustness of config directory detection (Antigravity/Gemini/OpenCode) across all hooks, now respecting `CLAUDE_CONFIG_DIR`.
+- **Semantic Configuration**: Migrated "depth" terminology to "granularity" (coarse/standard/fine) for better alignment with GSD specifications.
+- **Git Ignore Handling**: Updated `isGitIgnored` to use `--no-index`, ensuring correct behavior for files tracked before being ignored.
+
+### Fixed
+- **Windows UTF-8 Stability**: Enforced UTF-8 encoding for Python and Node.js subprocesses on Windows to eliminate character mangling.
+- **Multi-word Commit Messages**: Fixed the `commit` command in `gsd-tools.cjs` to correctly capture multi-word messages across different shell environments.
+- **Hook Reliability**: Added 3-second stdin timeout guards to `gsd-statusline.js` and `gsd-context-monitor.js` to prevent hanging on Windows/Git Bash.
+
+## [1.22.5] - 2026-03-09
+
+### Changed
+- **Maintenance**: General synchronization and maintenance release.
+
 ## [1.22.4] - 2026-03-03
 
 ### Added

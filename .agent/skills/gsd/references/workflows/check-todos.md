@@ -13,6 +13,7 @@ Load todo context:
 
 ```bash
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init todos)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `todo_count`, `todos`, `pending_dir`.

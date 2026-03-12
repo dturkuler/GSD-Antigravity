@@ -4,9 +4,16 @@ import shutil
 import sys
 import argparse
 import subprocess
+import json
 from datetime import datetime
 
 def setup_args():
+    # Force UTF-8 for Windows terminals
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
     parser = argparse.ArgumentParser(description='Convert GSD to Antigravity Skill format.')
     parser.add_argument('skill_name', nargs='?', default='gsd', help='Name of the target skill (default: gsd)')
     parser.add_argument('--path', default='.agent/skills', help='Base path for skills directory')
@@ -32,9 +39,10 @@ def run_gsd_install():
             check=True,
             capture_output=True,
             text=True,
-            shell=True
+            shell=True,
+            encoding='utf-8'
         )
-        print("  ✅ GSD installed successfully to .claude/")
+        print("\n  ✅ GSD installed successfully to .claude/")
     except subprocess.CalledProcessError as e:
         print(f"  ❌ Failed to run npx installation: {e}")
         print(f"  Output: {e.output}")
@@ -72,6 +80,15 @@ def migrate_files(source_base, target_base):
                     shutil.copy2(s, d)
         else:
             print(f"  ⚠️ Source not found: {src_path}")
+
+    # Migrate internal documentation (mapping.md)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    mapping_src = os.path.abspath(os.path.join(script_dir, '..', 'references', 'mapping.md'))
+    mapping_tgt = os.path.join(target_base, 'references', 'mapping.md')
+    if os.path.exists(mapping_src):
+        print(f"  📝 Migrating internal mapping.md")
+        os.makedirs(os.path.dirname(mapping_tgt), exist_ok=True)
+        shutil.copy2(mapping_src, mapping_tgt)
 
 def refactor_content(target_base):
     print("🔧 Refactoring file contents and paths...")
@@ -162,9 +179,12 @@ def optimize_gsd_tools(target_base):
             check=True,
             capture_output=True,
             text=True,
-            shell=True
+            shell=True,
+            encoding='utf-8'
         )
-        print(result.stdout)
+        # Combine stdout and stderr if any, avoiding async-like interleaving issues
+        full_output = result.stdout + (result.stderr if hasattr(result, 'stderr') else '')
+        print("\n" + full_output.strip() + "\n")
     except subprocess.CalledProcessError as e:
         print(f"  ❌ Optimizer failed: {e}")
         print(f"  Output: {e.stdout}")
@@ -325,6 +345,168 @@ def main():
     # Dynamic gsd-tools help extraction
     gsd_tools_help = extract_gsd_tools_help(target_base)
 
+    # Generate help-manifest.json
+    commands = scan_commands(target_base)
+    
+    internal_help = {
+        "state": {
+            "description": "Manage and query project state memory.",
+            "subcommands": {
+                "json": "Output full state as raw JSON.",
+                "update": "Update a state key. usage: state update <key> <value>",
+                "get": "Retrieve a specific state value. usage: state get <key>",
+                "patch": "Apply multiple state changes via flags.",
+                "advance-plan": "Advance to the next plan in the current phase.",
+                "record-metric": "Record execution metrics (duration, files, tasks).",
+                "update-progress": "Sync STATE.md progress with ROADMAP.md status.",
+                "add-decision": "Record a design decision with rationale.",
+                "add-blocker": "Record a new blocking issue.",
+                "resolve-blocker": "Mark a blocker as resolved.",
+                "record-session": "Record session continuity metadata."
+            }
+        },
+        "roadmap": {
+            "description": "Manage and analyze project roadmap and phases.",
+            "subcommands": {
+                "get-phase": "Retrieve details for a specific phase number.",
+                "analyze": "Analyze roadmap completion and next steps.",
+                "update-plan-progress": "Update completion status for a plan in ROADMAP.md."
+            }
+        },
+        "find-phase": {
+            "description": "Search for a phase directory by number or name. usage: find-phase <query>"
+        },
+        "resolve-model": {
+            "description": "Resolve the optimal AI model for a specific agent type. usage: resolve-model <agent-type>"
+        },
+        "commit": {
+            "description": "Create a standardized GSD commit. usage: commit [message] --files [file1...]",
+            "subcommands": {
+                "--amend": "Amend the last commit instead of creating a new one."
+            }
+        },
+        "verify-summary": {
+            "description": "Verify that a SUMMARY.md matches the corresponding PLAN.md. usage: verify-summary <path>"
+        },
+        "generate-slug": {
+            "description": "Convert a string into a URL-friendly slug. usage: generate-slug <text>"
+        },
+        "current-timestamp": {
+            "description": "Output the current timestamp in various formats. usage: current-timestamp [format]"
+        },
+        "list-todos": {
+            "description": "List all pending todos in the project. usage: list-todos [area]"
+        },
+        "verify-path-exists": {
+            "description": "Check if a specific path exists within the project. usage: verify-path-exists <path>"
+        },
+        "history-digest": {
+            "description": "Generate a concise digest of recent project activity."
+        },
+        "progress": {
+            "description": "Calculate and render project completion percentage.",
+            "subcommands": {
+                "json": "Output progress as raw JSON.",
+                "render": "Output a pretty-formatted progress bar (default)."
+            }
+        },
+        "todo": {
+            "description": "Atomic operations on a single todo file.",
+            "subcommands": {
+                "complete": "Mark a todo as done. usage: todo complete <path>"
+            }
+        },
+        "scaffold": {
+            "description": "Scaffold new project structures or phase directories. usage: scaffold <type> --name <name>",
+            "subcommands": {
+                "phase": "Initialize a new phase structure."
+            }
+        },
+        "phase-plan-index": {
+            "description": "Sync and re-index plans within a phase directory."
+        },
+        "state-snapshot": {
+            "description": "Create a persistent snapshot of the current project state."
+        },
+        "summary-extract": {
+            "description": "Extract specific fields from a SUMMARY.md file. usage: summary-extract <path> --fields <f1,f2>"
+        },
+        "websearch": {
+            "description": "Perform a low-latency web search for technical info. usage: websearch <query>"
+        },
+        "phase": {
+            "description": "Atomic phase operations in the roadmap.",
+            "subcommands": {
+                "next-decimal": "Calculate the next available decimal phase for insertion.",
+                "add": "Add a new phase at the end of the milestone.",
+                "insert": "Insert a new decimal phase at a specific position.",
+                "remove": "Remove a phase and re-number subsequent phases.",
+                "complete": "Mark a phase as 100% complete in ROADMAP.md."
+            }
+        },
+        "verify": {
+            "description": "Run verification and consistency checks.",
+            "subcommands": {
+                "plan-structure": "Validate PLAN.md formatting and required sections.",
+                "phase-completeness": "Verify that all plans in a phase have summaries.",
+                "references": "Check for broken internal or artifact references.",
+                "commits": "Verify that git commits match planned work.",
+                "artifacts": "Confirm existence of required phase artifacts.",
+                "key-links": "Validate critical links and external references.",
+                "consistency": "Ensure ROADMAP.md, STATE.md and REQUIREMENTS.md are in sync.",
+                "health": "Check directory structure and general project health."
+            }
+        },
+        "template": {
+            "description": "Manage and fill GSD artifact templates.",
+            "subcommands": {
+                "select": "Suggest the best template for a specific task.",
+                "fill": "Generate artifact content from a template with variables."
+            }
+        },
+        "frontmatter": {
+            "description": "Query or modify Markdown frontmatter.",
+            "subcommands": {
+                "get": "Retrieve a value from frontmatter. usage: frontmatter get <file> --field <key>",
+                "set": "Update a frontmatter field. usage: frontmatter set <file> --field <key> --value <val>",
+                "merge": "Merge a JSON object into file frontmatter.",
+                "validate": "Validate frontmatter against a specific schema."
+            }
+        },
+        "init": {
+            "description": "Initialize specialized GSD workflows.",
+            "subcommands": {
+                "execute-phase": "Init execution state for a phase.",
+                "plan-phase": "Init planning state for a phase.",
+                "new-project": "Init a fresh project structure.",
+                "new-milestone": "Init a new milestone cycle.",
+                "quick": "Init a quick-task context.",
+                "resume": "Restore context from a paused session.",
+                "verify-work": "Init UAT/verification workflow.",
+                "map-codebase": "Init parallel codebase mapping.",
+                "progress": "Calculate current project progress metrics."
+            }
+        }
+    }
+
+    help_manifest = {
+        "version": new_version,
+        "commands": {cmd['name']: {"description": cmd['description']} for cmd in commands},
+        "tools_usage": gsd_tools_help
+    }
+    
+    # Merge internal help
+    for cmd, data in internal_help.items():
+        if cmd in help_manifest["commands"]:
+            help_manifest["commands"][cmd].update(data)
+        else:
+            help_manifest["commands"][cmd] = data
+
+    manifest_path = os.path.join(target_base, 'bin', 'help-manifest.json')
+    with open(manifest_path, 'w', encoding='utf-8') as f:
+        json.dump(help_manifest, f, indent=2)
+    print("  ✅ Generated help-manifest.json")
+
     custom_assets = [
         ('gsd-tools.md', 'references/commands/gsd-tools.md'),
     ]
@@ -343,8 +525,10 @@ def main():
 
     create_skill_md(target_base, skill_name, new_version)
     
-    print(f"\n✨ Skill '{skill_name}' is ready at {target_base}")
-    print(f"📊 GSD Version: {old_version} -> {new_version}")
+    print(f"\n{"-"*40}")
+    print(f"✨ Skill '{skill_name}' is ready at {target_base}")
+    print(f"📊 GSD Version: {old_version} -> {new_version}\n")
+    sys.stdout.flush()
 
 if __name__ == '__main__':
     main()

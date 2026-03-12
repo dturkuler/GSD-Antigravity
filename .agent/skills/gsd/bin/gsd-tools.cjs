@@ -1,4 +1,22 @@
 #!/usr/bin/env node
+const HELP_MANIFEST = require('./help-manifest.json');
+
+function showHelp(cmd, sub) {
+  const info = HELP_MANIFEST.commands[cmd];
+  if (!info) {
+    console.log(`\n${HELP_MANIFEST.tools_usage}`);
+    console.log('\nAvailable Commands: ' + Object.keys(HELP_MANIFEST.commands).join(', '));
+    return;
+  }
+  console.log(`\nCommand: ${cmd}\nDescription: ${info.description}`);
+  if (sub && info.subcommands?.[sub]) {
+    console.log(`Subcommand: ${sub}\nUsage: ${info.subcommands[sub]}`);
+  } else if (info.subcommands) {
+    console.log('\nAvailable subcommands:');
+    Object.entries(info.subcommands).forEach(([s, d]) => console.log(`  - ${s.padEnd(15)} : ${d}`));
+  }
+}
+
 
 /**
  * GSD Tools — CLI utility for GSD workflow operations
@@ -10,7 +28,7 @@
  *   validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
  *   websearch, frontmatter, verify, template, init
  *
- * Run with --help for detailed usage of each command.
+ * Run with gsd:help command args for detailed usage of each command.
  */
 
 const fs = require('fs');
@@ -54,6 +72,18 @@ async function main() {
 
   const rawIndex = args.indexOf('--raw');
   const raw = rawIndex !== -1;
+
+  if (args.includes('--help') || args.includes('-h')) {
+    const cmd = args[0];
+    const sub = args[1];
+    if (raw) {
+      const { output } = require('./lib/core.cjs');
+      output(HELP_MANIFEST, true);
+    } else {
+      showHelp(cmd, sub);
+    }
+    process.exit(0);
+  }
   if (rawIndex !== -1) args.splice(rawIndex, 1);
 
   const command = args[0];
@@ -146,9 +176,13 @@ async function main() {
 
   case 'commit': {
     const amend = args.includes('--amend');
-    const message = args[1];
-    // Parse --files flag (collect args after --files, stopping at other flags)
     const filesIndex = args.indexOf('--files');
+    // Collect all positional args between command name and first flag,
+    // then join them — handles both quoted ("multi word msg") and
+    // unquoted (multi word msg) invocations from different shells
+    const endIndex = filesIndex !== -1 ? filesIndex : args.length;
+    const messageArgs = args.slice(1, endIndex).filter(a => !a.startsWith('--'));
+    const message = messageArgs.join(' ') || undefined;
     const files = filesIndex !== -1 ? args.slice(filesIndex + 1).filter(a => !a.startsWith('--')) : [];
     commands.cmdCommit(cwd, message, files, raw, amend);
     break;

@@ -27,8 +27,9 @@ Read all files referenced by the invoking prompt's execution_context before star
 
 **If no context file:**
 - Present what shipped in last milestone
-- Ask: "What do you want to build next?"
-- Use AskUserQuestion to explore features, priorities, constraints, scope
+- Ask inline (freeform, NOT AskUserQuestion): "What do you want to build next?"
+- Wait for their response, then use AskUserQuestion to probe specifics
+- If user selects "Other" at any point to provide freeform input, ask follow-up as plain text — not another AskUserQuestion
 
 ## 3. Determine Milestone Version
 
@@ -78,6 +79,7 @@ node ".agent/skills/gsd/bin/gsd-tools.cjs" commit "docs: start milestone v[X.Y] 
 
 ```bash
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init new-milestone)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `researcher_model`, `synthesizer_model`, `roadmapper_model`, `commit_docs`, `research_enabled`, `current_milestone`, `project_exists`, `roadmap_exists`.

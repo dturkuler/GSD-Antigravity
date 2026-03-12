@@ -26,7 +26,7 @@ current-timestamp, list-todos, verify-path-exists, config-ensure-section, config
 config-get, history-digest, phases, roadmap, requirements, phase, milestone,
 validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
 websearch, frontmatter, verify, template, init
-Run with --help for detailed usage of each command.
+Run with gsd:help command args for detailed usage of each command.
 
 ### Example
 To analyze the roadmap:

@@ -27,6 +27,7 @@ Load codebase mapping context:
 
 ```bash
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init map-codebase)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `mapper_model`, `commit_docs`, `codebase_dir`, `existing_maps`, `has_maps`, `codebase_dir_exists`.

@@ -3,6 +3,14 @@ name: gsd-executor
 description: Executes GSD plans with atomic commits, deviation handling, checkpoint protocols, and state management. Spawned by execute-phase orchestrator or execute-plan command.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: yellow
+skills:
+  - gsd-executor-workflow
+# hooks:
+#   PostToolUse:
+#     - matcher: "Write|Edit"
+#       hooks:
+#         - type: command
+#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <role>
@@ -38,6 +46,7 @@ Load execution context:
 
 ```bash
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init execute-phase "${PHASE}")
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 Extract from init JSON: `executor_model`, `commit_docs`, `phase_dir`, `plans`, `incomplete_plans`.
@@ -197,13 +206,14 @@ Do NOT continue reading. Analysis without action is a stuck signal.
 </authentication_gates>
 
 <auto_mode_detection>
-Check if auto mode is active at executor start:
+Check if auto mode is active at executor start (chain flag or user preference):
 
 ```bash
+AUTO_CHAIN=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
 AUTO_CFG=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
 ```
 
-Store the result for checkpoint handling below.
+Auto mode is active if either `AUTO_CHAIN` or `AUTO_CFG` is `"true"`. Store the result for checkpoint handling below.
 </auto_mode_detection>
 
 <checkpoint_protocol>

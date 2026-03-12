@@ -25,6 +25,7 @@ Ensure config exists and load current state:
 ```bash
 node ".agent/skills/gsd/bin/gsd-tools.cjs" config-ensure-section
 INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" state load)
+if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
 This creates `.planning/config.json` with defaults if missing and loads current config.

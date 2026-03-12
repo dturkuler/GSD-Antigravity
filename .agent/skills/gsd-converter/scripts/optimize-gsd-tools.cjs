@@ -91,7 +91,7 @@ if (fs.existsSync(gsdToolsPath)) {
  *   validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
  *   websearch, frontmatter, verify, template, init
  *
- * Run with --help for detailed usage of each command.
+ * Run with gsd:help command args for detailed usage of each command.
  */`;
 
     const headerRegex = /\/\*\*[\s\S]*?\*\/\s*(?=\nconst fs = require)/;
@@ -146,6 +146,66 @@ if (fs.existsSync(gsdToolsPath)) {
             "Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command>"
         );
         console.log('  ✅ Fixed bare gsd-tools usage string in error fallback');
+    }
+
+    // Step 10: Inject Help System into gsd-tools.cjs
+    if (!gsdContent.includes('const HELP_MANIFEST = require(\'./help-manifest.json\');')) {
+        const HELP_SYSTEM_CODE = `const HELP_MANIFEST = require('./help-manifest.json');
+
+function showHelp(cmd, sub) {
+  const info = HELP_MANIFEST.commands[cmd];
+  if (!info) {
+    console.log(\`\\n\${HELP_MANIFEST.tools_usage}\`);
+    console.log('\\nAvailable Commands: ' + Object.keys(HELP_MANIFEST.commands).join(', '));
+    return;
+  }
+  console.log(\`\\nCommand: \${cmd}\\nDescription: \${info.description}\`);
+  if (sub && info.subcommands?.[sub]) {
+    console.log(\`Subcommand: \${sub}\\nUsage: \${info.subcommands[sub]}\`);
+  } else if (info.subcommands) {
+    console.log('\\nAvailable subcommands:');
+    Object.entries(info.subcommands).forEach(([s, d]) => console.log(\`  - \${s.padEnd(15)} : \${d}\`));
+  }
+}
+
+`;
+        if (gsdContent.startsWith('#!')) {
+            const firstNewline = gsdContent.indexOf('\n') + 1;
+            gsdContent = gsdContent.slice(0, firstNewline) + HELP_SYSTEM_CODE + gsdContent.slice(firstNewline);
+        } else {
+            gsdContent = HELP_SYSTEM_CODE + gsdContent;
+        }
+        console.log('  ✅ Injected Help System into gsd-tools.cjs');
+
+        const mainStart = gsdContent.indexOf('async function main() {');
+        if (mainStart !== -1) {
+            const interceptor = `
+  if (args.includes('--help') || args.includes('-h')) {
+    const cmd = args[0];
+    const sub = args[1];
+    if (raw) {
+      const { output } = require('./lib/core.cjs');
+      output(HELP_MANIFEST, true);
+    } else {
+      showHelp(cmd, sub);
+    }
+    process.exit(0);
+  }
+`;
+            const argsSlicePos = gsdContent.indexOf('const args = process.argv.slice(2);', mainStart);
+            if (argsSlicePos !== -1) {
+                const insertionPoint = gsdContent.indexOf('\n', argsSlicePos) + 1;
+                // Also need to find 'raw' definition or move it up
+                const rawDefPos = gsdContent.indexOf('const raw = rawIndex !== -1;', mainStart);
+                if (rawDefPos !== -1) {
+                    const rawInsertionPoint = gsdContent.indexOf('\n', rawDefPos) + 1;
+                    gsdContent = gsdContent.slice(0, rawInsertionPoint) + interceptor + gsdContent.slice(rawInsertionPoint);
+                } else {
+                    // If raw is not found yet, we might need a simpler interceptor or move raw up
+                    gsdContent = gsdContent.slice(0, insertionPoint) + "  const raw = args.includes('--raw');" + interceptor + gsdContent.slice(insertionPoint);
+                }
+            }
+        }
     }
 
     fs.writeFileSync(gsdToolsPath, gsdContent, 'utf-8');
