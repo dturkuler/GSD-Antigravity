@@ -25,11 +25,11 @@ Brownfield equivalent of new-project. Project exists, PROJECT.md has history. Ga
 </objective>
 
 <execution_context>
-@references/workflows/new-milestone.md
-@references/docs/questioning.md
-@references/docs/ui-brand.md
-@assets/templates/project.md
-@assets/templates/requirements.md
+@C:/projects/GSD-Antigravityreferences/workflows/new-milestone.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/questioning.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@C:/projects/GSD-Antigravityassets/templates/project.md
+@C:/projects/GSD-Antigravityassets/templates/requirements.md
 </execution_context>
 
 <context>
@@ -39,6 +39,6 @@ Project and milestone context files are resolved inside the workflow (`init new-
 </context>
 
 <process>
-Execute the new-milestone workflow from @references/workflows/new-milestone.md end-to-end.
+Execute the new-milestone workflow from @C:/projects/GSD-Antigravityreferences/workflows/new-milestone.md end-to-end.
 Preserve all workflow gates (validation, questioning, research, requirements, roadmap approval, commits).
 </process>

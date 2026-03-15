@@ -22,7 +22,7 @@ Output: updated VALIDATION.md + generated test files.
 </objective>
 
 <execution_context>
-@references/workflows/validate-phase.md
+@C:/projects/GSD-Antigravityreferences/workflows/validate-phase.md
 </execution_context>
 
 <context>
@@ -30,6 +30,6 @@ Phase: $ARGUMENTS — optional, defaults to last completed phase.
 </context>
 
 <process>
-Execute @references/workflows/validate-phase.md.
+Execute @C:/projects/GSD-Antigravityreferences/workflows/validate-phase.md.
 Preserve all workflow gates.
 </process>

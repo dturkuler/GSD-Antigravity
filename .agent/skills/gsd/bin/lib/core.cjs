@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { MODEL_PROFILES } = require('./model-profiles.cjs');
 
 // ─── Path helpers ────────────────────────────────────────────────────────────
 
@@ -12,23 +13,6 @@ const { execSync } = require('child_process');
 function toPosixPath(p) {
   return p.split(path.sep).join('/');
 }
-
-// ─── Model Profile Table ─────────────────────────────────────────────────────
-
-const MODEL_PROFILES = {
-  'gsd-planner':              { quality: 'opus', balanced: 'opus',   budget: 'sonnet' },
-  'gsd-roadmapper':           { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-executor':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-phase-researcher':     { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-project-researcher':   { quality: 'opus', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-research-synthesizer': { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-debugger':             { quality: 'opus', balanced: 'sonnet', budget: 'sonnet' },
-  'gsd-codebase-mapper':      { quality: 'sonnet', balanced: 'haiku', budget: 'haiku' },
-  'gsd-verifier':             { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-plan-checker':         { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-integration-checker':  { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-  'gsd-nyquist-auditor':      { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
-};
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
@@ -383,6 +367,34 @@ function getArchivedPhaseDirs(cwd) {
   return results;
 }
 
+// ─── Roadmap milestone scoping ───────────────────────────────────────────────
+
+/**
+ * Strip shipped milestone content wrapped in <details> blocks.
+ * Used to isolate current milestone phases when searching ROADMAP.md
+ * for phase headings or checkboxes — prevents matching archived milestone
+ * phases that share the same numbers as current milestone phases.
+ */
+function stripShippedMilestones(content) {
+  return content.replace(/<details>[\s\S]*?<\/details>/gi, '');
+}
+
+/**
+ * Replace a pattern only in the current milestone section of ROADMAP.md
+ * (everything after the last </details> close tag). Used for write operations
+ * that must not accidentally modify archived milestone checkboxes/tables.
+ */
+function replaceInCurrentMilestone(content, pattern, replacement) {
+  const lastDetailsClose = content.lastIndexOf('</details>');
+  if (lastDetailsClose === -1) {
+  return content.replace(pattern, replacement);
+  }
+  const offset = lastDetailsClose + '</details>'.length;
+  const before = content.slice(0, offset);
+  const after = content.slice(offset);
+  return before + after.replace(pattern, replacement);
+}
+
 // ─── Roadmap & model utilities ────────────────────────────────────────────────
 
 function getRoadmapPhaseInternal(cwd, phaseNum) {
@@ -391,7 +403,7 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
   if (!fs.existsSync(roadmapPath)) return null;
 
   try {
-  const content = fs.readFileSync(roadmapPath, 'utf-8');
+  const content = stripShippedMilestones(fs.readFileSync(roadmapPath, 'utf-8'));
   const escapedPhase = escapeRegex(phaseNum.toString());
   const phasePattern = new RegExp(`#{2,4}\\s*Phase\\s+${escapedPhase}:\\s*([^\\n]+)`, 'i');
   const headerMatch = content.match(phasePattern);
@@ -404,7 +416,7 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
   const sectionEnd = nextHeaderMatch ? headerIndex + nextHeaderMatch.index : content.length;
   const section = content.slice(headerIndex, sectionEnd).trim();
 
-  const goalMatch = section.match(/\*\*Goal:\*\*\s*([^\n]+)/i);
+  const goalMatch = section.match(/\*\*Goal(?:\*\*:|\*?\*?:\*\*)\s*([^\n]+)/i);
   const goal = goalMatch ? goalMatch[1].trim() : null;
 
   return {
@@ -429,9 +441,10 @@ function resolveModelInternal(cwd, agentType) {
   }
 
   // Fall back to profile lookup
-  const profile = config.model_profile || 'balanced';
+  const profile = String(config.model_profile || 'balanced').toLowerCase();
   const agentModels = MODEL_PROFILES[agentType];
   if (!agentModels) return 'sonnet';
+  if (profile === 'inherit') return 'inherit';
   const resolved = agentModels[profile] || agentModels['balanced'] || 'sonnet';
   return resolved === 'opus' ? 'inherit' : resolved;
 }
@@ -468,7 +481,7 @@ function getMilestoneInfo(cwd) {
   }
 
   // Second: heading-format roadmaps — strip shipped milestones in <details> blocks
-  const cleaned = roadmap.replace(/<details>[\s\S]*?<\/details>/gi, '');
+  const cleaned = stripShippedMilestones(roadmap);
   // Extract version and name from the same ## heading for consistency
   const headingMatch = cleaned.match(/## .*v(\d+\.\d+)[:\s]+([^\n(]+)/);
   if (headingMatch) {
@@ -496,7 +509,7 @@ function getMilestoneInfo(cwd) {
 function getMilestonePhaseFilter(cwd) {
   const milestonePhaseNums = new Set();
   try {
-  const roadmap = fs.readFileSync(path.join(cwd, '.planning', 'ROADMAP.md'), 'utf-8');
+  const roadmap = stripShippedMilestones(fs.readFileSync(path.join(cwd, '.planning', 'ROADMAP.md'), 'utf-8'));
   const phasePattern = /#{2,4}\s*Phase\s+(\d+[A-Z]?(?:\.\d+)*)\s*:/gi;
   let m;
   while ((m = phasePattern.exec(roadmap)) !== null) {
@@ -528,7 +541,6 @@ module.exports = {
   discoverPhaseArtifacts,
   applyIncludes,
   buildPhaseBase,
-  MODEL_PROFILES,
   output,
   error,
   safeReadFile,
@@ -547,5 +559,7 @@ module.exports = {
   generateSlugInternal,
   getMilestoneInfo,
   getMilestonePhaseFilter,
+  stripShippedMilestones,
+  replaceInCurrentMilestone,
   toPosixPath,
 };

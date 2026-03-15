@@ -11,7 +11,7 @@ Instantly restore full project context so "Where were we?" has an immediate, com
 </purpose>
 
 <required_reading>
-@references/docs/continuation-format.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/continuation-format.md
 </required_reading>
 
 <process>
@@ -20,7 +20,7 @@ Instantly restore full project context so "Where were we?" has an immediate, com
 Load all context in one call:
 
 ```bash
-INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init resume)
+INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init resume)
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 

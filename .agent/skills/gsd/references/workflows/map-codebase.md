@@ -26,7 +26,7 @@ Documents are reference material for Antigravity when planning/executing. Always
 Load codebase mapping context:
 
 ```bash
-INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init map-codebase)
+INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init map-codebase)
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -251,7 +251,7 @@ Continue to commit_codebase_map.
 Commit the codebase map:
 
 ```bash
-node ".agent/skills/gsd/bin/gsd-tools.cjs" commit "docs: map existing codebase" --files .planning/codebase/*.md
+node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs: map existing codebase" --files .planning/codebase/*.md
 ```
 
 Continue to offer_next.

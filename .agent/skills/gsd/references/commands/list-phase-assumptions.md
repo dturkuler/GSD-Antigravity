@@ -17,7 +17,7 @@ Output: Conversational output only (no file creation) - ends with "What do you t
 </objective>
 
 <execution_context>
-@references/workflows/list-phase-assumptions.md
+@C:/projects/GSD-Antigravityreferences/workflows/list-phase-assumptions.md
 </execution_context>
 
 <context>

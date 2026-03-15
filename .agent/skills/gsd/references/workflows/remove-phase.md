@@ -29,7 +29,7 @@ Exit.
 Load phase operation context:
 
 ```bash
-INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${target}")
+INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${target}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -80,13 +80,13 @@ Wait for confirmation.
 **Delegate the entire removal operation to gsd-tools:**
 
 ```bash
-RESULT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" phase remove "${target}")
+RESULT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" phase remove "${target}")
 ```
 
 If the phase has executed plans (SUMMARY.md files), gsd-tools will error. Use `--force` only if the user confirms:
 
 ```bash
-RESULT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" phase remove "${target}" --force)
+RESULT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" phase remove "${target}" --force)
 ```
 
 The CLI handles:
@@ -103,7 +103,7 @@ Extract from result: `removed`, `directory_deleted`, `renamed_directories`, `ren
 Stage and commit the removal:
 
 ```bash
-node ".agent/skills/gsd/bin/gsd-tools.cjs" commit "chore: remove phase {target} ({original-phase-name})" --files .planning/
+node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "chore: remove phase {target} ({original-phase-name})" --files .planning/
 ```
 
 The commit message preserves the historical record of what was removed.

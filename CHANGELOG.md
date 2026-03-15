@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] - 2026-03-15
+
+### Added
+- **Major GSD Sync**: Synchronized with GSD `1.24.0`, bringing full support for the new modular engine and enhanced state management workflows.
+- **Improved Phase Operations**: Added native support for `phase insert`, `phase remove`, and `phase-plan-index` through the modular CLI.
+- **New Init Workflows**: Expanded `init` command to support `milestone-op`, `phase-op`, and `roadmap-op` for safer state transitions.
+
+### Changed
+- **Modular DRY Refactoring**: The monolithic `gsd-tools.cjs` has been completely refactored into a DRY architecture. Core logic is now modularized within `bin/lib/*.cjs`, significantly improving maintainability and reducing the primary script overhead.
+- **Automated Help Generation**: `gsd-converter` now automatically populates `help-manifest.json` with detailed subcommand metadata, enabling rich interactive help via the `--help` flag.
+
 ## [1.22.6] - 2026-03-13
 
 ### Added

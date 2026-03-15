@@ -6,6 +6,17 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.24.0 (2026-03-15)
+*   **Context:** `gsd-tools.cjs` (Engine Modernization)
+*   **Issue:** Technical debt in the core engine; increasing complexity of the monolithic `gsd-tools.cjs` script; and lack of granular control over phase/milestone state transitions.
+*   **Root Cause Analysis:** 
+    - The monolithic design of `gsd-tools.cjs` was becoming difficult to audit and extend, leading to duplication of logic across commands.
+    - Previous `init` workflows were too coarse-grained, making it difficult to perform atomic state updates for complex roadmap changes.
+*   **How it was fixed:**
+    - **Modularization (DRY)**: Refactored `gsd-tools.cjs` to delegate all command implementation to a dedicated library in `bin/lib/`. This reduced the main router file size and centralized error handling and state management.
+    - **Internal Library**: Created specialized modules: `phase.cjs` for roadmap manipulation, `init.cjs` for workflow bootstrapping, and `verify.cjs` for project health checks.
+    - **Enhanced Init Router**: Added multiple specialized init workflows (`milestone-op`, `phase-op`, `roadmap-op`) to provide agents with precise control over project structure modifications.
+
 ### v1.22.6 (2026-03-13)
 *   **Context:** `gsd-tools.cjs` and `gsd-converter`
 *   **Issue:** Missing detailed CLI help for subcommands; character encoding issues on Windows; hung terminal processes; and deprecated configuration keys.

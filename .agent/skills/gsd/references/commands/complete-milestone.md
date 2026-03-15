@@ -19,8 +19,8 @@ Output: Milestone archived (roadmap + requirements), PROJECT.md evolved, git tag
 <execution_context>
 **Load these files NOW (before proceeding):**
 
-- @references/workflows/complete-milestone.md (main workflow)
-- @assets/templates/milestone-archive.md (archive template)
+- @C:/projects/GSD-Antigravityreferences/workflows/complete-milestone.md (main workflow)
+- @C:/projects/GSD-Antigravityassets/templates/milestone-archive.md (archive template)
   </execution_context>
 
 <context>

@@ -29,7 +29,7 @@ Exit.
 Load phase operation context:
 
 ```bash
-INIT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "0")
+INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "0")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -45,7 +45,7 @@ Exit.
 **Delegate the phase addition to gsd-tools:**
 
 ```bash
-RESULT=$(node ".agent/skills/gsd/bin/gsd-tools.cjs" phase add "${description}")
+RESULT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" phase add "${description}")
 ```
 
 The CLI handles:

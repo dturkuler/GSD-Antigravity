@@ -20,11 +20,11 @@ Routes to the settings workflow which handles:
 </objective>
 
 <execution_context>
-@references/workflows/settings.md
+@C:/projects/GSD-Antigravityreferences/workflows/settings.md
 </execution_context>
 
 <process>
-**Follow the settings workflow** from `@references/workflows/settings.md`.
+**Follow the settings workflow** from `@C:/projects/GSD-Antigravityreferences/workflows/settings.md`.
 
 The workflow handles all logic including:
 1. Config file creation with defaults if missing

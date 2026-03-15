@@ -29,14 +29,14 @@ Initialize a new project through unified flow: questioning → research (optiona
 </objective>
 
 <execution_context>
-@references/workflows/new-project.md
-@references/docs/questioning.md
-@references/docs/ui-brand.md
-@assets/templates/project.md
-@assets/templates/requirements.md
+@C:/projects/GSD-Antigravityreferences/workflows/new-project.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/questioning.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@C:/projects/GSD-Antigravityassets/templates/project.md
+@C:/projects/GSD-Antigravityassets/templates/requirements.md
 </execution_context>
 
 <process>
-Execute the new-project workflow from @references/workflows/new-project.md end-to-end.
+Execute the new-project workflow from @C:/projects/GSD-Antigravityreferences/workflows/new-project.md end-to-end.
 Preserve all workflow gates (validation, approvals, commits, routing).
 </process>

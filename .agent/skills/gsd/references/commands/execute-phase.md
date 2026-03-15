@@ -22,8 +22,8 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 </objective>
 
 <execution_context>
-@references/workflows/execute-phase.md
-@references/docs/ui-brand.md
+@C:/projects/GSD-Antigravityreferences/workflows/execute-phase.md
+@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <context>
@@ -36,6 +36,6 @@ Context files are resolved inside the workflow via `gsd-tools init execute-phase
 </context>
 
 <process>
-Execute the execute-phase workflow from @references/workflows/execute-phase.md end-to-end.
+Execute the execute-phase workflow from @C:/projects/GSD-Antigravityreferences/workflows/execute-phase.md end-to-end.
 Preserve all workflow gates (wave execution, checkpoint handling, verification, state updates, routing).
 </process>
