@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.1] - 2026-03-16
+
+### Added
+- **GSD Sync 1.25.1**: Full synchronization with the latest GSD core, featuring optimized model profiles and enhanced state consistency.
+- **Selective Inclusion Engine**: Injected `parseIncludeFlag`, `applyIncludes`, and `buildPhaseBase` into the core CLI, enabling granular context management via the `--include` flag.
+- **Artifact Discovery**: Integrated `discoverPhaseArtifacts` for automated detection of hierarchical project files, improving context gathering automation.
+
+### Changed
+- **Skill Optimization**: Applied advanced refactoring via `gsd-converter`, reducing script overhead through 2-space indentation and condensed headers.
+- **Improved Portability**: Enhanced regex-based path mapping for even more robust environment isolation in Antigravity.
+
 ## [1.24.0] - 2026-03-15
 
 ### Added

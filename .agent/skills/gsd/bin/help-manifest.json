@@ -1,5 +1,5 @@
 {
-  "version": "1.24.0",
+  "version": "1.25.1",
   "commands": {
     "add-phase": {
       "description": "Add phase to end of current milestone in roadmap"
@@ -31,6 +31,9 @@
     "discuss-phase": {
       "description": "Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults)."
     },
+    "do": {
+      "description": "Route freeform text to the right GSD command automatically"
+    },
     "execute-phase": {
       "description": "Execute all plans in a phase with wave-based parallelization"
     },
@@ -57,6 +60,9 @@
     },
     "new-project": {
       "description": "Initialize a new project with deep context gathering and PROJECT.md"
+    },
+    "note": {
+      "description": "Zero-friction idea capture. Append, list, or promote notes to todos."
     },
     "pause-work": {
       "description": "Create context handoff when pausing work mid-phase"

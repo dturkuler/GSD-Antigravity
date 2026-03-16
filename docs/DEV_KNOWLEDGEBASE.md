@@ -6,6 +6,17 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.25.1 (2026-03-16)
+*   **Context:** `gsd-tools.cjs` (Selective Inclusion and Artifact Discovery)
+*   **Issue:** Lack of standardized context slicing and automated artifact traversal in the core GSD engine, leading to inconsistent context gathering across different subagents.
+*   **Root Cause Analysis:** 
+    - The core engine was missing a unified way to handle partial context loading, forcing agents to either load the entire state or manually parse it.
+    - Artifact discovery relied on static paths which didn't always account for deeply nested or dynamically named phase directories.
+*   **How it was fixed:**
+    - **Smart Inclusions**: Injected `parseIncludeFlag`, `applyIncludes`, and `buildPhaseBase` into `gsd-tools.cjs`. This allows the `--include` flag to dynamically filter state/roadmap data, significantly reducing token overhead for long-running workflows.
+    - **Automated Discovery**: Integrated `discoverPhaseArtifacts()` to automatically traverse the `.planning/` hierarchy, ensuring that all relevant requirements, plans, and implementation notes are available to the agent without manual specification.
+    - **Model Profile Injection**: Injected a centralized `MODEL_PROFILES` object to ensure consistent model selection (e.g., using better models for planning and cheaper ones for simple tasks) across the entire GSD toolchain.
+
 ### v1.24.0 (2026-03-15)
 *   **Context:** `gsd-tools.cjs` (Engine Modernization)
 *   **Issue:** Technical debt in the core engine; increasing complexity of the monolithic `gsd-tools.cjs` script; and lack of granular control over phase/milestone state transitions.
