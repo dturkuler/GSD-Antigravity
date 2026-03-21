@@ -1,7 +1,7 @@
 ---
 name: gsd:execute-phase
 description: Execute all plans in a phase with wave-based parallelization
-argument-hint: "<phase-number> [--gaps-only]"
+argument-hint: "<phase-number> [--gaps-only] [--interactive]"
 allowed-tools:
   - Read
   - Write
@@ -22,8 +22,8 @@ Context budget: ~15% orchestrator, 100% fresh per subagent.
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/execute-phase.md
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@references/workflows/execute-phase.md
+@references/docs/ui-brand.md
 </execution_context>
 
 <context>
@@ -31,11 +31,12 @@ Phase: $ARGUMENTS
 
 **Flags:**
 - `--gaps-only` — Execute only gap closure plans (plans with `gap_closure: true` in frontmatter). Use after verify-work creates fix plans.
+- `--interactive` — Execute plans sequentially inline (no subagents) with user checkpoints between tasks. Lower token usage, pair-programming style. Best for small phases, bug fixes, and verification gaps.
 
 Context files are resolved inside the workflow via `gsd-tools init execute-phase` and per-subagent `<files_to_read>` blocks.
 </context>
 
 <process>
-Execute the execute-phase workflow from @C:/projects/GSD-Antigravityreferences/workflows/execute-phase.md end-to-end.
+Execute the execute-phase workflow from @references/workflows/execute-phase.md end-to-end.
 Preserve all workflow gates (wave execution, checkpoint handling, verification, state updates, routing).
 </process>

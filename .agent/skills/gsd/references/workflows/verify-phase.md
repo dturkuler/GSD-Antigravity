@@ -18,8 +18,8 @@ Then verify each level against the actual codebase.
 </core_principle>
 
 <required_reading>
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/verification-patterns.md
-@C:/projects/GSD-Antigravityassets/templates/verification-report.md
+@references/docs/verification-patterns.md
+@assets/templates/verification-report.md
 </required_reading>
 
 <process>
@@ -28,7 +28,7 @@ Then verify each level against the actual codebase.
 Load phase operation context:
 
 ```bash
-INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${PHASE_ARG}")
+.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${PHASE_ARG}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -36,7 +36,7 @@ Extract from init JSON: `phase_dir`, `phase_number`, `phase_name`, `has_plans`, 
 
 Then load phase details and list plans/summaries:
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" roadmap get-phase "${phase_number}"
+.agent/skills/gsd/bin/gsd-tools.cjs" roadmap get-phase "${phase_number}"
 grep -E "^| ${phase_number}" .planning/REQUIREMENTS.md 2>/dev/null
 ls "$phase_dir"/*-SUMMARY.md "$phase_dir"/*-PLAN.md 2>/dev/null
 ```
@@ -51,7 +51,7 @@ Use gsd-tools to extract must_haves from each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  MUST_HAVES=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" frontmatter get "$plan" --field must_haves)
+.agent/skills/gsd/bin/gsd-tools.cjs" frontmatter get "$plan" --field must_haves)
   echo "=== $plan ===" && echo "$MUST_HAVES"
 done
 ```
@@ -65,7 +65,7 @@ Aggregate all must_haves across plans for phase-level verification.
 If no must_haves in frontmatter (MUST_HAVES returns error or empty), check for Success Criteria:
 
 ```bash
-PHASE_DATA=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" roadmap get-phase "${phase_number}" --raw)
+.agent/skills/gsd/bin/gsd-tools.cjs" roadmap get-phase "${phase_number}" --raw)
 ```
 
 Parse the `success_criteria` array from the JSON output. If non-empty:
@@ -101,7 +101,7 @@ Use gsd-tools for artifact verification against must_haves in each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  ARTIFACT_RESULT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" verify artifacts "$plan")
+.agent/skills/gsd/bin/gsd-tools.cjs" verify artifacts "$plan")
   echo "=== $plan ===" && echo "$ARTIFACT_RESULT"
 done
 ```
@@ -126,6 +126,17 @@ WIRED = imported AND used. ORPHANED = exists but not imported/used.
 | ✓ | ✓ | ✗ | ⚠️ ORPHANED |
 | ✓ | ✗ | - | ✗ STUB |
 | ✗ | - | - | ✗ MISSING |
+
+**Export-level spot check (WARNING severity):**
+
+For artifacts that pass Level 3, spot-check individual exports:
+- Extract key exported symbols (functions, constants, classes — skip types/interfaces)
+- For each, grep for usage outside the defining file
+- Flag exports with zero external call sites as "exported but unused"
+
+This catches dead stores like `setPlan()` that exist in a wired file but are
+never actually called. Report as WARNING — may indicate incomplete cross-plan
+wiring or leftover code from plan revisions.
 </step>
 
 <step name="verify_wiring">
@@ -133,7 +144,7 @@ Use gsd-tools for key link verification against must_haves in each PLAN:
 
 ```bash
 for plan in "$PHASE_DIR"/*-PLAN.md; do
-  LINKS_RESULT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" verify key-links "$plan")
+.agent/skills/gsd/bin/gsd-tools.cjs" verify key-links "$plan")
   echo "=== $plan ===" && echo "$LINKS_RESULT"
 done
 ```
@@ -214,7 +225,7 @@ REPORT_PATH="$PHASE_DIR/${PHASE_NUM}-VERIFICATION.md"
 
 Fill template sections: frontmatter (phase/timestamp/status/score), goal achievement, artifact table, wiring table, requirements coverage, anti-patterns, human verification, gaps summary, fix plans (if gaps_found), metadata.
 
-See C:/projects/GSD-Antigravityassets/templates/verification-report.md for complete template.
+assets/templates/verification-report.md for complete template.
 </step>
 
 <step name="return_to_orchestrator">

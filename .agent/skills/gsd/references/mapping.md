@@ -8,9 +8,9 @@ When converting from a standard GSD installation to an Antigravity Skill, paths 
 |-----------------|-------------------|---------|
 | `.antigravity/commands/gsd/` | `references/commands/` | Interactive slash commands |
 | `.antigravity/get-shit-done/references/` | `references/docs/` | Static domain knowledge and guides |
-| `references/workflows/` | `references/workflows/` | Multi-step procedural logic |
-| `references/agents/` | `references/agents/` | Specialized sub-agent system prompts |
-| `assets/templates/` | `assets/templates/` | File boilerplate (PROJECT.md, etc.) |
+references/workflows/` | `references/workflows/` | Multi-step procedural logic |
+references/agents/` | `references/agents/` | Specialized sub-agent system prompts |
+assets/templates/` | `assets/templates/` | File boilerplate (PROJECT.md, etc.) |
 
 ## String Replacements (Regex)
 
@@ -24,9 +24,9 @@ The conversion script performs the following replacements within `.md` and `.jso
    - `@references/agents/` -> `@references/agents/`
 
 2. **Programmatic Paths (e.g., in `Task()` calls)**
-   - `references/agents/` -> `references/agents/`
-   - `assets/templates/` -> `assets/templates/`
-   - `references/workflows/` -> `references/workflows/`
+references/agents/` -> `references/agents/`
+assets/templates/` -> `assets/templates/`
+references/workflows/` -> `references/workflows/`
 
 ## Project Context
 References to `@.planning/` are **preserved**, as these refer to the active project's local planning directory, not the skill's own resources.

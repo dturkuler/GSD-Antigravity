@@ -12,7 +12,7 @@ Default: `balanced` if not set or config missing.
 
 ## Lookup Table
 
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/model-profiles.md
+@references/docs/model-profiles.md
 
 Look up the agent in the table for the resolved profile. Pass the model parameter to Task calls:
 

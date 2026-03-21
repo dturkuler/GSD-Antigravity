@@ -1,6 +1,6 @@
 ---
 name: gsd
-version: 1.25.1
+version: 1.27.0
 description: "Antigravity GSD (Get Stuff Done) - A spec-driven hierarchical planning and execution system. Triggers on project planning, phase management, and GSD slash commands."
 ---
 
@@ -21,10 +21,12 @@ This skill should be used when:
 **Triggers:**
 - Keywords: "plan phase", "execute phase", "new project spec", "gsd", "gsd-tools"
 - Commands: 
+- `gsd:add-backlog`
 - `gsd:add-phase`
 - `gsd:add-tests`
 - `gsd:add-todo`
 - `gsd:audit-milestone`
+- `gsd:audit-uat`
 - `gsd:autonomous`
 - `gsd:check-todos`
 - `gsd:cleanup`
@@ -33,6 +35,7 @@ This skill should be used when:
 - `gsd:discuss-phase`
 - `gsd:do`
 - `gsd:execute-phase`
+- `gsd:fast`
 - `gsd:gsd-tools`
 - `gsd:health`
 - `gsd:help`
@@ -42,19 +45,28 @@ This skill should be used when:
 - `gsd:map-codebase`
 - `gsd:new-milestone`
 - `gsd:new-project`
+- `gsd:next`
 - `gsd:note`
 - `gsd:pause-work`
 - `gsd:plan-milestone-gaps`
 - `gsd:plan-phase`
+- `gsd:plant-seed`
+- `gsd:pr-branch`
+- `gsd:profile-user`
 - `gsd:progress`
 - `gsd:quick`
 - `gsd:reapply-patches`
 - `gsd:remove-phase`
 - `gsd:research-phase`
 - `gsd:resume-work`
+- `gsd:review-backlog`
+- `gsd:review`
+- `gsd:session-report`
 - `gsd:set-profile`
 - `gsd:settings`
+- `gsd:ship`
 - `gsd:stats`
+- `gsd:thread`
 - `gsd:ui-phase`
 - `gsd:ui-review`
 - `gsd:update`
@@ -72,10 +84,12 @@ The system enforces distinct phases. You typically cannot execute until you have
 ### 2. Available Commands
 The following slash commands are available in this skill. Use them to drive the GSD process:
 
+- **[`gsd:add-backlog`](references/commands/add-backlog.md)**: Add an idea to the backlog parking lot (999.x numbering)
 - **[`gsd:add-phase`](references/commands/add-phase.md)**: Add phase to end of current milestone in roadmap
 - **[`gsd:add-tests`](references/commands/add-tests.md)**: Generate tests for a completed phase based on UAT criteria and implementation
 - **[`gsd:add-todo`](references/commands/add-todo.md)**: Capture idea or task as todo from current conversation context
 - **[`gsd:audit-milestone`](references/commands/audit-milestone.md)**: Audit milestone completion against original intent before archiving
+- **[`gsd:audit-uat`](references/commands/audit-uat.md)**: Cross-phase audit of all outstanding UAT and verification items
 - **[`gsd:autonomous`](references/commands/autonomous.md)**: Run all remaining phases autonomously — discuss→plan→execute per phase
 - **[`gsd:check-todos`](references/commands/check-todos.md)**: List pending todos and select one to work on
 - **[`gsd:cleanup`](references/commands/cleanup.md)**: Archive accumulated phase directories from completed milestones
@@ -84,6 +98,7 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:discuss-phase`](references/commands/discuss-phase.md)**: Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults).
 - **[`gsd:do`](references/commands/do.md)**: Route freeform text to the right GSD command automatically
 - **[`gsd:execute-phase`](references/commands/execute-phase.md)**: Execute all plans in a phase with wave-based parallelization
+- **[`gsd:fast`](references/commands/fast.md)**: Execute a trivial task inline — no subagents, no planning overhead
 - **[`gsd:gsd-tools`](references/commands/gsd-tools.md)**: Direct access to GSD internal CLI tools for atomic operations (state, roadmap, phase, config, etc.)
 - **[`gsd:health`](references/commands/health.md)**: Diagnose planning directory health and optionally repair issues
 - **[`gsd:help`](references/commands/help.md)**: Show available GSD commands and usage guide
@@ -93,19 +108,28 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:map-codebase`](references/commands/map-codebase.md)**: Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents
 - **[`gsd:new-milestone`](references/commands/new-milestone.md)**: Start a new milestone cycle — update PROJECT.md and route to requirements
 - **[`gsd:new-project`](references/commands/new-project.md)**: Initialize a new project with deep context gathering and PROJECT.md
+- **[`gsd:next`](references/commands/next.md)**: Automatically advance to the next logical step in the GSD workflow
 - **[`gsd:note`](references/commands/note.md)**: Zero-friction idea capture. Append, list, or promote notes to todos.
 - **[`gsd:pause-work`](references/commands/pause-work.md)**: Create context handoff when pausing work mid-phase
 - **[`gsd:plan-milestone-gaps`](references/commands/plan-milestone-gaps.md)**: Create phases to close all gaps identified by milestone audit
 - **[`gsd:plan-phase`](references/commands/plan-phase.md)**: Create detailed phase plan (PLAN.md) with verification loop
+- **[`gsd:plant-seed`](references/commands/plant-seed.md)**: Capture a forward-looking idea with trigger conditions — surfaces automatically at the right milestone
+- **[`gsd:pr-branch`](references/commands/pr-branch.md)**: Create a clean PR branch by filtering out .planning/ commits — ready for code review
+- **[`gsd:profile-user`](references/commands/profile-user.md)**: Generate developer behavioral profile and create Antigravity-discoverable artifacts
 - **[`gsd:progress`](references/commands/progress.md)**: Check project progress, show context, and route to next action (execute or plan)
 - **[`gsd:quick`](references/commands/quick.md)**: Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents
 - **[`gsd:reapply-patches`](references/commands/reapply-patches.md)**: Reapply local modifications after a GSD update
 - **[`gsd:remove-phase`](references/commands/remove-phase.md)**: Remove a future phase from roadmap and renumber subsequent phases
 - **[`gsd:research-phase`](references/commands/research-phase.md)**: Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)
 - **[`gsd:resume-work`](references/commands/resume-work.md)**: Resume work from previous session with full context restoration
+- **[`gsd:review-backlog`](references/commands/review-backlog.md)**: Review and promote backlog items to active milestone
+- **[`gsd:review`](references/commands/review.md)**: Request cross-AI peer review of phase plans from external AI CLIs
+- **[`gsd:session-report`](references/commands/session-report.md)**: Generate a session report with token usage estimates, work summary, and outcomes
 - **[`gsd:set-profile`](references/commands/set-profile.md)**: Switch model profile for GSD agents (quality/balanced/budget/inherit)
 - **[`gsd:settings`](references/commands/settings.md)**: Configure GSD workflow toggles and model profile
+- **[`gsd:ship`](references/commands/ship.md)**: Create PR, run review, and prepare for merge after verification passes
 - **[`gsd:stats`](references/commands/stats.md)**: Display project statistics — phases, plans, requirements, git metrics, and timeline
+- **[`gsd:thread`](references/commands/thread.md)**: Manage persistent context threads for cross-session work
 - **[`gsd:ui-phase`](references/commands/ui-phase.md)**: Generate UI design contract (UI-SPEC.md) for frontend phases
 - **[`gsd:ui-review`](references/commands/ui-review.md)**: Retroactive 6-pillar visual audit of implemented frontend code
 - **[`gsd:update`](references/commands/update.md)**: Update GSD to latest version with changelog display
@@ -145,4 +169,4 @@ General documentation on the GSD philosophy, usage patterns, and configuration.
 5.  **CLI Invocation**: `gsd-tools` is **NOT** a global command. Always invoke it with the full node path: `node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args]`. Never run `gsd-tools` bare.
 
 ---
-*Generated by gsd-converter on 2026-03-16*
+*Generated by gsd-converter on 2026-03-21*

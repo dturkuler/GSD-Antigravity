@@ -19,11 +19,11 @@ Routes to the update workflow which handles:
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/update.md
+@references/workflows/update.md
 </execution_context>
 
 <process>
-**Follow the update workflow** from `@C:/projects/GSD-Antigravityreferences/workflows/update.md`.
+**Follow the update workflow** from `@references/workflows/update.md`.
 
 The workflow handles all logic including:
 1. Installed version detection (local/global)

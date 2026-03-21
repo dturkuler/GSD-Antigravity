@@ -16,8 +16,8 @@ Use when you know what you want but don't know which `/gsd:*` command to run.
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/do.md
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@references/workflows/do.md
+@references/docs/ui-brand.md
 </execution_context>
 
 <context>
@@ -25,6 +25,6 @@ $ARGUMENTS
 </context>
 
 <process>
-Execute the do workflow from @C:/projects/GSD-Antigravityreferences/workflows/do.md end-to-end.
+Execute the do workflow from @references/workflows/do.md end-to-end.
 Route user intent to the best GSD command and invoke it.
 </process>

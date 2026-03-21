@@ -4,10 +4,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { escapeRegex, normalizePhaseName, output, error, findPhaseInternal, stripShippedMilestones, replaceInCurrentMilestone } = require('./core.cjs');
+const { escapeRegex, normalizePhaseName, planningPaths, output, error, findPhaseInternal, stripShippedMilestones, extractCurrentMilestone, replaceInCurrentMilestone } = require('./core.cjs');
 
 function cmdRoadmapGetPhase(cwd, phaseNum, raw) {
-  const roadmapPath = path.join(cwd, '.planning', 'ROADMAP.md');
+  const roadmapPath = planningPaths(cwd).roadmap;
 
   if (!fs.existsSync(roadmapPath)) {
   output({ found: false, error: 'ROADMAP.md not found' }, raw, '');
@@ -15,7 +15,7 @@ function cmdRoadmapGetPhase(cwd, phaseNum, raw) {
   }
 
   try {
-  const content = stripShippedMilestones(fs.readFileSync(roadmapPath, 'utf-8'));
+  const content = extractCurrentMilestone(fs.readFileSync(roadmapPath, 'utf-8'), cwd);
 
   // Escape special regex chars in phase number, handle decimal
   const escapedPhase = escapeRegex(phaseNum);
@@ -91,7 +91,7 @@ function cmdRoadmapGetPhase(cwd, phaseNum, raw) {
 }
 
 function cmdRoadmapAnalyze(cwd, raw) {
-  const roadmapPath = path.join(cwd, '.planning', 'ROADMAP.md');
+  const roadmapPath = planningPaths(cwd).roadmap;
 
   if (!fs.existsSync(roadmapPath)) {
   output({ error: 'ROADMAP.md not found', milestones: [], phases: [], current_phase: null }, raw);
@@ -99,8 +99,8 @@ function cmdRoadmapAnalyze(cwd, raw) {
   }
 
   const rawContent = fs.readFileSync(roadmapPath, 'utf-8');
-  const content = stripShippedMilestones(rawContent);
-  const phasesDir = path.join(cwd, '.planning', 'phases');
+  const content = extractCurrentMilestone(rawContent, cwd);
+  const phasesDir = planningPaths(cwd).phases;
 
   // Extract all phase headings: ## Phase N: Name or ### Phase N: Name
   const phasePattern = /#{2,4}\s*Phase\s+(\d+[A-Z]?(?:\.\d+)*)\s*:\s*([^\n]+)/gi;
@@ -151,7 +151,7 @@ function cmdRoadmapAnalyze(cwd, raw) {
     else if (hasContext) diskStatus = 'discussed';
     else diskStatus = 'empty';
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // Check ROADMAP checkbox status
   const checkboxPattern = new RegExp(`-\\s*\\[(x| )\\]\\s*.*Phase\\s+${escapeRegex(phaseNum)}[:\\s]`, 'i');
@@ -181,7 +181,7 @@ function cmdRoadmapAnalyze(cwd, raw) {
 
   // Extract milestone info
   const milestones = [];
-  const milestonePattern = /##\s*(.*v(\d+\.\d+)[^(\n]*)/gi;
+  const milestonePattern = /##\s*(.*v(\d+(?:\.\d+)+)[^(\n]*)/gi;
   let mMatch;
   while ((mMatch = milestonePattern.exec(content)) !== null) {
   milestones.push({
@@ -230,7 +230,7 @@ function cmdRoadmapUpdatePlanProgress(cwd, phaseNum, raw) {
   error('phase number required for roadmap update-plan-progress');
   }
 
-  const roadmapPath = path.join(cwd, '.planning', 'ROADMAP.md');
+  const roadmapPath = planningPaths(cwd).roadmap;
 
   const phaseInfo = findPhaseInternal(cwd, phaseNum);
   if (!phaseInfo) {
@@ -257,16 +257,27 @@ function cmdRoadmapUpdatePlanProgress(cwd, phaseNum, raw) {
   let roadmapContent = fs.readFileSync(roadmapPath, 'utf-8');
   const phaseEscaped = escapeRegex(phaseNum);
 
-  // Progress table row: update Plans column (summaries/plans) and Status column
-  const tablePattern = new RegExp(
-  `(\\|\\s*${phaseEscaped}\\.?\\s[^|]*\\|)[^|]*(\\|)\\s*[^|]*(\\|)\\s*[^|]*(\\|)`,
-  'i'
+  // Progress table row: update Plans/Status/Date columns (handles 4 or 5 column tables)
+  const tableRowPattern = new RegExp(
+  `^(\\|\\s*${phaseEscaped}\\.?\\s[^|]*(?:\\|[^\\n]*))$`,
+  'im'
   );
   const dateField = isComplete ? ` ${today} ` : '  ';
-  roadmapContent = replaceInCurrentMilestone(
-  roadmapContent, tablePattern,
-  `$1 ${summaryCount}/${planCount} $2 ${status.padEnd(11)}$3${dateField}$4`
-  );
+  roadmapContent = roadmapContent.replace(tableRowPattern, (fullRow) => {
+  const cells = fullRow.split('|').slice(1, -1); // drop leading/trailing empty from split
+  if (cells.length === 5) {
+    // 5-col: Phase | Milestone | Plans | Status | Completed
+    cells[2] = ` ${summaryCount}/${planCount} `;
+    cells[3] = ` ${status.padEnd(11)}`;
+    cells[4] = dateField;
+  } else if (cells.length === 4) {
+    // 4-col: Phase | Plans | Status | Completed
+    cells[1] = ` ${summaryCount}/${planCount} `;
+    cells[2] = ` ${status.padEnd(11)}`;
+    cells[3] = dateField;
+  }
+  return '|' + cells.join('|') + '|';
+  });
 
   // Update plan count in phase detail section
   const planCountPattern = new RegExp(
@@ -285,6 +296,18 @@ function cmdRoadmapUpdatePlanProgress(cwd, phaseNum, raw) {
     'i'
   );
   roadmapContent = replaceInCurrentMilestone(roadmapContent, checkboxPattern, `$1x$2 (completed ${today})`);
+  }
+
+  // Mark completed plan checkboxes (e.g. "- [ ] 50-01-PLAN.md" or "- [ ] 50-01:")
+  for (const summaryFile of phaseInfo.summaries) {
+  const planId = summaryFile.replace('-SUMMARY.md', '').replace('SUMMARY.md', '');
+  if (!planId) continue;
+  const planEscaped = escapeRegex(planId);
+  const planCheckboxPattern = new RegExp(
+    `(-\\s*\\[) (\\]\\s*${planEscaped})`,
+    'i'
+  );
+  roadmapContent = roadmapContent.replace(planCheckboxPattern, '$1x$2');
   }
 
   fs.writeFileSync(roadmapPath, roadmapContent, 'utf-8');

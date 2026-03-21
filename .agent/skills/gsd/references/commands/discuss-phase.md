@@ -1,7 +1,7 @@
 ---
 name: gsd:discuss-phase
 description: Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults).
-argument-hint: "<phase> [--auto]"
+argument-hint: "<phase> [--auto] [--batch] [--analyze]"
 allowed-tools:
   - Read
   - Write
@@ -29,8 +29,8 @@ Extract implementation decisions that downstream agents need — researcher and 
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/discuss-phase.md
-@C:/projects/GSD-Antigravityassets/templates/context.md
+@references/workflows/discuss-phase.md
+@assets/templates/context.md
 </execution_context>
 
 <context>

@@ -600,7 +600,7 @@ Some things can't be verified programmatically. Flag these for human testing:
 
 For automation-first checkpoint patterns, server lifecycle management, CLI installation handling, and error recovery protocols, see:
 
-**@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/checkpoints.md** → `<automation_reference>` section
+**@references/docs/checkpoints.md** → `<automation_reference>` section
 
 Key principles:
 - Antigravity sets up verification environment BEFORE presenting checkpoints

@@ -94,17 +94,22 @@ def refactor_content(target_base):
     print("🔧 Refactoring file contents and paths...")
     
     replacements = [
-        (r'@\.?/?\.claude/commands/gsd/', '@references/commands/'),
-        (r'@\.?/?\.claude/get-shit-done/references/', '@references/docs/'),
-        (r'@\.?/?\.claude/get-shit-done/workflows/', '@references/workflows/'),
-        (r'@\.?/?\.claude/get-shit-done/templates/', '@assets/templates/'),
-        (r'@\.?/?\.claude/agents/', '@references/agents/'),
-        (r'\.?/?\.claude/agents/', 'references/agents/'),
-        (r'\.?/?\.claude/get-shit-done/templates/', 'assets/templates/'),
-        (r'\.?/?\.claude/get-shit-done/workflows/', 'references/workflows/'),
-        (r'\.?/?\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
-        (r'\.?/?\.claude/hooks/', '.agent/skills/gsd/bin/hooks/'),
-        (r'@\.?/?\.claude/hooks/', '@bin/hooks/'),
+        # Skill-relative internal references
+        (r'@.*?\.claude/commands/gsd/', '@references/commands/'),
+        (r'@.*?\.claude/get-shit-done/references/', '@references/docs/'),
+        (r'@.*?\.claude/get-shit-done/workflows/', '@references/workflows/'),
+        (r'@.*?\.claude/get-shit-done/templates/', '@assets/templates/'),
+        (r'@.*?\.claude/agents/', '@references/agents/'),
+        (r'@.*?\.claude/hooks/', '@bin/hooks/'),
+
+        # Local filesystem paths
+        (r'\.?/?.*?\.claude/agents/', 'references/agents/'),
+        (r'\.?/?.*?\.claude/get-shit-done/templates/', 'assets/templates/'),
+        (r'\.?/?.*?\.claude/get-shit-done/workflows/', 'references/workflows/'),
+        (r'\.?/?.*?\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
+        (r'\.?/?.*?\.claude/hooks/', '.agent/skills/gsd/bin/hooks/'),
+
+        # Rebranding
         (r'\bClaude Code\b', 'Antigravity'),
         (r'\bClaude\b', 'Antigravity'),
         (r'\bclaude\b', 'antigravity'),

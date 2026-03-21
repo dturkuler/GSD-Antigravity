@@ -110,6 +110,18 @@ Phase: "API documentation"
 1. Retry the question once with the same parameters
 2. If still empty, present the options as a plain-text numbered list and ask the user to type their choice number
 Never proceed with an empty answer.
+
+**Text mode (`workflow.text_mode: true` in config or `--text` flag):**
+When text mode is active, **do not use AskUserQuestion at all**. Instead, present every
+question as a plain-text numbered list and ask the user to type their choice number.
+This is required for Antigravity remote sessions (`/rc` mode) where the Antigravity App
+cannot forward TUI menu selections back to the host.
+
+Enable text mode:
+- Per-session: pass `--text` flag to any command (e.g., `/gsd:discuss-phase --text`)
+- Per-project: `gsd-tools config-set workflow.text_mode true`
+
+Text mode applies to ALL workflows in the session, not just discuss-phase.
 </answer_validation>
 
 <process>
@@ -120,7 +132,7 @@ Never proceed with an empty answer.
 Phase number from argument (required).
 
 ```bash
-INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${PHASE}")
+.agent/skills/gsd/bin/gsd-tools.cjs" init phase-op "${PHASE}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -242,6 +254,47 @@ Structure the extracted information:
 **If no prior context exists:** Continue without — this is expected for early phases.
 </step>
 
+<step name="cross_reference_todos">
+Check if any pending todos are relevant to this phase's scope. Surfaces backlog items that might otherwise be missed.
+
+**Load and match todos:**
+```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" todo match-phase "${PHASE_NUMBER}")
+```
+
+Parse JSON for: `todo_count`, `matches[]` (each with `file`, `title`, `area`, `score`, `reasons`).
+
+**If `todo_count` is 0 or `matches` is empty:** Skip silently — no workflow slowdown.
+
+**If matches found:**
+
+Present matched todos to the user. Show each match with its title, area, and why it matched:
+
+```
+📋 Found {N} pending todo(s) that may be relevant to Phase {X}:
+
+{For each match:}
+- **{title}** (area: {area}, relevance: {score}) — matched on {reasons}
+```
+
+Use AskUserQuestion (multiSelect) asking which todos to fold into this phase's scope:
+
+```
+Which of these todos should be folded into Phase {X} scope?
+(Select any that apply, or none to skip)
+```
+
+**For selected (folded) todos:**
+- Store internally as `<folded_todos>` for inclusion in CONTEXT.md `<decisions>` section
+- These become additional scope items that downstream agents (researcher, planner) will see
+
+**For unselected (reviewed but not folded) todos:**
+- Store internally as `<reviewed_todos>` for inclusion in CONTEXT.md `<deferred>` section
+- This prevents future phases from re-surfacing the same todos as "missed"
+
+**Auto mode (`--auto`):** Fold all todos with score >= 0.4 automatically. Log the selection.
+</step>
+
 <step name="scout_codebase">
 Lightweight scan of existing code to inform gray area identification and discussion. Uses ~10% context — acceptable for an interactive session.
 
@@ -308,6 +361,33 @@ Analyze the phase to identify gray areas worth discussing. **Use both `prior_dec
 3. **Gray areas by category** — For each relevant category (UI, UX, Behavior, Empty States, Content), identify 1-2 specific ambiguities that would change implementation. **Annotate with code context where relevant** (e.g., "You already have a Card component" or "No existing pattern for this").
 
 4. **Skip assessment** — If no meaningful gray areas exist (pure infrastructure, clear-cut implementation, or all already decided in prior phases), the phase may not need discussion.
+
+**Advisor Mode Detection:**
+
+Check if advisor mode should activate:
+
+1. Check for USER-PROFILE.md:
+   ```bash
+   PROFILE_PATH="C:/projects/GSD-Antigravity/.antigravity/get-shit-done/USER-PROFILE.md"
+   ```
+   ADVISOR_MODE = file exists at PROFILE_PATH → true, otherwise → false
+
+2. If ADVISOR_MODE is true, resolve vendor_philosophy calibration tier:
+   - Priority 1: Read config.json > preferences.vendor_philosophy (project-level override)
+   - Priority 2: Read USER-PROFILE.md Vendor Choices/Philosophy rating (global)
+   - Priority 3: Default to "standard" if neither has a value or value is UNSCORED
+
+   Map to calibration tier:
+   - conservative OR thorough-evaluator → full_maturity
+   - opinionated → minimal_decisive
+   - pragmatic-fast OR any other value OR empty → standard
+
+3. Resolve model for advisor agents:
+   ```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" resolve-model gsd-advisor-researcher --raw)
+   ```
+
+If ADVISOR_MODE is false, skip all advisor-specific steps — workflow proceeds with existing conversational flow unchanged.
 
 **Output your analysis internally, then present to user.**
 
@@ -398,13 +478,149 @@ For "Organize photo library" (organization task):
 ☐ Folder structure — Flat, nested by year, or by category?
 ```
 
-Continue to discuss_areas with selected areas.
+Continue to discuss_areas with selected areas (or advisor_research if ADVISOR_MODE is true).
+</step>
+
+<step name="advisor_research">
+**Advisor Research** (only when ADVISOR_MODE is true)
+
+After user selects gray areas in present_gray_areas, spawn parallel research agents.
+
+1. Display brief status: "Researching {N} areas..."
+
+2. For EACH user-selected gray area, spawn a Task() in parallel:
+
+   Task(
+     prompt="First, read @references/agents/gsd-advisor-researcher.md for your role and instructions.
+
+     <gray_area>{area_name}: {area_description from gray area identification}</gray_area>
+     <phase_context>{phase_goal and description from ROADMAP.md}</phase_context>
+     <project_context>{project name and brief description from PROJECT.md}</project_context>
+     <calibration_tier>{resolved calibration tier: full_maturity | standard | minimal_decisive}</calibration_tier>
+
+     Research this gray area and return a structured comparison table with rationale.",
+     subagent_type="general-purpose",
+     model="{ADVISOR_MODEL}",
+     description="Research: {area_name}"
+   )
+
+   All Task() calls spawn simultaneously — do NOT wait for one before starting the next.
+
+3. After ALL agents return, SYNTHESIZE results before presenting:
+   For each agent's return:
+   a. Parse the markdown comparison table and rationale paragraph
+   b. Verify all 5 columns present (Option | Pros | Cons | Complexity | Recommendation) — fill any missing columns rather than showing broken table
+   c. Verify option count matches calibration tier:
+      - full_maturity: 3-5 options acceptable
+      - standard: 2-4 options acceptable
+      - minimal_decisive: 1-2 options acceptable
+      If agent returned too many, trim least viable. If too few, accept as-is.
+   d. Rewrite rationale paragraph to weave in project context and ongoing discussion context that the agent did not have access to
+   e. If agent returned only 1 option, convert from table format to direct recommendation: "Standard approach for {area}: {option}. {rationale}"
+
+4. Store synthesized tables for use in discuss_areas.
+
+**If ADVISOR_MODE is false:** Skip this step entirely — proceed directly from present_gray_areas to discuss_areas.
 </step>
 
 <step name="discuss_areas">
+Discuss each selected area with the user. Flow depends on advisor mode.
+
+**If ADVISOR_MODE is true:**
+
+Table-first discussion flow — present research-backed comparison tables, then capture user picks.
+
+**For each selected area:**
+
+1. **Present the synthesized comparison table + rationale paragraph** (from advisor_research step)
+
+2. **Use AskUserQuestion:**
+   - header: "{area_name}"
+   - question: "Which approach for {area_name}?"
+   - options: Extract from the table's Option column (AskUserQuestion adds "Other" automatically)
+
+3. **Record the user's selection:**
+   - If user picks from table options → record as locked decision for that area
+   - If user picks "Other" → receive their input, reflect it back for confirmation, record
+
+4. **After recording pick, Antigravity decides whether follow-up questions are needed:**
+   - If the pick has ambiguity that would affect downstream planning → ask 1-2 targeted follow-up questions using AskUserQuestion
+   - If the pick is clear and self-contained → move to next area
+   - Do NOT ask the standard 4 questions — the table already provided the context
+
+5. **After all areas processed:**
+   - header: "Done"
+   - question: "That covers [list areas]. Ready to create context?"
+   - options: "Create context" / "Revisit an area"
+
+**Scope creep handling (advisor mode):**
+If user mentions something outside the phase domain:
+```
+"[Feature] sounds like a new capability — that belongs in its own phase.
+I'll note it as a deferred idea.
+
+Back to [current area]: [return to current question]"
+```
+
+Track deferred ideas internally.
+
+---
+
+**If ADVISOR_MODE is false:**
+
 For each selected area, conduct a focused discussion loop.
 
+**Research-before-questions mode:** Check if `research_questions` is enabled in config (from init context or `.planning/config.json`). When enabled, before presenting questions for each area:
+1. Do a brief web search for best practices related to the area topic
+2. Summarize the top findings in 2-3 bullet points
+3. Present the research alongside the question so the user can make a more informed decision
+
+Example with research enabled:
+```
+Let's talk about [Authentication Strategy].
+
+📊 Best practices research:
+• OAuth 2.0 + PKCE is the current standard for SPAs (replaces implicit flow)
+• Session tokens with httpOnly cookies preferred over localStorage for XSS protection
+• Consider passkey/WebAuthn support — adoption is accelerating in 2025-2026
+
+With that context: How should users authenticate?
+```
+
+When disabled (default), skip the research and present questions directly as before.
+
+**Text mode support:** Parse optional `--text` from `$ARGUMENTS`.
+- Accept `--text` flag OR read `workflow.text_mode` from config (from init context)
+- When active, replace ALL `AskUserQuestion` calls with plain-text numbered lists
+- User types a number to select, or types free text for "Other"
+- This is required for Antigravity remote sessions (`/rc` mode) where TUI menus
+  don't work through the Antigravity App
+
 **Batch mode support:** Parse optional `--batch` from `$ARGUMENTS`.
+- Accept `--batch`, `--batch=N`, or `--batch N`
+
+**Analyze mode support:** Parse optional `--analyze` from `$ARGUMENTS`.
+When `--analyze` is active, before presenting each question (or question group in batch mode), provide a brief **trade-off analysis** for the decision:
+- 2-3 options with pros/cons based on codebase context and common patterns
+- A recommended approach with reasoning
+- Known pitfalls or constraints from prior phases
+
+Example with `--analyze`:
+```
+**Trade-off analysis: Authentication strategy**
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Session cookies | Simple, httpOnly prevents XSS | Requires CSRF protection, sticky sessions |
+| JWT (stateless) | Scalable, no server state | Token size, revocation complexity |
+| OAuth 2.0 + PKCE | Industry standard for SPAs | More setup, redirect flow UX |
+
+💡 Recommended: OAuth 2.0 + PKCE — your app has social login in requirements (REQ-04) and this aligns with the existing NextAuth setup in `src/lib/auth.ts`.
+
+How should users authenticate?
+```
+
+This gives the user context to make informed decisions without extra prompting. When `--analyze` is absent, present questions directly as before.
 - Accept `--batch`, `--batch=N`, or `--batch N`
 - Default to 4 questions per batch when no number is provided
 - Clamp explicit sizes to 2-5 so a batch stays answerable
@@ -500,10 +716,22 @@ Back to [current area]: [return to current question]"
 ```
 
 Track deferred ideas internally.
+
+**Track discussion log data internally:**
+For each question asked, accumulate:
+- Area name
+- All options presented (label + description)
+- Which option the user selected (or their free-text response)
+- Any follow-up notes or clarifications the user provided
+This data is used to generate DISCUSSION-LOG.md in the `write_context` step.
 </step>
 
 <step name="write_context">
 Create CONTEXT.md capturing decisions made.
+
+**Also generate DISCUSSION-LOG.md** — a full audit trail of the discuss-phase Q&A.
+This file is for human reference only (software audits, compliance reviews). It is NOT
+consumed by downstream agents (researcher, planner, executor).
 
 **Find or create phase directory:**
 
@@ -535,14 +763,19 @@ mkdir -p ".planning/phases/${padded_phase}-${phase_slug}"
 ## Implementation Decisions
 
 ### [Category 1 that was discussed]
-- [Decision or preference captured]
-- [Another decision if applicable]
+- **D-01:** [Decision or preference captured]
+- **D-02:** [Another decision if applicable]
 
 ### [Category 2 that was discussed]
-- [Decision or preference captured]
+- **D-03:** [Decision or preference captured]
 
 ### Antigravity's Discretion
 [Areas where user said "you decide" — note that Antigravity has flexibility here]
+
+### Folded Todos
+[If any todos were folded into scope from the cross_reference_todos step, list them here.
+Each entry should include the todo title, original problem, and how it fits this phase's scope.
+If no todos were folded: omit this subsection entirely.]
 
 </decisions>
 
@@ -594,6 +827,12 @@ Every entry needs a full relative path — not just a name.]
 ## Deferred Ideas
 
 [Ideas that came up but belong in other phases. Don't lose them.]
+
+### Reviewed Todos (not folded)
+[If any todos were reviewed in cross_reference_todos but not folded into scope,
+list them here so future phases know they were considered.
+Each entry: todo title + reason it was deferred (out of scope, belongs in Phase Y, etc.)
+If no reviewed-but-deferred todos: omit this subsection entirely.]
 
 [If none: "None — discussion stayed within phase scope"]
 
@@ -648,10 +887,54 @@ Created: .planning/phases/${PADDED_PHASE}-${SLUG}/${PADDED_PHASE}-CONTEXT.md
 </step>
 
 <step name="git_commit">
-Commit phase context (uses `commit_docs` from init internally):
+**Write DISCUSSION-LOG.md before committing:**
+
+**File location:** `${phase_dir}/${padded_phase}-DISCUSSION-LOG.md`
+
+```markdown
+# Phase [X]: [Name] - Discussion Log
+
+> **Audit trail only.** Do not use as input to planning, research, or execution agents.
+> Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
+
+**Date:** [ISO date]
+**Phase:** [phase number]-[phase name]
+**Areas discussed:** [comma-separated list]
+
+---
+
+[For each gray area discussed:]
+
+## [Area Name]
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| [Option 1] | [Description from AskUserQuestion] | |
+| [Option 2] | [Description] | ✓ |
+| [Option 3] | [Description] | |
+
+**User's choice:** [Selected option or free-text response]
+**Notes:** [Any clarifications, follow-up context, or rationale the user provided]
+
+---
+
+[Repeat for each area]
+
+## Antigravity's Discretion
+
+[List areas where user said "you decide" or deferred to Antigravity]
+
+## Deferred Ideas
+
+[Ideas mentioned during discussion that were noted for future phases]
+```
+
+Write file.
+
+Commit phase context and discussion log:
 
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs(${padded_phase}): capture phase context" --files "${phase_dir}/${padded_phase}-CONTEXT.md"
+.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs(${padded_phase}): capture phase context" --files "${phase_dir}/${padded_phase}-CONTEXT.md" "${phase_dir}/${padded_phase}-DISCUSSION-LOG.md"
 ```
 
 Confirm: "Committed: docs(${padded_phase}): capture phase context"
@@ -661,7 +944,7 @@ Confirm: "Committed: docs(${padded_phase}): capture phase context"
 Update STATE.md with session info:
 
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" state record-session \
+.agent/skills/gsd/bin/gsd-tools.cjs" state record-session \
   --stopped-at "Phase ${PHASE} context gathered" \
   --resume-file "${phase_dir}/${padded_phase}-CONTEXT.md"
 ```
@@ -669,7 +952,7 @@ node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" state reco
 Commit STATE.md:
 
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs(state): record phase ${PHASE} context session" --files .planning/STATE.md
+.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs(state): record phase ${PHASE} context session" --files .planning/STATE.md
 ```
 </step>
 
@@ -680,18 +963,18 @@ Check for auto-advance trigger:
 2. **Sync chain flag with intent** — if user invoked manually (no `--auto`), clear the ephemeral chain flag from any previous interrupted `--auto` chain. This does NOT touch `workflow.auto_advance` (the user's persistent settings preference):
    ```bash
    if [[ ! "$ARGUMENTS" =~ --auto ]]; then
-     node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
+.agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
    fi
    ```
 3. Read both the chain flag and user preference:
    ```bash
-   AUTO_CHAIN=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
-   AUTO_CFG=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
    ```
 
 **If `--auto` flag present AND `AUTO_CHAIN` is not true:** Persist chain flag to config (handles direct `--auto` usage without new-project):
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active true
+.agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active true
 ```
 
 **If `--auto` flag present OR `AUTO_CHAIN` is true OR `AUTO_CFG` is true:**

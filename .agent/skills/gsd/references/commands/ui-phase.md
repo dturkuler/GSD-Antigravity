@@ -20,8 +20,8 @@ Flow: Validate → Research UI → Verify UI-SPEC → Done
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/ui-phase.md
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@references/workflows/ui-phase.md
+@references/docs/ui-brand.md
 </execution_context>
 
 <context>
@@ -29,6 +29,6 @@ Phase number: $ARGUMENTS — optional, auto-detects next unplanned phase if omit
 </context>
 
 <process>
-Execute @C:/projects/GSD-Antigravityreferences/workflows/ui-phase.md end-to-end.
+Execute @references/workflows/ui-phase.md end-to-end.
 Preserve all workflow gates.
 </process>

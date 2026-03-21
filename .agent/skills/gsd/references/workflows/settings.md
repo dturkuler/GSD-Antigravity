@@ -12,8 +12,8 @@ Read all files referenced by the invoking prompt's execution_context before star
 Ensure config exists and load current state:
 
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-ensure-section
-INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" state load)
+.agent/skills/gsd/bin/gsd-tools.cjs" config-ensure-section
+.agent/skills/gsd/bin/gsd-tools.cjs" state load)
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -49,7 +49,7 @@ AskUserQuestion([
       { label: "Quality", description: "Opus everywhere except verification (highest cost)" },
       { label: "Balanced (Recommended)", description: "Opus for planning, Sonnet for research/execution/verification" },
       { label: "Budget", description: "Sonnet for writing, Haiku for research/verification (lowest cost)" },
-      { label: "Inherit", description: "Use current session model for all agents (best for OpenCode /model)" }
+      { label: "Inherit", description: "Use current session model for all agents (best for OpenRouter, local models, or runtime model switching)" }
     ]
   },
   {
@@ -135,6 +135,15 @@ AskUserQuestion([
       { label: "Yes (Recommended)", description: "Warn when context usage exceeds 65%. Helps avoid losing work." },
       { label: "No", description: "Disable warnings. Allows Antigravity to reach auto-compact naturally. Good for long unattended runs." }
     ]
+  },
+  {
+    question: "Research best practices before asking questions? (web search during new-project and discuss-phase)",
+    header: "Research Qs",
+    multiSelect: false,
+    options: [
+      { label: "No (Recommended)", description: "Ask questions directly. Faster, uses fewer tokens." },
+      { label: "Yes", description: "Search web for best practices before each question group. More informed questions but uses more tokens." }
+    ]
   }
 ])
 ```
@@ -157,10 +166,16 @@ Merge new settings into existing config.json:
     "ui_safety_gate": true/false
   },
   "git": {
-    "branching_strategy": "none" | "phase" | "milestone"
+    "branching_strategy": "none" | "phase" | "milestone",
+    "quick_branch_template": <string|null>
   },
   "hooks": {
-    "context_warnings": true/false
+    "context_warnings": true/false,
+    "workflow_guard": true/false,
+    "research_questions": true/false
+  },
+  "workflow": {
+    "text_mode": true/false  // Use plain-text questions instead of TUI menus (for /rc remote sessions)
   }
 }
 ```
@@ -200,6 +215,7 @@ Write `~/.gsd/defaults.json` with:
   "commit_docs": <current>,
   "parallelization": <current>,
   "branching_strategy": <current>,
+  "quick_branch_template": <current>,
   "workflow": {
     "research": <current>,
     "plan_check": <current>,

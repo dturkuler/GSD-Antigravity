@@ -18,8 +18,8 @@ Output: {phase_num}-UI-REVIEW.md
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/ui-review.md
-@C:/projects/GSD-Antigravity/.antigravity/get-shit-done/references/ui-brand.md
+@references/workflows/ui-review.md
+@references/docs/ui-brand.md
 </execution_context>
 
 <context>
@@ -27,6 +27,6 @@ Phase: $ARGUMENTS — optional, defaults to last completed phase.
 </context>
 
 <process>
-Execute @C:/projects/GSD-Antigravityreferences/workflows/ui-review.md end-to-end.
+Execute @references/workflows/ui-review.md end-to-end.
 Preserve all workflow gates.
 </process>

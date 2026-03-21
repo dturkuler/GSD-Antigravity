@@ -1,6 +1,9 @@
 {
-  "version": "1.25.1",
+  "version": "1.27.0",
   "commands": {
+    "add-backlog": {
+      "description": "Add an idea to the backlog parking lot (999.x numbering)"
+    },
     "add-phase": {
       "description": "Add phase to end of current milestone in roadmap"
     },
@@ -12,6 +15,9 @@
     },
     "audit-milestone": {
       "description": "Audit milestone completion against original intent before archiving"
+    },
+    "audit-uat": {
+      "description": "Cross-phase audit of all outstanding UAT and verification items"
     },
     "autonomous": {
       "description": "Run all remaining phases autonomously \u2014 discuss\u2192plan\u2192execute per phase"
@@ -37,6 +43,9 @@
     "execute-phase": {
       "description": "Execute all plans in a phase with wave-based parallelization"
     },
+    "fast": {
+      "description": "Execute a trivial task inline \u2014 no subagents, no planning overhead"
+    },
     "health": {
       "description": "Diagnose planning directory health and optionally repair issues"
     },
@@ -61,6 +70,9 @@
     "new-project": {
       "description": "Initialize a new project with deep context gathering and PROJECT.md"
     },
+    "next": {
+      "description": "Automatically advance to the next logical step in the GSD workflow"
+    },
     "note": {
       "description": "Zero-friction idea capture. Append, list, or promote notes to todos."
     },
@@ -72,6 +84,15 @@
     },
     "plan-phase": {
       "description": "Create detailed phase plan (PLAN.md) with verification loop"
+    },
+    "plant-seed": {
+      "description": "Capture a forward-looking idea with trigger conditions \u2014 surfaces automatically at the right milestone"
+    },
+    "pr-branch": {
+      "description": "Create a clean PR branch by filtering out .planning/ commits \u2014 ready for code review"
+    },
+    "profile-user": {
+      "description": "Generate developer behavioral profile and create Antigravity-discoverable artifacts"
     },
     "progress": {
       "description": "Calculate and render project completion percentage.",
@@ -95,14 +116,29 @@
     "resume-work": {
       "description": "Resume work from previous session with full context restoration"
     },
+    "review-backlog": {
+      "description": "Review and promote backlog items to active milestone"
+    },
+    "review": {
+      "description": "Request cross-AI peer review of phase plans from external AI CLIs"
+    },
+    "session-report": {
+      "description": "Generate a session report with token usage estimates, work summary, and outcomes"
+    },
     "set-profile": {
       "description": "Switch model profile for GSD agents (quality/balanced/budget/inherit)"
     },
     "settings": {
       "description": "Configure GSD workflow toggles and model profile"
     },
+    "ship": {
+      "description": "Create PR, run review, and prepare for merge after verification passes"
+    },
     "stats": {
       "description": "Display project statistics \u2014 phases, plans, requirements, git metrics, and timeline"
+    },
+    "thread": {
+      "description": "Manage persistent context threads for cross-session work"
     },
     "ui-phase": {
       "description": "Generate UI design contract (UI-SPEC.md) for frontend phases"

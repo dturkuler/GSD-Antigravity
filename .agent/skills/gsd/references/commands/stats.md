@@ -10,9 +10,9 @@ Display comprehensive project statistics including phase progress, plan executio
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/stats.md
+@references/workflows/stats.md
 </execution_context>
 
 <process>
-Execute the stats workflow from @C:/projects/GSD-Antigravityreferences/workflows/stats.md end-to-end.
+Execute the stats workflow from @references/workflows/stats.md end-to-end.
 </process>

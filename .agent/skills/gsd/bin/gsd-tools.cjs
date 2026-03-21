@@ -33,7 +33,8 @@ function showHelp(cmd, sub) {
 
 const fs = require('fs');
 const path = require('path');
-const { error, parseIncludeFlag } = require('./lib/core.cjs');
+const { parseIncludeFlag } = require('./lib/core.cjs');
+const { error, findProjectRoot } = require('./lib/core.cjs');
 const state = require('./lib/state.cjs');
 const phase = require('./lib/phase.cjs');
 const roadmap = require('./lib/roadmap.cjs');
@@ -44,6 +45,8 @@ const milestone = require('./lib/milestone.cjs');
 const commands = require('./lib/commands.cjs');
 const init = require('./lib/init.cjs');
 const frontmatter = require('./lib/frontmatter.cjs');
+const profilePipeline = require('./lib/profile-pipeline.cjs');
+const profileOutput = require('./lib/profile-output.cjs');
 
 // ─── CLI Router ───────────────────────────────────────────────────────────────
 
@@ -70,6 +73,13 @@ async function main() {
   error(`Invalid --cwd: ${cwd}`);
   }
 
+  // Resolve worktree root: in a linked worktree, .planning/ lives in the main worktree
+  const { resolveWorktreeRoot } = require('./lib/core.cjs');
+  const worktreeRoot = resolveWorktreeRoot(cwd);
+  if (worktreeRoot !== cwd) {
+  cwd = worktreeRoot;
+  }
+
   const rawIndex = args.indexOf('--raw');
   const raw = rawIndex !== -1;
 
@@ -89,7 +99,18 @@ async function main() {
   const command = args[0];
 
   if (!command) {
-  error('Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, init');
+  error('Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--cwd <path>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-new-project, init');
+  }
+
+  // Multi-repo guard: resolve project root for commands that read/write .planning/.
+  // Skip for pure-utility commands that don't touch .planning/ to avoid unnecessary
+  // filesystem traversal on every invocation.
+  const SKIP_ROOT_RESOLUTION = new Set([
+  'generate-slug', 'current-timestamp', 'verify-path-exists',
+  'verify-summary', 'template', 'frontmatter',
+  ]);
+  if (!SKIP_ROOT_RESOLUTION.has(command)) {
+  cwd = findProjectRoot(cwd);
   }
 
   switch (command) {
@@ -158,6 +179,32 @@ async function main() {
       stopped_at: stoppedIdx !== -1 ? args[stoppedIdx + 1] : null,
       resume_file: resumeIdx !== -1 ? args[resumeIdx + 1] : 'None',
     }, raw);
+    } else if (subcommand === 'begin-phase') {
+    const phaseIdx = args.indexOf('--phase');
+    const nameIdx = args.indexOf('--name');
+    const plansIdx = args.indexOf('--plans');
+    state.cmdStateBeginPhase(
+      cwd,
+      phaseIdx !== -1 ? args[phaseIdx + 1] : null,
+      nameIdx !== -1 ? args[nameIdx + 1] : null,
+      plansIdx !== -1 ? parseInt(args[plansIdx + 1], 10) : null,
+      raw
+    );
+    } else if (subcommand === 'signal-waiting') {
+    const typeIdx = args.indexOf('--type');
+    const qIdx = args.indexOf('--question');
+    const optIdx = args.indexOf('--options');
+    const phaseIdx = args.indexOf('--phase');
+    state.cmdSignalWaiting(
+      cwd,
+      typeIdx !== -1 ? args[typeIdx + 1] : null,
+      qIdx !== -1 ? args[qIdx + 1] : null,
+      optIdx !== -1 ? args[optIdx + 1] : null,
+      phaseIdx !== -1 ? args[phaseIdx + 1] : null,
+      raw
+    );
+    } else if (subcommand === 'signal-resume') {
+    state.cmdSignalResume(cwd, raw);
     } else {
     state.cmdStateLoad(cwd, raw);
     }
@@ -176,6 +223,7 @@ async function main() {
 
   case 'commit': {
     const amend = args.includes('--amend');
+    const noVerify = args.includes('--no-verify');
     const filesIndex = args.indexOf('--files');
     // Collect all positional args between command name and first flag,
     // then join them — handles both quoted ("multi word msg") and
@@ -184,7 +232,15 @@ async function main() {
     const messageArgs = args.slice(1, endIndex).filter(a => !a.startsWith('--'));
     const message = messageArgs.join(' ') || undefined;
     const files = filesIndex !== -1 ? args.slice(filesIndex + 1).filter(a => !a.startsWith('--')) : [];
-    commands.cmdCommit(cwd, message, files, raw, amend);
+    commands.cmdCommit(cwd, message, files, raw, amend, noVerify);
+    break;
+  }
+
+  case 'commit-to-subrepo': {
+    const message = args[1];
+    const filesIndex = args.indexOf('--files');
+    const files = filesIndex !== -1 ? args.slice(filesIndex + 1).filter(a => !a.startsWith('--')) : [];
+    commands.cmdCommitToSubrepo(cwd, message, files, raw);
     break;
   }
 
@@ -214,7 +270,12 @@ async function main() {
       name: nameIdx !== -1 ? args[nameIdx + 1] : null,
       type: typeIdx !== -1 ? args[typeIdx + 1] : 'execute',
       wave: waveIdx !== -1 ? args[waveIdx + 1] : '1',
-      fields: fieldsIdx !== -1 ? JSON.parse(args[fieldsIdx + 1]) : {},
+      fields: fieldsIdx !== -1 ? (() => {
+      const { safeJsonParse } = require('./lib/security.cjs');
+      const result = safeJsonParse(args[fieldsIdx + 1], { label: '--fields' });
+      if (!result.ok) error(result.error);
+      return result.value;
+      })() : {},
     }, raw);
     } else {
     error('Unknown template subcommand. Available: select, fill');
@@ -304,6 +365,11 @@ async function main() {
     break;
   }
 
+  case 'config-new-project': {
+    config.cmdConfigNewProject(cwd, args[1], raw);
+    break;
+  }
+
   case 'history-digest': {
     commands.cmdHistoryDigest(cwd, raw);
     break;
@@ -355,7 +421,18 @@ async function main() {
     if (subcommand === 'next-decimal') {
     phase.cmdPhaseNextDecimal(cwd, args[2], raw);
     } else if (subcommand === 'add') {
-    phase.cmdPhaseAdd(cwd, args.slice(2).join(' '), raw);
+    const idIdx = args.indexOf('--id');
+    let customId = null;
+    const descArgs = [];
+    for (let i = 2; i < args.length; i++) {
+      if (args[i] === '--id' && i + 1 < args.length) {
+      customId = args[i + 1];
+      i++; // skip value
+      } else {
+      descArgs.push(args[i]);
+      }
+    }
+    phase.cmdPhaseAdd(cwd, descArgs.join(' '), raw, customId);
     } else if (subcommand === 'insert') {
     phase.cmdPhaseInsert(cwd, args[2], args.slice(3).join(' '), raw);
     } else if (subcommand === 'remove') {
@@ -410,6 +487,12 @@ async function main() {
     break;
   }
 
+  case 'audit-uat': {
+    const uat = require('./lib/uat.cjs');
+    uat.cmdAuditUat(cwd, raw);
+    break;
+  }
+
   case 'stats': {
     const subcommand = args[1] || 'json';
     commands.cmdStats(cwd, subcommand, raw);
@@ -420,8 +503,10 @@ async function main() {
     const subcommand = args[1];
     if (subcommand === 'complete') {
     commands.cmdTodoComplete(cwd, args[2], raw);
+    } else if (subcommand === 'match-phase') {
+    commands.cmdTodoMatchPhase(cwd, args[2], raw);
     } else {
-    error('Unknown todo subcommand. Available: complete');
+    error('Unknown todo subcommand. Available: complete, match-phase');
     }
     break;
   }
@@ -510,6 +595,94 @@ async function main() {
     limit: limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 10,
     freshness: freshnessIdx !== -1 ? args[freshnessIdx + 1] : null,
     }, raw);
+    break;
+  }
+
+  // ─── Profiling Pipeline ────────────────────────────────────────────────
+
+  case 'scan-sessions': {
+    const pathIdx = args.indexOf('--path');
+    const sessionsPath = pathIdx !== -1 ? args[pathIdx + 1] : null;
+    const verboseFlag = args.includes('--verbose');
+    const jsonFlag = args.includes('--json');
+    await profilePipeline.cmdScanSessions(sessionsPath, { verbose: verboseFlag, json: jsonFlag }, raw);
+    break;
+  }
+
+  case 'extract-messages': {
+    const sessionIdx = args.indexOf('--session');
+    const sessionId = sessionIdx !== -1 ? args[sessionIdx + 1] : null;
+    const limitIdx = args.indexOf('--limit');
+    const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
+    const pathIdx = args.indexOf('--path');
+    const sessionsPath = pathIdx !== -1 ? args[pathIdx + 1] : null;
+    const projectArg = args[1];
+    if (!projectArg || projectArg.startsWith('--')) {
+    error('Usage: gsd-tools extract-messages <project> [--session <id>] [--limit N] [--path <dir>]\nRun scan-sessions first to see available projects.');
+    }
+    await profilePipeline.cmdExtractMessages(projectArg, { sessionId, limit }, raw, sessionsPath);
+    break;
+  }
+
+  case 'profile-sample': {
+    const pathIdx = args.indexOf('--path');
+    const sessionsPath = pathIdx !== -1 ? args[pathIdx + 1] : null;
+    const limitIdx = args.indexOf('--limit');
+    const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 150;
+    const maxPerIdx = args.indexOf('--max-per-project');
+    const maxPerProject = maxPerIdx !== -1 ? parseInt(args[maxPerIdx + 1], 10) : null;
+    const maxCharsIdx = args.indexOf('--max-chars');
+    const maxChars = maxCharsIdx !== -1 ? parseInt(args[maxCharsIdx + 1], 10) : 500;
+    await profilePipeline.cmdProfileSample(sessionsPath, { limit, maxPerProject, maxChars }, raw);
+    break;
+  }
+
+  // ─── Profile Output ──────────────────────────────────────────────────
+
+  case 'write-profile': {
+    const inputIdx = args.indexOf('--input');
+    const inputPath = inputIdx !== -1 ? args[inputIdx + 1] : null;
+    if (!inputPath) error('--input <analysis-json-path> is required');
+    const outputIdx = args.indexOf('--output');
+    const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
+    profileOutput.cmdWriteProfile(cwd, { input: inputPath, output: outputPath }, raw);
+    break;
+  }
+
+  case 'profile-questionnaire': {
+    const answersIdx = args.indexOf('--answers');
+    const answers = answersIdx !== -1 ? args[answersIdx + 1] : null;
+    profileOutput.cmdProfileQuestionnaire({ answers }, raw);
+    break;
+  }
+
+  case 'generate-dev-preferences': {
+    const analysisIdx = args.indexOf('--analysis');
+    const analysisPath = analysisIdx !== -1 ? args[analysisIdx + 1] : null;
+    const outputIdx = args.indexOf('--output');
+    const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
+    const stackIdx = args.indexOf('--stack');
+    const stack = stackIdx !== -1 ? args[stackIdx + 1] : null;
+    profileOutput.cmdGenerateDevPreferences(cwd, { analysis: analysisPath, output: outputPath, stack }, raw);
+    break;
+  }
+
+  case 'generate-antigravity-profile': {
+    const analysisIdx = args.indexOf('--analysis');
+    const analysisPath = analysisIdx !== -1 ? args[analysisIdx + 1] : null;
+    const outputIdx = args.indexOf('--output');
+    const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
+    const globalFlag = args.includes('--global');
+    profileOutput.cmdGenerateClaudeProfile(cwd, { analysis: analysisPath, output: outputPath, global: globalFlag }, raw);
+    break;
+  }
+
+  case 'generate-antigravity-md': {
+    const outputIdx = args.indexOf('--output');
+    const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
+    const autoFlag = args.includes('--auto');
+    const forceFlag = args.includes('--force');
+    profileOutput.cmdGenerateClaudeMd(cwd, { output: outputPath, auto: autoFlag, force: forceFlag }, raw);
     break;
   }
 

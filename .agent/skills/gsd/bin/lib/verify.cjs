@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { safeReadFile, normalizePhaseName, execGit, findPhaseInternal, getMilestoneInfo, stripShippedMilestones, output, error } = require('./core.cjs');
+const { safeReadFile, loadConfig, normalizePhaseName, execGit, findPhaseInternal, getMilestoneInfo, stripShippedMilestones, extractCurrentMilestone, output, error } = require('./core.cjs');
 const { extractFrontmatter, parseMustHavesBlock } = require('./frontmatter.cjs');
 const { writeStateMd } = require('./state.cjs');
 
@@ -409,7 +409,7 @@ function cmdValidateConsistency(cwd, raw) {
   }
 
   const roadmapContentRaw = fs.readFileSync(roadmapPath, 'utf-8');
-  const roadmapContent = stripShippedMilestones(roadmapContentRaw);
+  const roadmapContent = extractCurrentMilestone(roadmapContentRaw, cwd);
 
   // Extract phases from ROADMAP (archived milestones already stripped)
   const roadmapPhases = new Set();
@@ -428,7 +428,7 @@ function cmdValidateConsistency(cwd, raw) {
     const dm = dir.match(/^(\d+[A-Z]?(?:\.\d+)*)/i);
     if (dm) diskPhases.add(dm[1]);
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // Check: phases in ROADMAP but not on disk
   for (const p of roadmapPhases) {
@@ -445,15 +445,18 @@ function cmdValidateConsistency(cwd, raw) {
   }
   }
 
-  // Check: sequential phase numbers (integers only)
+  // Check: sequential phase numbers (integers only, skip in custom naming mode)
+  const config = loadConfig(cwd);
+  if (config.phase_naming !== 'custom') {
   const integerPhases = [...diskPhases]
-  .filter(p => !p.includes('.'))
-  .map(p => parseInt(p, 10))
-  .sort((a, b) => a - b);
+    .filter(p => !p.includes('.'))
+    .map(p => parseInt(p, 10))
+    .sort((a, b) => a - b);
 
   for (let i = 1; i < integerPhases.length; i++) {
-  if (integerPhases[i] !== integerPhases[i - 1] + 1) {
+    if (integerPhases[i] !== integerPhases[i - 1] + 1) {
     warnings.push(`Gap in phase numbering: ${integerPhases[i - 1]} → ${integerPhases[i]}`);
+    }
   }
   }
 
@@ -490,7 +493,7 @@ function cmdValidateConsistency(cwd, raw) {
     }
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // Check: frontmatter in plans has required fields
   try {
@@ -510,7 +513,7 @@ function cmdValidateConsistency(cwd, raw) {
     }
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   const passed = errors.length === 0;
   output({ passed, errors, warnings, warning_count: warnings.length }, raw, passed ? 'passed' : 'failed');
@@ -599,15 +602,19 @@ function cmdValidateHealth(cwd, options, raw) {
       if (m) diskPhases.add(m[1]);
     }
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
   // Check for invalid references
   for (const ref of phaseRefs) {
     const normalizedRef = String(parseInt(ref, 10)).padStart(2, '0');
     if (!diskPhases.has(ref) && !diskPhases.has(normalizedRef) && !diskPhases.has(String(parseInt(ref, 10)))) {
     // Only warn if phases dir has any content (not just an empty project)
     if (diskPhases.size > 0) {
-      addIssue('warning', 'W002', `STATE.md references phase ${ref}, but only phases ${[...diskPhases].sort().join(', ')} exist`, 'Run /gsd:health --repair to regenerate STATE.md', true);
-      if (!repairs.includes('regenerateState')) repairs.push('regenerateState');
+      addIssue(
+      'warning',
+      'W002',
+      `STATE.md references phase ${ref}, but only phases ${[...diskPhases].sort().join(', ')} exist`,
+      'Review STATE.md manually before changing it; /gsd:health --repair will not overwrite an existing STATE.md for phase mismatches'
+      );
     }
     }
   }
@@ -641,7 +648,7 @@ function cmdValidateHealth(cwd, options, raw) {
     addIssue('warning', 'W008', 'config.json: workflow.nyquist_validation absent (defaults to enabled but agents may skip)', 'Run /gsd:health --repair to add key', true);
     if (!repairs.includes('addNyquistKey')) repairs.push('addNyquistKey');
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
   }
 
   // ─── Check 6: Phase directory naming (NN-name format) ─────────────────────
@@ -652,7 +659,7 @@ function cmdValidateHealth(cwd, options, raw) {
     addIssue('warning', 'W005', `Phase directory "${e.name}" doesn't follow NN-name format`, 'Rename to match pattern (e.g., 01-setup)');
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // ─── Check 7: Orphaned plans (PLAN without SUMMARY) ───────────────────────
   try {
@@ -671,7 +678,7 @@ function cmdValidateHealth(cwd, options, raw) {
     }
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // ─── Check 7b: Nyquist VALIDATION.md consistency ────────────────────────
   try {
@@ -689,13 +696,13 @@ function cmdValidateHealth(cwd, options, raw) {
     }
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // ─── Check 8: Run existing consistency checks ─────────────────────────────
   // Inline subset of cmdValidateConsistency
   if (fs.existsSync(roadmapPath)) {
   const roadmapContentRaw = fs.readFileSync(roadmapPath, 'utf-8');
-  const roadmapContent = stripShippedMilestones(roadmapContentRaw);
+  const roadmapContent = extractCurrentMilestone(roadmapContentRaw, cwd);
   const roadmapPhases = new Set();
   const phasePattern = /#{2,4}\s*Phase\s+(\d+[A-Z]?(?:\.\d+)*)\s*:/gi;
   let m;
@@ -712,7 +719,7 @@ function cmdValidateHealth(cwd, options, raw) {
       if (dm) diskPhases.add(dm[1]);
     }
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   // Phases in ROADMAP but not on disk
   for (const p of roadmapPhases) {
@@ -746,6 +753,7 @@ function cmdValidateHealth(cwd, options, raw) {
         branching_strategy: 'none',
         phase_branch_template: 'gsd/phase-{phase}-{slug}',
         milestone_branch_template: 'gsd/{milestone}-{slug}',
+        quick_branch_template: null,
         workflow: {
         research: true,
         plan_check: true,

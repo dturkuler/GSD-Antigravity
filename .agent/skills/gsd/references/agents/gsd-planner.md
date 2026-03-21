@@ -60,6 +60,7 @@ The orchestrator provides user decisions in `<user_decisions>` tags from `/gsd:d
    - If user said "use library X" → task MUST use library X, not an alternative
    - If user said "card layout" → task MUST implement cards, not tables
    - If user said "no animations" → task MUST NOT include animations
+   - Reference the decision ID (D-01, D-02, etc.) in task actions for traceability
 
 2. **Deferred Ideas (from `## Deferred Ideas`)** — MUST NOT appear in plans
    - If user deferred "search functionality" → NO search tasks allowed
@@ -69,7 +70,8 @@ The orchestrator provides user decisions in `<user_decisions>` tags from `/gsd:d
    - Make reasonable choices and document in task actions
 
 **Self-check before returning:** For each plan, verify:
-- [ ] Every locked decision has a task implementing it
+- [ ] Every locked decision (D-01, D-02, etc.) has a task implementing it
+- [ ] Task actions reference the decision ID they implement (e.g., "per D-03")
 - [ ] No task implements a deferred idea
 - [ ] Discretion areas are handled reasonably
 
@@ -426,8 +428,8 @@ Output: [Artifacts created]
 </objective>
 
 <execution_context>
-@C:/projects/GSD-Antigravityreferences/workflows/execute-plan.md
-@C:/projects/GSD-Antigravityassets/templates/summary.md
+@references/workflows/execute-plan.md
+@assets/templates/summary.md
 </execution_context>
 
 <context>
@@ -931,7 +933,7 @@ Group by plan, dimension, severity.
 ### Step 6: Commit
 
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "fix($PHASE): revise plans based on checker feedback" --files .planning/phases/$PHASE-*/$PHASE-*-PLAN.md
+.agent/skills/gsd/bin/gsd-tools.cjs" commit "fix($PHASE): revise plans based on checker feedback" --files .planning/phases/$PHASE-*/$PHASE-*-PLAN.md
 ```
 
 ### Step 7: Return Revision Summary
@@ -970,7 +972,7 @@ node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "fi
 Load planning context:
 
 ```bash
-INIT=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" init plan-phase "${PHASE}")
+.agent/skills/gsd/bin/gsd-tools.cjs" init plan-phase "${PHASE}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 
@@ -1027,7 +1029,7 @@ Apply discovery level protocol (see discovery_levels section).
 
 **Step 1 — Generate digest index:**
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" history-digest
+.agent/skills/gsd/bin/gsd-tools.cjs" history-digest
 ```
 
 **Step 2 — Select relevant phases (typically 2-4):**
@@ -1155,7 +1157,7 @@ Include all frontmatter fields.
 Validate each created PLAN.md using gsd-tools:
 
 ```bash
-VALID=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" frontmatter validate "$PLAN_PATH" --schema plan)
+.agent/skills/gsd/bin/gsd-tools.cjs" frontmatter validate "$PLAN_PATH" --schema plan)
 ```
 
 Returns JSON: `{ valid, missing, present, schema }`
@@ -1168,7 +1170,7 @@ Required plan frontmatter fields:
 Also validate plan structure:
 
 ```bash
-STRUCTURE=$(node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" verify plan-structure "$PLAN_PATH")
+.agent/skills/gsd/bin/gsd-tools.cjs" verify plan-structure "$PLAN_PATH")
 ```
 
 Returns JSON: `{ valid, errors, warnings, task_count, tasks }`
@@ -1205,7 +1207,7 @@ Plans:
 
 <step name="git_commit">
 ```bash
-node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs($PHASE): create phase plan" --files .planning/phases/$PHASE-*/$PHASE-*-PLAN.md .planning/ROADMAP.md
+.agent/skills/gsd/bin/gsd-tools.cjs" commit "docs($PHASE): create phase plan" --files .planning/phases/$PHASE-*/$PHASE-*-PLAN.md .planning/ROADMAP.md
 ```
 </step>
 

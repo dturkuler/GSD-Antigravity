@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawnSync } = require('child_process');
+const { execSync, execFileSync, spawnSync } = require('child_process');
 const { MODEL_PROFILES } = require('./model-profiles.cjs');
 
 // ─── Path helpers ────────────────────────────────────────────────────────────
@@ -12,6 +12,102 @@ const { MODEL_PROFILES } = require('./model-profiles.cjs');
 /** Normalize a relative path to always use forward slashes (cross-platform). */
 function toPosixPath(p) {
   return p.split(path.sep).join('/');
+}
+
+/**
+ * Scan immediate child directories for separate git repos.
+ * Returns a sorted array of directory names that have their own `.git`.
+ * Excludes hidden directories and node_modules.
+ */
+function detectSubRepos(cwd) {
+  const results = [];
+  try {
+  const entries = fs.readdirSync(cwd, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+    const gitPath = path.join(cwd, entry.name, '.git');
+    try {
+    if (fs.existsSync(gitPath)) {
+      results.push(entry.name);
+    }
+    } catch {}
+  }
+  } catch {}
+  return results.sort();
+}
+
+/**
+ * Walk up from `startDir` to find the project root that owns `.planning/`.
+ *
+ * In multi-repo workspaces, Antigravity may open inside a sub-repo (e.g. `backend/`)
+ * instead of the project root. This function prevents `.planning/` from being
+ * created inside the sub-repo by locating the nearest ancestor that already has
+ * a `.planning/` directory.
+ *
+ * Detection strategy (checked in order for each ancestor):
+ * 1. Parent has `.planning/config.json` with `sub_repos` listing this directory
+ * 2. Parent has `.planning/config.json` with `multiRepo: true` (legacy format)
+ * 3. Parent has `.planning/` and current dir has its own `.git` (heuristic)
+ *
+ * Returns `startDir` unchanged when no ancestor `.planning/` is found (first-run
+ * or single-repo projects).
+ */
+function findProjectRoot(startDir) {
+  const resolved = path.resolve(startDir);
+  const root = path.parse(resolved).root;
+  const homedir = require('os').homedir();
+
+  // Check if startDir or any of its ancestors (up to but not including a
+  // candidate project root) contains a .git directory. This handles both
+  // `backend/` (direct sub-repo) and `backend/src/modules/` (nested inside).
+  function isInsideGitRepo(candidateParent) {
+  let d = resolved;
+  while (d !== candidateParent && d !== root) {
+    if (fs.existsSync(path.join(d, '.git'))) return true;
+    d = path.dirname(d);
+  }
+  return false;
+  }
+
+  let dir = resolved;
+  while (dir !== root) {
+  const parent = path.dirname(dir);
+  if (parent === dir) break; // filesystem root
+  if (parent === homedir) break; // never go above home
+
+  const parentPlanning = path.join(parent, '.planning');
+  if (fs.existsSync(parentPlanning) && fs.statSync(parentPlanning).isDirectory()) {
+    const configPath = path.join(parentPlanning, 'config.json');
+    try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const subRepos = config.sub_repos || config.planning?.sub_repos || [];
+
+    // Check explicit sub_repos list
+    if (Array.isArray(subRepos) && subRepos.length > 0) {
+      const relPath = path.relative(parent, resolved);
+      const topSegment = relPath.split(path.sep)[0];
+      if (subRepos.includes(topSegment)) {
+      return parent;
+      }
+    }
+
+    // Check legacy multiRepo flag
+    if (config.multiRepo === true && isInsideGitRepo(parent)) {
+      return parent;
+    }
+    } catch {
+    // config.json missing or malformed — fall back to .git heuristic
+    }
+
+    // Heuristic: parent has .planning/ and we're inside a git repo
+    if (isInsideGitRepo(parent)) {
+    return parent;
+    }
+  }
+  dir = parent;
+  }
+  return startDir;
 }
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
@@ -113,12 +209,20 @@ function loadConfig(cwd) {
   branching_strategy: 'none',
   phase_branch_template: 'gsd/phase-{phase}-{slug}',
   milestone_branch_template: 'gsd/{milestone}-{slug}',
+  quick_branch_template: null,
   research: true,
   plan_checker: true,
   verifier: true,
   nyquist_validation: true,
   parallelization: true,
   brave_search: false,
+  firecrawl: false,
+  exa_search: false,
+  text_mode: false, // when true, use plain-text numbered lists instead of AskUserQuestion menus
+  sub_repos: [],
+  resolve_model_ids: false, // when true, resolve aliases (opus/sonnet/haiku) to full model IDs
+  context_window: 200000, // default 200k; set to 1000000 for Opus/Sonnet 4.6 1M models
+  phase_naming: 'sequential', // 'sequential' (default, auto-increment) or 'custom' (arbitrary string IDs)
   };
 
   try {
@@ -130,6 +234,39 @@ function loadConfig(cwd) {
     const depthToGranularity = { quick: 'coarse', standard: 'standard', comprehensive: 'fine' };
     parsed.granularity = depthToGranularity[parsed.depth] || parsed.depth;
     delete parsed.depth;
+    try { fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2), 'utf-8'); } catch { /* intentionally empty */ }
+  }
+
+  // Auto-detect and sync sub_repos: scan for child directories with .git
+  let configDirty = false;
+
+  // Migrate legacy "multiRepo: true" boolean → sub_repos array
+  if (parsed.multiRepo === true && !parsed.sub_repos && !parsed.planning?.sub_repos) {
+    const detected = detectSubRepos(cwd);
+    if (detected.length > 0) {
+    parsed.sub_repos = detected;
+    if (!parsed.planning) parsed.planning = {};
+    parsed.planning.commit_docs = false;
+    delete parsed.multiRepo;
+    configDirty = true;
+    }
+  }
+
+  // Keep sub_repos in sync with actual filesystem
+  const currentSubRepos = parsed.sub_repos || parsed.planning?.sub_repos || [];
+  if (Array.isArray(currentSubRepos) && currentSubRepos.length > 0) {
+    const detected = detectSubRepos(cwd);
+    if (detected.length > 0) {
+    const sorted = [...currentSubRepos].sort();
+    if (JSON.stringify(sorted) !== JSON.stringify(detected)) {
+      parsed.sub_repos = detected;
+      configDirty = true;
+    }
+    }
+  }
+
+  // Persist sub_repos changes (migration or sync)
+  if (configDirty) {
     try { fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2), 'utf-8'); } catch {}
   }
 
@@ -150,17 +287,33 @@ function loadConfig(cwd) {
 
   return {
     model_profile: get('model_profile') ?? defaults.model_profile,
-    commit_docs: get('commit_docs', { section: 'planning', field: 'commit_docs' }) ?? defaults.commit_docs,
+    commit_docs: (() => {
+    const explicit = get('commit_docs', { section: 'planning', field: 'commit_docs' });
+    // If explicitly set in config, respect the user's choice
+    if (explicit !== undefined) return explicit;
+    // Auto-detection: when no explicit value and .planning/ is gitignored,
+    // default to false instead of true
+    if (isGitIgnored(cwd, '.planning/')) return false;
+    return defaults.commit_docs;
+    })(),
     search_gitignored: get('search_gitignored', { section: 'planning', field: 'search_gitignored' }) ?? defaults.search_gitignored,
     branching_strategy: get('branching_strategy', { section: 'git', field: 'branching_strategy' }) ?? defaults.branching_strategy,
     phase_branch_template: get('phase_branch_template', { section: 'git', field: 'phase_branch_template' }) ?? defaults.phase_branch_template,
     milestone_branch_template: get('milestone_branch_template', { section: 'git', field: 'milestone_branch_template' }) ?? defaults.milestone_branch_template,
+    quick_branch_template: get('quick_branch_template', { section: 'git', field: 'quick_branch_template' }) ?? defaults.quick_branch_template,
     research: get('research', { section: 'workflow', field: 'research' }) ?? defaults.research,
     plan_checker: get('plan_checker', { section: 'workflow', field: 'plan_check' }) ?? defaults.plan_checker,
     verifier: get('verifier', { section: 'workflow', field: 'verifier' }) ?? defaults.verifier,
     nyquist_validation: get('nyquist_validation', { section: 'workflow', field: 'nyquist_validation' }) ?? defaults.nyquist_validation,
     parallelization,
     brave_search: get('brave_search') ?? defaults.brave_search,
+    firecrawl: get('firecrawl') ?? defaults.firecrawl,
+    exa_search: get('exa_search') ?? defaults.exa_search,
+    text_mode: get('text_mode', { section: 'workflow', field: 'text_mode' }) ?? defaults.text_mode,
+    sub_repos: get('sub_repos', { section: 'planning', field: 'sub_repos' }) ?? defaults.sub_repos,
+    resolve_model_ids: get('resolve_model_ids') ?? defaults.resolve_model_ids,
+    context_window: get('context_window') ?? defaults.context_window,
+    phase_naming: get('phase_naming') ?? defaults.phase_naming,
     model_overrides: parsed.model_overrides || null,
   };
   } catch {
@@ -176,7 +329,9 @@ function isGitIgnored(cwd, targetPath) {
   // Without it, git check-ignore returns "not ignored" for tracked files even when
   // .gitignore explicitly lists them — a common source of confusion when .planning/
   // was committed before being added to .gitignore.
-  execSync('git check-ignore -q --no-index -- ' + targetPath.replace(/[^a-zA-Z0-9._\-/]/g, ''), {
+  // Use execFileSync (array args) to prevent shell interpretation of special characters
+  // in file paths — avoids command injection via crafted path names.
+  execFileSync('git', ['check-ignore', '-q', '--no-index', '--', targetPath], {
     cwd,
     stdio: 'pipe',
   });
@@ -184,6 +339,110 @@ function isGitIgnored(cwd, targetPath) {
   } catch {
   return false;
   }
+}
+
+// ─── Markdown normalization ─────────────────────────────────────────────────
+
+/**
+ * Normalize markdown to fix common markdownlint violations.
+ * Applied at write points so GSD-generated .planning/ files are IDE-friendly.
+ *
+ * Rules enforced:
+ *   MD022 — Blank lines around headings
+ *   MD031 — Blank lines around fenced code blocks
+ *   MD032 — Blank lines around lists
+ *   MD012 — No multiple consecutive blank lines (collapsed to 2 max)
+ *   MD047 — Files end with a single newline
+ */
+function normalizeMd(content) {
+  if (!content || typeof content !== 'string') return content;
+
+  // Normalize line endings to LF for consistent processing
+  let text = content.replace(/\r\n/g, '\n');
+
+  const lines = text.split('\n');
+  const result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+  const line = lines[i];
+  const prev = i > 0 ? lines[i - 1] : '';
+  const prevTrimmed = prev.trimEnd();
+  const trimmed = line.trimEnd();
+
+  // MD022: Blank line before headings (skip first line and frontmatter delimiters)
+  if (/^#{1,6}\s/.test(trimmed) && i > 0 && prevTrimmed !== '' && prevTrimmed !== '---') {
+    result.push('');
+  }
+
+  // MD031: Blank line before fenced code blocks
+  if (/^```/.test(trimmed) && i > 0 && prevTrimmed !== '' && !isInsideFencedBlock(lines, i)) {
+    result.push('');
+  }
+
+  // MD032: Blank line before lists (- item, * item, N. item, - [ ] item)
+  if (/^(\s*[-*+]\s|\s*\d+\.\s)/.test(line) && i > 0 &&
+    prevTrimmed !== '' && !/^(\s*[-*+]\s|\s*\d+\.\s)/.test(prev) &&
+    prevTrimmed !== '---') {
+    result.push('');
+  }
+
+  result.push(line);
+
+  // MD022: Blank line after headings
+  if (/^#{1,6}\s/.test(trimmed) && i < lines.length - 1) {
+    const next = lines[i + 1];
+    if (next !== undefined && next.trimEnd() !== '') {
+    result.push('');
+    }
+  }
+
+  // MD031: Blank line after closing fenced code blocks
+  if (/^```\s*$/.test(trimmed) && isClosingFence(lines, i) && i < lines.length - 1) {
+    const next = lines[i + 1];
+    if (next !== undefined && next.trimEnd() !== '') {
+    result.push('');
+    }
+  }
+
+  // MD032: Blank line after last list item in a block
+  if (/^(\s*[-*+]\s|\s*\d+\.\s)/.test(line) && i < lines.length - 1) {
+    const next = lines[i + 1];
+    if (next !== undefined && next.trimEnd() !== '' &&
+      !/^(\s*[-*+]\s|\s*\d+\.\s)/.test(next) &&
+      !/^\s/.test(next)) {
+    // Only add blank line if next line is not a continuation/indented line
+    result.push('');
+    }
+  }
+  }
+
+  text = result.join('\n');
+
+  // MD012: Collapse 3+ consecutive blank lines to 2
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  // MD047: Ensure file ends with exactly one newline
+  text = text.replace(/\n*$/, '\n');
+
+  return text;
+}
+
+/** Check if line index i is inside an already-open fenced code block */
+function isInsideFencedBlock(lines, i) {
+  let fenceCount = 0;
+  for (let j = 0; j < i; j++) {
+  if (/^```/.test(lines[j].trimEnd())) fenceCount++;
+  }
+  return fenceCount % 2 === 1;
+}
+
+/** Check if a ``` line is a closing fence (odd number of fences up to and including this one) */
+function isClosingFence(lines, i) {
+  let fenceCount = 0;
+  for (let j = 0; j <= i; j++) {
+  if (/^```/.test(lines[j].trimEnd())) fenceCount++;
+  }
+  return fenceCount % 2 === 0;
 }
 
 function execGit(cwd, args) {
@@ -199,6 +458,105 @@ function execGit(cwd, args) {
   };
 }
 
+// ─── Common path helpers ──────────────────────────────────────────────────────
+
+/**
+ * Resolve the main worktree root when running inside a git worktree.
+ * In a linked worktree, .planning/ lives in the main worktree, not in the linked one.
+ * Returns the main worktree path, or cwd if not in a worktree.
+ */
+function resolveWorktreeRoot(cwd) {
+  // Check if we're in a linked worktree
+  const gitDir = execGit(cwd, ['rev-parse', '--git-dir']);
+  const commonDir = execGit(cwd, ['rev-parse', '--git-common-dir']);
+
+  if (gitDir.exitCode !== 0 || commonDir.exitCode !== 0) return cwd;
+
+  // In a linked worktree, .git is a file pointing to .git/worktrees/<name>
+  // and git-common-dir points to the main repo's .git directory
+  const gitDirResolved = path.resolve(cwd, gitDir.stdout);
+  const commonDirResolved = path.resolve(cwd, commonDir.stdout);
+
+  if (gitDirResolved !== commonDirResolved) {
+  // We're in a linked worktree — resolve main worktree root
+  // The common dir is the main repo's .git, so its parent is the main worktree root
+  return path.dirname(commonDirResolved);
+  }
+
+  return cwd;
+}
+
+/**
+ * Acquire a file-based lock for .planning/ writes.
+ * Prevents concurrent worktrees from corrupting shared planning files.
+ * Lock is auto-released after the callback completes.
+ */
+function withPlanningLock(cwd, fn) {
+  const lockPath = path.join(planningDir(cwd), '.lock');
+  const lockTimeout = 10000; // 10 seconds
+  const retryDelay = 100;
+  const start = Date.now();
+
+  // Ensure .planning/ exists
+  try { fs.mkdirSync(planningDir(cwd), { recursive: true }); } catch { /* ok */ }
+
+  while (Date.now() - start < lockTimeout) {
+  try {
+    // Atomic create — fails if file exists
+    fs.writeFileSync(lockPath, JSON.stringify({
+    pid: process.pid,
+    cwd,
+    acquired: new Date().toISOString(),
+    }), { flag: 'wx' });
+
+    // Lock acquired — run the function
+    try {
+    return fn();
+    } finally {
+    try { fs.unlinkSync(lockPath); } catch { /* already released */ }
+    }
+  } catch (err) {
+    if (err.code === 'EEXIST') {
+    // Lock exists — check if stale (>30s old)
+    try {
+      const stat = fs.statSync(lockPath);
+      if (Date.now() - stat.mtimeMs > 30000) {
+      fs.unlinkSync(lockPath);
+      continue; // retry
+      }
+    } catch { continue; }
+
+    // Wait and retry
+    spawnSync('sleep', ['0.1'], { stdio: 'ignore' });
+    continue;
+    }
+    throw err;
+  }
+  }
+  // Timeout — force acquire (stale lock recovery)
+  try { fs.unlinkSync(lockPath); } catch { /* ok */ }
+  return fn();
+}
+
+/** Get the .planning directory path */
+function planningDir(cwd) {
+  return path.join(cwd, '.planning');
+}
+
+/** Get common .planning file paths */
+function planningPaths(cwd) {
+  const base = path.join(cwd, '.planning');
+  return {
+  planning: base,
+  state: path.join(base, 'STATE.md'),
+  roadmap: path.join(base, 'ROADMAP.md'),
+  project: path.join(base, 'PROJECT.md'),
+  config: path.join(base, 'config.json'),
+  phases: path.join(base, 'phases'),
+  requirements: path.join(base, 'REQUIREMENTS.md'),
+  };
+}
+
 // ─── Phase utilities ──────────────────────────────────────────────────────────
 
 function escapeRegex(value) {
@@ -206,17 +564,23 @@ function escapeRegex(value) {
 }
 
 function normalizePhaseName(phase) {
-  const match = String(phase).match(/^(\d+)([A-Z])?((?:\.\d+)*)/i);
-  if (!match) return phase;
+  const str = String(phase);
+  // Standard numeric phases: 1, 01, 12A, 12.1
+  const match = str.match(/^(\d+)([A-Z])?((?:\.\d+)*)/i);
+  if (match) {
   const padded = match[1].padStart(2, '0');
   const letter = match[2] ? match[2].toUpperCase() : '';
   const decimal = match[3] || '';
   return padded + letter + decimal;
+  }
+  // Custom phase IDs (e.g. PROJ-42, AUTH-101): return as-is
+  return str;
 }
 
 function comparePhaseNum(a, b) {
   const pa = String(a).match(/^(\d+)([A-Z])?((?:\.\d+)*)/i);
   const pb = String(b).match(/^(\d+)([A-Z])?((?:\.\d+)*)/i);
+  // If either is non-numeric (custom ID), fall back to string comparison
   if (!pa || !pb) return String(a).localeCompare(String(b));
   const intDiff = parseInt(pa[1], 10) - parseInt(pb[1], 10);
   if (intDiff !== 0) return intDiff;
@@ -246,10 +610,19 @@ function searchPhaseInDir(baseDir, relBase, normalized) {
   try {
   const entries = fs.readdirSync(baseDir, { withFileTypes: true });
   const dirs = entries.filter(e => e.isDirectory()).map(e => e.name).sort((a, b) => comparePhaseNum(a, b));
-  const match = dirs.find(d => d.startsWith(normalized));
+  // Match: starts with normalized (numeric) OR contains normalized as prefix segment (custom ID)
+  const match = dirs.find(d => {
+    if (d.startsWith(normalized)) return true;
+    // For custom IDs like PROJ-42, match case-insensitively
+    if (d.toUpperCase().startsWith(normalized.toUpperCase())) return true;
+    return false;
+  });
   if (!match) return null;
 
-  const dirMatch = match.match(/^(\d+[A-Z]?(?:\.\d+)*)-?(.*)/i);
+  // Extract phase number and name — supports both numeric (01-name) and custom (PROJ-42-name)
+  const dirMatch = match.match(/^(\d+[A-Z]?(?:\.\d+)*)-?(.*)/i)
+    || match.match(/^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*)-(.+)/i)
+    || [null, match, null];
   const phaseNumber = dirMatch ? dirMatch[1] : normalized;
   const phaseName = dirMatch && dirMatch[2] ? dirMatch[2] : null;
   const phaseDir = path.join(baseDir, match);
@@ -319,7 +692,7 @@ function findPhaseInternal(cwd, phase) {
     return result;
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   return null;
 }
@@ -354,7 +727,7 @@ function getArchivedPhaseDirs(cwd) {
     });
     }
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   return results;
 }
@@ -369,6 +742,91 @@ function getArchivedPhaseDirs(cwd) {
  */
 function stripShippedMilestones(content) {
   return content.replace(/<details>[\s\S]*?<\/details>/gi, '');
+}
+
+/**
+ * Extract the current milestone section from ROADMAP.md by positive lookup.
+ *
+ * Instead of stripping <details> blocks (negative heuristic that breaks if
+ * agents wrap the current milestone in <details>), this finds the section
+ * matching the current milestone version and returns only that content.
+ *
+ * Falls back to stripShippedMilestones() if:
+ * - cwd is not provided
+ * - STATE.md doesn't exist or has no milestone field
+ * - Version can't be found in ROADMAP.md
+ *
+ * @param {string} content - Full ROADMAP.md content
+ * @param {string} [cwd] - Working directory for reading STATE.md
+ * @returns {string} Content scoped to current milestone
+ */
+function extractCurrentMilestone(content, cwd) {
+  if (!cwd) return stripShippedMilestones(content);
+
+  // 1. Get current milestone version from STATE.md frontmatter
+  let version = null;
+  try {
+  const statePath = path.join(cwd, '.planning', 'STATE.md');
+  if (fs.existsSync(statePath)) {
+    const stateRaw = fs.readFileSync(statePath, 'utf-8');
+    const milestoneMatch = stateRaw.match(/^milestone:\s*(.+)/m);
+    if (milestoneMatch) {
+    version = milestoneMatch[1].trim();
+    }
+  }
+  } catch {}
+
+  // 2. Fallback: derive version from getMilestoneInfo pattern in ROADMAP.md itself
+  if (!version) {
+  // Check for 🚧 in-progress marker
+  const inProgressMatch = content.match(/🚧\s*\*\*v(\d+\.\d+)\s/);
+  if (inProgressMatch) {
+    version = 'v' + inProgressMatch[1];
+  }
+  }
+
+  if (!version) return stripShippedMilestones(content);
+
+  // 3. Find the section matching this version
+  // Match headings like: ## Roadmap v3.0: Name, ## v3.0 Name, etc.
+  const escapedVersion = escapeRegex(version);
+  const sectionPattern = new RegExp(
+  `(^#{1,3}\\s+.*${escapedVersion}[^\\n]*)`,
+  'mi'
+  );
+  const sectionMatch = content.match(sectionPattern);
+
+  if (!sectionMatch) return stripShippedMilestones(content);
+
+  const sectionStart = sectionMatch.index;
+
+  // Find the end: next milestone heading at same or higher level, or EOF
+  // Milestone headings look like: ## v2.0, ## Roadmap v2.0, ## ✅ v1.0, etc.
+  const headingLevel = sectionMatch[1].match(/^(#{1,3})\s/)[1].length;
+  const restContent = content.slice(sectionStart + sectionMatch[0].length);
+  const nextMilestonePattern = new RegExp(
+  `^#{1,${headingLevel}}\\s+(?:.*v\\d+\\.\\d+|✅|📋|🚧)`,
+  'mi'
+  );
+  const nextMatch = restContent.match(nextMilestonePattern);
+
+  let sectionEnd;
+  if (nextMatch) {
+  sectionEnd = sectionStart + sectionMatch[0].length + nextMatch.index;
+  } else {
+  sectionEnd = content.length;
+  }
+
+  // Return everything before the current milestone section (non-milestone content
+  // like title, overview) plus the current milestone section
+  const beforeMilestones = content.slice(0, sectionStart);
+  const currentSection = content.slice(sectionStart, sectionEnd);
+
+  // Also include any content before the first milestone heading (title, overview, etc.)
+  // but strip any <details> blocks in it (these are definitely shipped)
+  const preamble = beforeMilestones.replace(/<details>[\s\S]*?<\/details>/gi, '');
+
+  return preamble + currentSection;
 }
 
 /**
@@ -395,8 +853,9 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
   if (!fs.existsSync(roadmapPath)) return null;
 
   try {
-  const content = stripShippedMilestones(fs.readFileSync(roadmapPath, 'utf-8'));
+  const content = extractCurrentMilestone(fs.readFileSync(roadmapPath, 'utf-8'), cwd);
   const escapedPhase = escapeRegex(phaseNum.toString());
+  // Match both numeric (Phase 1:) and custom (Phase PROJ-42:) headers
   const phasePattern = new RegExp(`#{2,4}\\s*Phase\\s+${escapedPhase}:\\s*([^\\n]+)`, 'i');
   const headerMatch = content.match(phasePattern);
   if (!headerMatch) return null;
@@ -404,7 +863,7 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
   const phaseName = headerMatch[1].trim();
   const headerIndex = headerMatch.index;
   const restOfContent = content.slice(headerIndex);
-  const nextHeaderMatch = restOfContent.match(/\n#{2,4}\s+Phase\s+\d/i);
+  const nextHeaderMatch = restOfContent.match(/\n#{2,4}\s+Phase\s+[\w]/i);
   const sectionEnd = nextHeaderMatch ? headerIndex + nextHeaderMatch.index : content.length;
   const section = content.slice(headerIndex, sectionEnd).trim();
 
@@ -423,6 +882,19 @@ function getRoadmapPhaseInternal(cwd, phaseNum) {
   }
 }
 
+// ─── Model alias resolution ───────────────────────────────────────────────────
+
+/**
+ * Map short model aliases to full model IDs.
+ * Updated each release to match current model versions.
+ * Users can override with model_overrides in config.json for custom/latest models.
+ */
+const MODEL_ALIAS_MAP = {
+  'opus': 'antigravity-opus-4-0',
+  'sonnet': 'antigravity-sonnet-4-5',
+  'haiku': 'antigravity-haiku-3-5',
+};
+
 function resolveModelInternal(cwd, agentType) {
   const config = loadConfig(cwd);
 
@@ -437,7 +909,32 @@ function resolveModelInternal(cwd, agentType) {
   const agentModels = MODEL_PROFILES[agentType];
   if (!agentModels) return 'sonnet';
   if (profile === 'inherit') return 'inherit';
-  return agentModels[profile] || agentModels['balanced'] || 'sonnet';
+  const alias = agentModels[profile] || agentModels['balanced'] || 'sonnet';
+
+  // If resolve_model_ids is true, map alias to full model ID
+  // This prevents 404s when the Task tool passes aliases directly to the API
+  if (config.resolve_model_ids) {
+  return MODEL_ALIAS_MAP[alias] || alias;
+  }
+
+  return alias;
+}
+
+// ─── Summary body helpers ─────────────────────────────────────────────────
+
+/**
+ * Extract a one-liner from the summary body when it's not in frontmatter.
+ * The summary template defines one-liner as a bold markdown line after the heading:
+ *   # Phase X: Name Summary
+ *   **[substantive one-liner text]**
+ */
+function extractOneLinerFromBody(content) {
+  if (!content) return null;
+  // Strip frontmatter first
+  const body = content.replace(/^---\n[\s\S]*?\n---\n*/, '');
+  // Find the first **...** line after a # heading
+  const match = body.match(/^#[^\n]*\n+\*\*([^*]+)\*\*/m);
+  return match ? match[1].trim() : null;
 }
 
 // ─── Misc utilities ───────────────────────────────────────────────────────────
@@ -463,7 +960,8 @@ function getMilestoneInfo(cwd) {
 
   // First: check for list-format roadmaps using 🚧 (in-progress) marker
   // e.g. "- 🚧 **v2.1 Belgium** — Phases 24-28 (in progress)"
-  const inProgressMatch = roadmap.match(/🚧\s*\*\*v(\d+\.\d+)\s+([^*]+)\*\*/);
+  // e.g. "- 🚧 **v1.2.1 Tech Debt** — Phases 1-8 (in progress)"
+  const inProgressMatch = roadmap.match(/🚧\s*\*\*v(\d+(?:\.\d+)+)\s+([^*]+)\*\*/);
   if (inProgressMatch) {
     return {
     version: 'v' + inProgressMatch[1],
@@ -474,15 +972,16 @@ function getMilestoneInfo(cwd) {
   // Second: heading-format roadmaps — strip shipped milestones in <details> blocks
   const cleaned = stripShippedMilestones(roadmap);
   // Extract version and name from the same ## heading for consistency
-  const headingMatch = cleaned.match(/## .*v(\d+\.\d+)[:\s]+([^\n(]+)/);
+  // Supports 2+ segment versions: v1.2, v1.2.1, v2.0.1, etc.
+  const headingMatch = cleaned.match(/## .*v(\d+(?:\.\d+)+)[:\s]+([^\n(]+)/);
   if (headingMatch) {
     return {
     version: 'v' + headingMatch[1],
     name: headingMatch[2].trim(),
     };
   }
-  // Fallback: try bare version match
-  const versionMatch = cleaned.match(/v(\d+\.\d+)/);
+  // Fallback: try bare version match (greedy — capture longest version string)
+  const versionMatch = cleaned.match(/v(\d+(?:\.\d+)+)/);
   return {
     version: versionMatch ? versionMatch[0] : 'v1.0',
     name: 'milestone',
@@ -500,13 +999,14 @@ function getMilestoneInfo(cwd) {
 function getMilestonePhaseFilter(cwd) {
   const milestonePhaseNums = new Set();
   try {
-  const roadmap = stripShippedMilestones(fs.readFileSync(path.join(cwd, '.planning', 'ROADMAP.md'), 'utf-8'));
-  const phasePattern = /#{2,4}\s*Phase\s+(\d+[A-Z]?(?:\.\d+)*)\s*:/gi;
+  const roadmap = extractCurrentMilestone(fs.readFileSync(path.join(cwd, '.planning', 'ROADMAP.md'), 'utf-8'), cwd);
+  // Match both numeric phases (Phase 1:) and custom IDs (Phase PROJ-42:)
+  const phasePattern = /#{2,4}\s*Phase\s+([\w][\w.-]*)\s*:/gi;
   let m;
   while ((m = phasePattern.exec(roadmap)) !== null) {
     milestonePhaseNums.add(m[1]);
   }
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   if (milestonePhaseNums.size === 0) {
   const passAll = () => true;
@@ -519,9 +1019,13 @@ function getMilestonePhaseFilter(cwd) {
   );
 
   function isDirInMilestone(dirName) {
+  // Try numeric match first
   const m = dirName.match(/^0*(\d+[A-Za-z]?(?:\.\d+)*)/);
-  if (!m) return false;
-  return normalized.has(m[1].toLowerCase());
+  if (m && normalized.has(m[1].toLowerCase())) return true;
+  // Try custom ID match (e.g. PROJ-42-description → PROJ-42)
+  const customMatch = dirName.match(/^([A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*)/);
+  if (customMatch && normalized.has(customMatch[1].toLowerCase())) return true;
+  return false;
   }
   isDirInMilestone.phaseCount = milestonePhaseNums.size;
   return isDirInMilestone;
@@ -538,6 +1042,7 @@ module.exports = {
   loadConfig,
   isGitIgnored,
   execGit,
+  normalizeMd,
   escapeRegex,
   normalizePhaseName,
   comparePhaseNum,
@@ -551,6 +1056,15 @@ module.exports = {
   getMilestoneInfo,
   getMilestonePhaseFilter,
   stripShippedMilestones,
+  extractCurrentMilestone,
   replaceInCurrentMilestone,
   toPosixPath,
+  extractOneLinerFromBody,
+  resolveWorktreeRoot,
+  withPlanningLock,
+  findProjectRoot,
+  detectSubRepos,
+  MODEL_ALIAS_MAP,
+  planningDir,
+  planningPaths,
 };

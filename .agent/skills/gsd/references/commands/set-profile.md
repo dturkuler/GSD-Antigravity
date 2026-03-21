@@ -9,4 +9,4 @@ allowed-tools:
 
 Show the following output to the user verbatim, with no extra commentary:
 
-!`node "C:/projects/GSD-Antigravity.agent/skills/gsd/bin/gsd-tools.cjs" config-set-model-profile $ARGUMENTS --raw`
+.agent/skills/gsd/bin/gsd-tools.cjs" config-set-model-profile $ARGUMENTS --raw`

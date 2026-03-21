@@ -151,6 +151,21 @@ Usage: `/gsd:quick`
 Usage: `/gsd:quick --research --full`
 Result: Creates `.planning/quick/NNN-slug/PLAN.md`, `.planning/quick/NNN-slug/SUMMARY.md`
 
+---
+
+**`/gsd:fast [description]`**
+Execute a trivial task inline — no subagents, no planning files, no overhead.
+
+For tasks too small to justify planning: typo fixes, config changes, forgotten commits, simple additions. Runs in the current context, makes the change, commits, and logs to STATE.md.
+
+- No PLAN.md or SUMMARY.md created
+- No subagent spawned (runs inline)
+- ≤ 3 file edits — redirects to `/gsd:quick` if task is non-trivial
+- Atomic commit with conventional message
+
+Usage: `/gsd:fast "fix the typo in README"`
+Usage: `/gsd:fast "add .env to gitignore"`
+
 ### Roadmap Management
 
 **`/gsd:add-phase <description>`**
@@ -192,10 +207,12 @@ Start a new milestone through unified flow.
 - Optional domain research (spawns 4 parallel researcher agents)
 - Requirements definition with scoping
 - Roadmap creation with phase breakdown
+- Optional `--reset-phase-numbers` flag restarts numbering at Phase 1 and archives old phase dirs first for safety
 
 Mirrors `/gsd:new-project` flow for brownfield projects (existing PROJECT.md).
 
 Usage: `/gsd:new-milestone "v2.0 Features"`
+Usage: `/gsd:new-milestone --reset-phase-numbers "v2.0 Features"`
 
 **`/gsd:complete-milestone <version>`**
 Archive completed milestone and prepare for next version.
@@ -307,6 +324,65 @@ Validate built features through conversational UAT.
 - Ready for re-execution if issues found
 
 Usage: `/gsd:verify-work 3`
+
+### Ship Work
+
+**`/gsd:ship [phase]`**
+Create a PR from completed phase work with an auto-generated body.
+
+- Pushes branch to remote
+- Creates PR with summary from SUMMARY.md, VERIFICATION.md, REQUIREMENTS.md
+- Optionally requests code review
+- Updates STATE.md with shipping status
+
+Prerequisites: Phase verified, `gh` CLI installed and authenticated.
+
+Usage: `/gsd:ship 4` or `/gsd:ship 4 --draft`
+
+---
+
+**`/gsd:review --phase N [--gemini] [--antigravity] [--codex] [--all]`**
+Cross-AI peer review — invoke external AI CLIs to independently review phase plans.
+
+- Detects available CLIs (gemini, antigravity, codex)
+- Each CLI reviews plans independently with the same structured prompt
+- Produces REVIEWS.md with per-reviewer feedback and consensus summary
+- Feed reviews back into planning: `/gsd:plan-phase N --reviews`
+
+Usage: `/gsd:review --phase 3 --all`
+
+---
+
+**`/gsd:pr-branch [target]`**
+Create a clean branch for pull requests by filtering out .planning/ commits.
+
+- Classifies commits: code-only (include), planning-only (exclude), mixed (include sans .planning/)
+- Cherry-picks code commits onto a clean branch
+- Reviewers see only code changes, no GSD artifacts
+
+Usage: `/gsd:pr-branch` or `/gsd:pr-branch main`
+
+---
+
+**`/gsd:plant-seed [idea]`**
+Capture a forward-looking idea with trigger conditions for automatic surfacing.
+
+- Seeds preserve WHY, WHEN to surface, and breadcrumbs to related code
+- Auto-surfaces during `/gsd:new-milestone` when trigger conditions match
+- Better than deferred items — triggers are checked, not forgotten
+
+Usage: `/gsd:plant-seed "add real-time notifications when we build the events system"`
+
+---
+
+**`/gsd:audit-uat`**
+Cross-phase audit of all outstanding UAT and verification items.
+- Scans every phase for pending, skipped, blocked, and human_needed items
+- Cross-references against codebase to detect stale documentation
+- Produces prioritized human test plan grouped by testability
+- Use before starting a new milestone to clear verification debt
+
+Usage: `/gsd:audit-uat`
 
 ### Milestone Auditing
 
