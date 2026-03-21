@@ -6,6 +6,12 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.27.2 (2026-03-21)
+*   **Context:** `bin/install.js` (Linux/Unix execution)
+*   **Issue:** `npx` execution failed on Linux with `Syntax error: "(" unexpected`.
+*   **Root Cause Analysis:** The `#!/usr/bin/env node` shebang was accidentally deleted during the v1.27.0 interactive installer refactor. Shells were attempting to execute the JS file as a shell script.
+*   **How it was fixed:** Restored the shebang line at the very top of `bin/install.js`.
+
 ### v1.27.0 (2026-03-21)
 *   **Context:** `bin/install.js` (Interactive Installer) and `gsd-converter` (`convert.py`)
 *   **Issue:** Lack of user control during GSD skill installation; risk of overwriting local modifications; and broken absolute path references in migrated commands.

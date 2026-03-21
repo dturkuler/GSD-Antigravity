@@ -1,6 +1,6 @@
 {
     "name": "gsd-antigravity-kit",
-    "version": "1.27.0",
+    "version": "1.27.2",
     "description": "Installer for GSD-Antigravity skills",
     "main": "index.js",
     "files": [
