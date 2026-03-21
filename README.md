@@ -90,11 +90,11 @@ This repository is structured to separate the kit's logic from the generated ski
 The **GSD-Antigravity Kit** stands on the shoulders of giants. We owe a debt of gratitude to the original creators who pioneered the spec-driven development movement:
 
 ### 🌟 The GSD Protocol
-The core logic, philosophy, and original script engine were created by **[glittercowboy](https://github.com/glittercowboy)**. Without the original [Get Shit Done (GSD)](https://github.com/glittercowboy/get-shit-done) system, this kit would have no engine to manage.
+The core logic, philosophy, and original script engine were created by **[glittercowboy](https://github.com/gsd-build)**. Without the original [Get Shit Done (GSD)](https://github.com/gsd-build/get-shit-done) system, this kit would have no engine to manage.
 
-- **Source Code**: [GitHub Repository](https://github.com/glittercowboy/get-shit-done)
-- **Documentation**: [The GSD Handbook](https://github.com/glittercowboy/get-shit-done/tree/main/.claude/get-shit-done)
-- **Original GSD Changelog and Version**: [Changelog](https://github.com/glittercowboy/get-shit-done/blob/main/CHANGELOG.md)
+- **Source Code**: [GitHub Repository](https://github.com/gsd-build/get-shit-done)
+- **Documentation**: [The GSD Handbook](https://github.com/gsd-build/get-shit-done/blob/main/docs/README.md)
+- **Original GSD Changelog and Version**: [Changelog](https://github.com/gsd-build/get-shit-done/blob/main/CHANGELOG.md)
 
 
 ---
