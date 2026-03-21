@@ -21,11 +21,18 @@ env/
 # OS
 .DS_Store
 Thumbs.db
-#.agent/skills/gsd/
-#.gitignore
 .claude
 __tobedeleted/
-release_manager/
-# docs/DEV_KNOWLEDGEBASE.md
 __current_gsd/
+
+# Archive/Distribution
 *.zip
+*.tgz
+
+# Temp/Backups
+*.bak
+tmp/
+temp/
+coverage/
+.env
+.env.local

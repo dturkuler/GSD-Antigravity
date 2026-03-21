@@ -6,17 +6,16 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
-### v1.25.2 (2026-03-21)
-*   **Context:** `gsd-converter` (`convert.py`) and GSD Skill (v1.27.0)
-*   **Issue:** Broken path references in migrated GSD commands; legacy branding in execution contexts; and outdated GSD v1.26.0 core.
+### v1.27.0 (2026-03-21)
+*   **Context:** `bin/install.js` (Interactive Installer) and `gsd-converter` (`convert.py`)
+*   **Issue:** Lack of user control during GSD skill installation; risk of overwriting local modifications; and broken absolute path references in migrated commands.
 *   **Root Cause Analysis:** 
-    - The GSD installer used absolute paths (e.g., `C:/projects/.../.claude/...`) in its generated command files.
-    - The `convert.py` regexes (`r'@\.?/?\.claude/...'`) were too strict, only matching relative versions starting with `@.claude` or `@/.claude`.
-    - When an absolute path was encountered (e.g., `@C:/projects/GSD-Antigravity/.claude/...`), the regex failed to match the `@` at the start of the sequence, but a subsequent less-strict rule matching `\.claude/...` consumed the leading slash of the absolute path, resulting in merged strings like `GSD-Antigravityreferences/...`.
+    - The previous installer was a blind "copy-all" script, leading to potential data loss if a user had local skill changes.
+    - Path resolution in `convert.py` failed on absolute paths because regexes didn't account for anything between the `@` symbol and the `.claude/` directory.
 *   **How it was fixed:**
-    - **Robust Regex Pathing**: Updated `convert.py` to use non-greedy wildcards (`r'@.*?\.claude/...'`) to capture any characters (including absolute drive paths) between `@` and `.claude/`. This ensures they are replaced wholesale with skill-relative `@references/...` or `@assets/...` tags.
-    - **GSD v1.27.0 Sync**: Upgraded the core GSD installation, bringing new `init` workflow signatures (`cmdInitExecutePhase`, `cmdInitPlanPhase`, `cmdInitProgress`) for improved state tracking.
-    - **Enhanced Branding**: Reinforced the Antigravity rebranding regexes to ensure no `.claude` or `Claude` mentions remain in the final skill artifacts.
+    - **Interactive Installer**: Refactored `bin/install.js` to use `readline`. It now detects existing folders, prompts for removal, and allows granular selection of which skills to install.
+    - **Robust Path Regex**: Updated `convert.py` with non-greedy wildcards (`r'@.*?\.claude/...'`) to capture absolute drive paths, correctly replacing them with skill-relative `@references/` tags.
+    - **Distribution Optimization**: Added a `"files"` whitelist to `package.json` to exclude non-essential source files (`.claude/`) from the distributed NPM package.
 
 ### v1.25.1 (2026-03-16)
 *   **Context:** `gsd-tools.cjs` (Selective Inclusion and Artifact Discovery)

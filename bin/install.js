@@ -1,38 +1,97 @@
-#!/usr/bin/env node
-
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 const { execSync } = require('child_process');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+const ask = (query) => new Promise((resolve) => rl.question(query, (ans) => resolve(ans.toLowerCase().trim())));
 
 async function install() {
     const targetDir = process.cwd();
-    // Location of the .agent folder relative to this script in the package
     const sourceAgentDir = path.join(__dirname, '..', '.agent');
-    const targetAgentDir = path.join(targetDir, '.agent');
+    const skillsSourceDir = path.join(sourceAgentDir, 'skills');
+    
+    // Skills to check/install
+    const skillNames = ['gsd', 'gsd-converter'];
+    const targetSkillsDir = path.join(targetDir, '.agent', 'skills');
 
-    console.log('🌌 Initializing GSD-Antigravity Skill System...');
+    console.log('\n🌌 GSD-Antigravity Skill System Installer\n');
 
     try {
-        // 1. Copy .agent folder
-        if (fs.existsSync(sourceAgentDir)) {
-            console.log(`📦 Copying .agent skills to ${targetDir}...`);
-
-            // We use a simple recursive copy strategy
-            copyFolderSync(sourceAgentDir, targetAgentDir);
-            console.log('✅ .agent folder installed successfully.');
-        } else {
-            console.error('❌ Error: Could not find .agent folder in the package.');
-            process.exit(1);
+        // 1. Check for existing skills
+        const existing = [];
+        for (const name of skillNames) {
+            if (fs.existsSync(path.join(targetSkillsDir, name))) {
+                existing.push(name);
+            }
         }
 
-        // 2. Offer to run the converter
-        console.log('\n✨ GSD-Antigravity is now in your project.');
-        console.log('To initialize the GSD engine, run:');
-        console.log('  py .agent/skills/gsd-converter/scripts/convert.py gsd\n');
+        if (existing.length > 0) {
+            console.log(`⚠️  Detected existing skills in .agent/skills/: ${existing.join(', ')}`);
+            const confirmRemove = await ask(`Do you want to REMOVE existing skills and perform a fresh install? (y/n): `);
+            if (confirmRemove === 'y') {
+                for (const name of existing) {
+                    const p = path.join(targetSkillsDir, name);
+                    console.log(`  🗑️  Removing ${name}...`);
+                    fs.rmSync(p, { recursive: true, force: true });
+                }
+            } else {
+                console.log('  ⏩ Skipping removal. New files will be merged/overwritten.');
+            }
+        }
+
+        // 2. Interactive Installation Selection
+        const installGsd = await ask(`Install GSD skill? (y/n) [default: y]: `);
+        const installConverter = await ask(`Install GSD-Converter skill? (y/n) [default: y]: `);
+
+        const selection = {
+            'gsd': installGsd !== 'n',
+            'gsd-converter': installConverter !== 'n'
+        };
+
+        // 3. Perform Installation
+        if (!fs.existsSync(targetSkillsDir)) {
+            fs.mkdirSync(targetSkillsDir, { recursive: true });
+        }
+
+        // Also copy rules if they exist
+        const sourceRulesDir = path.join(sourceAgentDir, 'rules');
+        const targetRulesDir = path.join(targetDir, '.agent', 'rules');
+        if (fs.existsSync(sourceRulesDir)) {
+            copyFolderSync(sourceRulesDir, targetRulesDir);
+        }
+
+        let installedCount = 0;
+        for (const [name, shouldInstall] of Object.entries(selection)) {
+            if (shouldInstall) {
+                const src = path.join(skillsSourceDir, name);
+                const tgt = path.join(targetSkillsDir, name);
+                if (fs.existsSync(src)) {
+                    console.log(`📦 Installing ${name}...`);
+                    copyFolderSync(src, tgt);
+                    installedCount++;
+                }
+            }
+        }
+
+        if (installedCount > 0) {
+            console.log('\n✅ Installation completed successfully.');
+            if (selection['gsd-converter']) {
+                console.log('\n✨ To initialize the GSD engine, run:');
+                console.log('  py .agent/skills/gsd-converter/scripts/convert.py gsd\n');
+            }
+        } else {
+            console.log('\nℹ️  No skills were selected for installation.');
+        }
 
     } catch (err) {
-        console.error('❌ Installation failed:', err.message);
-        process.exit(1);
+        console.error('\n❌ Installation failed:', err.message);
+    } finally {
+        rl.close();
     }
 }
 
@@ -41,11 +100,13 @@ function copyFolderSync(from, to) {
         fs.mkdirSync(to, { recursive: true });
     }
     fs.readdirSync(from).forEach(element => {
-        const stat = fs.lstatSync(path.join(from, element));
+        const srcPath = path.join(from, element);
+        const tgtPath = path.join(to, element);
+        const stat = fs.lstatSync(srcPath);
         if (stat.isFile()) {
-            fs.copyFileSync(path.join(from, element), path.join(to, element));
+            fs.copyFileSync(srcPath, tgtPath);
         } else if (stat.isDirectory()) {
-            copyFolderSync(path.join(from, element), path.join(to, element));
+            copyFolderSync(srcPath, tgtPath);
         }
     });
 }
