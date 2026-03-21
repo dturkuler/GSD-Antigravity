@@ -1,5 +1,6 @@
 ---
 name: gsd-converter
+version: 1.27.0
 description: "A tool for converting standard GSD (Get Shit Done) installations into the Antigravity Skill format. Use this skill when you want to migrate `.claude/gsd` commands, agents, and templates into a portable, spec-driven skill structure for Claude Code."
 ---
 
