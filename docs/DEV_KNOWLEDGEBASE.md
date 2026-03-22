@@ -6,6 +6,12 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.28.0 (2026-03-23)
+*   **Context**: Project Version Synchronization.
+*   **Issue**: Potential for confusion due to the Kits versioning mismatching the underlying GSD protocol version.
+*   **Root Cause Analysis**: The GSD-Antigravity Kit's version was trailing behind the core GSD protocol it manages, leading to a disconnect in performance tracking and feature parity expectations.
+*   **How it was fixed**: Established a synchronized release cycle by bumping the project version to **v1.28.0**, aligning it directly with the core protocol for total transparency and parity.
+
 ### v1.27.3 (2026-03-23)
 *   **Context**: `gsd-converter` and generated `gsd` skill.
 *   **Issue**: Inconsistent advanced feature availability in the generated `gsd` skill core library compared to the kit's internal expectations.
