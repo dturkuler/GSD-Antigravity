@@ -1,5 +1,5 @@
 {
-  "version": "1.27.0",
+  "version": "1.28.0",
   "commands": {
     "add-backlog": {
       "description": "Add an idea to the backlog parking lot (999.x numbering)"
@@ -46,6 +46,9 @@
     "fast": {
       "description": "Execute a trivial task inline \u2014 no subagents, no planning overhead"
     },
+    "forensics": {
+      "description": "Post-mortem investigation for failed GSD workflows \u2014 analyzes git history, artifacts, and state to diagnose what went wrong"
+    },
     "health": {
       "description": "Diagnose planning directory health and optionally repair issues"
     },
@@ -61,14 +64,26 @@
     "list-phase-assumptions": {
       "description": "Surface Antigravity's assumptions about a phase approach before planning"
     },
+    "list-workspaces": {
+      "description": "List active GSD workspaces and their status"
+    },
+    "manager": {
+      "description": "Interactive command center for managing multiple phases from one terminal"
+    },
     "map-codebase": {
       "description": "Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents"
+    },
+    "milestone-summary": {
+      "description": "Generate a comprehensive project summary from milestone artifacts for team onboarding and review"
     },
     "new-milestone": {
       "description": "Start a new milestone cycle \u2014 update PROJECT.md and route to requirements"
     },
     "new-project": {
       "description": "Initialize a new project with deep context gathering and PROJECT.md"
+    },
+    "new-workspace": {
+      "description": "Create an isolated workspace with repo copies and independent .planning/"
     },
     "next": {
       "description": "Automatically advance to the next logical step in the GSD workflow"
@@ -109,6 +124,9 @@
     },
     "remove-phase": {
       "description": "Remove a future phase from roadmap and renumber subsequent phases"
+    },
+    "remove-workspace": {
+      "description": "Remove a GSD workspace and clean up worktrees"
     },
     "research-phase": {
       "description": "Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)"
@@ -154,6 +172,9 @@
     },
     "verify-work": {
       "description": "Validate built features through conversational UAT"
+    },
+    "workstreams": {
+      "description": "Manage parallel workstreams \u2014 list, create, switch, status, progress, complete, and resume"
     },
     "state": {
       "description": "Manage and query project state memory.",

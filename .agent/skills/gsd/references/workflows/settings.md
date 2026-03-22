@@ -144,6 +144,15 @@ AskUserQuestion([
       { label: "No (Recommended)", description: "Ask questions directly. Faster, uses fewer tokens." },
       { label: "Yes", description: "Search web for best practices before each question group. More informed questions but uses more tokens." }
     ]
+  },
+  {
+    question: "Skip discuss-phase in autonomous mode? (use ROADMAP phase goals as spec)",
+    header: "Skip Discuss",
+    multiSelect: false,
+    options: [
+      { label: "No (Recommended)", description: "Run smart discuss before each phase — surfaces gray areas and captures decisions." },
+      { label: "Yes", description: "Skip discuss in /gsd:autonomous — chain directly to plan. Best for backend/pipeline work where phase descriptions are the spec." }
+    ]
   }
 ])
 ```
@@ -163,7 +172,11 @@ Merge new settings into existing config.json:
     "auto_advance": true/false,
     "nyquist_validation": true/false,
     "ui_phase": true/false,
-    "ui_safety_gate": true/false
+    "ui_safety_gate": true/false,
+    "text_mode": true/false,
+    "research_before_questions": true/false,
+    "discuss_mode": "discuss" | "assumptions",
+    "skip_discuss": true/false
   },
   "git": {
     "branching_strategy": "none" | "phase" | "milestone",
@@ -171,11 +184,7 @@ Merge new settings into existing config.json:
   },
   "hooks": {
     "context_warnings": true/false,
-    "workflow_guard": true/false,
-    "research_questions": true/false
-  },
-  "workflow": {
-    "text_mode": true/false  // Use plain-text questions instead of TUI menus (for /rc remote sessions)
+    "workflow_guard": true/false
   }
 }
 ```
@@ -223,7 +232,8 @@ Write `~/.gsd/defaults.json` with:
     "auto_advance": <current>,
     "nyquist_validation": <current>,
     "ui_phase": <current>,
-    "ui_safety_gate": <current>
+    "ui_safety_gate": <current>,
+    "skip_discuss": <current>
   }
 }
 ```
@@ -248,6 +258,7 @@ Display:
 | UI Phase             | {On/Off} |
 | UI Safety Gate       | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
+| Skip Discuss         | {On/Off} |
 | Context Warnings     | {On/Off} |
 | Saved as Defaults    | {Yes/No} |
 
@@ -265,7 +276,7 @@ Quick commands:
 
 <success_criteria>
 - [ ] Current config read
-- [ ] User presented with 9 settings (profile + 7 workflow toggles + git branching)
+- [ ] User presented with 10 settings (profile + 8 workflow toggles + git branching)
 - [ ] Config updated with model_profile, workflow, and git sections
 - [ ] User offered to save as global defaults (~/.gsd/defaults.json)
 - [ ] Changes confirmed to user

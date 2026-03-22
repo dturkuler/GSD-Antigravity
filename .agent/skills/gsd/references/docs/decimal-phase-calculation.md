@@ -32,9 +32,8 @@ With existing decimals:
 ## Extract Values
 
 ```bash
-.agent/skills/gsd/bin/gsd-tools.cjs" phase next-decimal "${AFTER_PHASE}")
-DECIMAL_PHASE=$(printf '%s\n' "$DECIMAL_INFO" | jq -r '.next')
-BASE_PHASE=$(printf '%s\n' "$DECIMAL_INFO" | jq -r '.base_phase')
+.agent/skills/gsd/bin/gsd-tools.cjs" phase next-decimal "${AFTER_PHASE}" --pick next)
+.agent/skills/gsd/bin/gsd-tools.cjs" phase next-decimal "${AFTER_PHASE}" --pick base_phase)
 ```
 
 Or with --raw flag:

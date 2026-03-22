@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { escapeRegex, loadConfig, getMilestoneInfo, getMilestonePhaseFilter, normalizeMd, planningPaths, output, error } = require('./core.cjs');
+const { escapeRegex, loadConfig, getMilestoneInfo, getMilestonePhaseFilter, normalizeMd, planningDir, planningPaths, output, error } = require('./core.cjs');
 const { extractFrontmatter, reconstructFrontmatter } = require('./frontmatter.cjs');
 
 /** Shorthand — every state command needs this path */
@@ -733,9 +733,20 @@ function stripFrontmatter(content) {
 }
 
 function syncStateFrontmatter(content, cwd) {
+  // Read existing frontmatter BEFORE stripping — it may contain values
+  // that the body no longer has (e.g., Status field removed by an agent).
+  const existingFm = extractFrontmatter(content);
   const body = stripFrontmatter(content);
-  const fm = buildStateFrontmatter(body, cwd);
-  const yamlStr = reconstructFrontmatter(fm);
+  const derivedFm = buildStateFrontmatter(body, cwd);
+
+  // Preserve existing frontmatter status when body-derived status is 'unknown'.
+  // This prevents a missing Status: field in the body from overwriting a
+  // previously valid status (e.g., 'executing' → 'unknown').
+  if (derivedFm.status === 'unknown' && existingFm.status && existingFm.status !== 'unknown') {
+  derivedFm.status = existingFm.status;
+  }
+
+  const yamlStr = reconstructFrontmatter(derivedFm);
   return `---\n${yamlStr}\n---\n\n${body}`;
 }
 
@@ -894,7 +905,7 @@ function cmdStateBeginPhase(cwd, phaseNumber, phaseName, planCount, raw) {
  * Fixes #1034.
  */
 function cmdSignalWaiting(cwd, type, question, options, phase, raw) {
-  const gsdDir = fs.existsSync(path.join(cwd, '.gsd')) ? path.join(cwd, '.gsd') : path.join(cwd, '.planning');
+  const gsdDir = fs.existsSync(path.join(cwd, '.gsd')) ? path.join(cwd, '.gsd') : planningDir(cwd);
   const waitingPath = path.join(gsdDir, 'WAITING.json');
 
   const signal = {
@@ -921,7 +932,7 @@ function cmdSignalWaiting(cwd, type, question, options, phase, raw) {
 function cmdSignalResume(cwd, raw) {
   const paths = [
   path.join(cwd, '.gsd', 'WAITING.json'),
-  path.join(cwd, '.planning', 'WAITING.json'),
+  path.join(planningDir(cwd), 'WAITING.json'),
   ];
 
   let removed = false;

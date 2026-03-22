@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.3] - 2026-03-23
+
+### Added
+- **GSD Sync 1.28.0**: Synchronized with the latest GSD core (v1.28.0), featuring enhanced initialization signatures and improved state tracking.
+- **Enhanced Feature Injection**: The `gsd-converter` now injects advanced features like `discoverPhaseArtifacts`, `MODEL_PROFILES`, and `Smart Inclusions` into the generated `gsd` skill's core library.
+
 ## [1.27.2] - 2026-03-21
 
 ### Fixed

@@ -40,6 +40,8 @@ Before researching, discover project context:
 5. Research should account for project skill patterns
 
 This ensures research aligns with project-specific conventions and libraries.
+
+**ANTIGRAVITY.md enforcement:** If `./ANTIGRAVITY.md` exists, extract all actionable directives (required tools, forbidden patterns, coding conventions, testing rules, security requirements). Include a `## Project Constraints (from ANTIGRAVITY.md)` section in RESEARCH.md listing these directives so the planner can verify compliance. Treat ANTIGRAVITY.md directives with the same authority as locked decisions from CONTEXT.md — research should not recommend approaches that contradict them.
 </project_context>
 
 <upstream_input>
@@ -348,6 +350,20 @@ Verified patterns from official sources:
    - What's unclear: [the gap]
    - Recommendation: [how to handle]
 
+## Environment Availability
+
+> Skip this section if the phase has no external dependencies (code/config-only changes).
+
+| Dependency | Required By | Available | Version | Fallback |
+|------------|------------|-----------|---------|----------|
+| [tool] | [feature/requirement] | ✓/✗ | [version or —] | [fallback or —] |
+
+**Missing dependencies with no fallback:**
+- [items that block execution]
+
+**Missing dependencies with fallback:**
+- [items with viable alternatives]
+
 ## Validation Architecture
 
 > Skip this section entirely if workflow.nyquist_validation is explicitly set to false in .planning/config.json. If the key is absent, treat as enabled.
@@ -466,6 +482,68 @@ For each item found: document (1) what needs changing, and (2) whether it requir
 **The canonical question:** *After every file in the repo is updated, what runtime systems still have the old string cached, stored, or registered?*
 
 If the answer for a category is "nothing" — say so explicitly. Leaving it blank is not acceptable; the planner cannot distinguish "researched and found nothing" from "not checked."
+
+## Step 2.6: Environment Availability Audit
+
+**Trigger:** Any phase that depends on external tools, services, runtimes, or CLI utilities beyond the project's own code.
+
+Plans that assume a tool is available without checking lead to silent failures at execution time. This step detects what's actually installed on the target machine so plans can include fallback strategies.
+
+**How:**
+
+1. **Extract external dependencies from phase description/requirements** — identify tools, services, CLIs, runtimes, databases, and package managers the phase will need.
+
+2. **Probe availability** for each dependency:
+
+```bash
+# CLI tools — check if command exists and get version
+command -v $TOOL 2>/dev/null && $TOOL --version 2>/dev/null | head -1
+
+# Runtimes — check version meets minimum
+node --version 2>/dev/null
+python3 --version 2>/dev/null
+ruby --version 2>/dev/null
+
+# Package managers
+npm --version 2>/dev/null
+pip3 --version 2>/dev/null
+cargo --version 2>/dev/null
+
+# Databases / services — check if process is running or port is open
+pg_isready 2>/dev/null
+redis-cli ping 2>/dev/null
+curl -s http://localhost:27017 2>/dev/null
+
+# Docker
+docker info 2>/dev/null | head -3
+```
+
+3. **Document in RESEARCH.md** as `## Environment Availability`:
+
+```markdown
+## Environment Availability
+
+| Dependency | Required By | Available | Version | Fallback |
+|------------|------------|-----------|---------|----------|
+| PostgreSQL | Data layer | ✓ | 15.4 | — |
+| Redis | Caching | ✗ | — | Use in-memory cache |
+| Docker | Containerization | ✓ | 24.0.7 | — |
+| ffmpeg | Media processing | ✗ | — | Skip media features, flag for human |
+
+**Missing dependencies with no fallback:**
+- {list items that block execution — planner must address these}
+
+**Missing dependencies with fallback:**
+- {list items with viable alternatives — planner should use fallback}
+```
+
+4. **Classification:**
+   - **Available:** Tool found, version meets minimum → no action needed
+   - **Available, wrong version:** Tool found but version too old → document upgrade path
+   - **Missing with fallback:** Not found, but a viable alternative exists → planner uses fallback
+   - **Missing, blocking:** Not found, no fallback → planner must address (install step, or descope feature)
+
+**Skip condition:** If the phase is purely code/config changes with no external dependencies (e.g., refactoring, documentation), output: "Step 2.6: SKIPPED (no external dependencies identified)" and move on.
 
 ## Step 3: Execute Research Protocol
 
@@ -601,6 +679,7 @@ Research is complete when:
 - [ ] Architecture patterns documented
 - [ ] Don't-hand-roll items listed
 - [ ] Common pitfalls catalogued
+- [ ] Environment availability audited (or skipped with reason)
 - [ ] Code examples provided
 - [ ] Source hierarchy followed (Context7 → Official → WebSearch)
 - [ ] All findings have confidence levels

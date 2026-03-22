@@ -65,8 +65,7 @@ Gap: Flow "View dashboard" broken at data fetch
 Find highest existing phase:
 ```bash
 # Get sorted phase list, extract last one
-.agent/skills/gsd/bin/gsd-tools.cjs" phases list)
-HIGHEST=$(printf '%s\n' "$PHASES" | jq -r '.directories[-1]')
+.agent/skills/gsd/bin/gsd-tools.cjs" phases list --pick directories[-1])
 ```
 
 New phases continue from there:

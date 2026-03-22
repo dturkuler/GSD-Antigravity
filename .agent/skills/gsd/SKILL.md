@@ -1,9 +1,8 @@
 ---
 name: gsd
-version: 1.27.0
+version: 1.28.0
 description: "Antigravity GSD (Get Stuff Done) - A spec-driven hierarchical planning and execution system. Triggers on project planning, phase management, and GSD slash commands."
 ---
-
 
 # GSD
 
@@ -37,15 +36,20 @@ This skill should be used when:
 - `gsd:do`
 - `gsd:execute-phase`
 - `gsd:fast`
+- `gsd:forensics`
 - `gsd:gsd-tools`
 - `gsd:health`
 - `gsd:help`
 - `gsd:insert-phase`
 - `gsd:join-discord`
 - `gsd:list-phase-assumptions`
+- `gsd:list-workspaces`
+- `gsd:manager`
 - `gsd:map-codebase`
+- `gsd:milestone-summary`
 - `gsd:new-milestone`
 - `gsd:new-project`
+- `gsd:new-workspace`
 - `gsd:next`
 - `gsd:note`
 - `gsd:pause-work`
@@ -58,6 +62,7 @@ This skill should be used when:
 - `gsd:quick`
 - `gsd:reapply-patches`
 - `gsd:remove-phase`
+- `gsd:remove-workspace`
 - `gsd:research-phase`
 - `gsd:resume-work`
 - `gsd:review-backlog`
@@ -73,6 +78,7 @@ This skill should be used when:
 - `gsd:update`
 - `gsd:validate-phase`
 - `gsd:verify-work`
+- `gsd:workstreams`
 
 ## System Overview
 
@@ -100,15 +106,20 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:do`](references/commands/do.md)**: Route freeform text to the right GSD command automatically
 - **[`gsd:execute-phase`](references/commands/execute-phase.md)**: Execute all plans in a phase with wave-based parallelization
 - **[`gsd:fast`](references/commands/fast.md)**: Execute a trivial task inline — no subagents, no planning overhead
+- **[`gsd:forensics`](references/commands/forensics.md)**: Post-mortem investigation for failed GSD workflows — analyzes git history, artifacts, and state to diagnose what went wrong
 - **[`gsd:gsd-tools`](references/commands/gsd-tools.md)**: Direct access to GSD internal CLI tools for atomic operations (state, roadmap, phase, config, etc.)
 - **[`gsd:health`](references/commands/health.md)**: Diagnose planning directory health and optionally repair issues
 - **[`gsd:help`](references/commands/help.md)**: Show available GSD commands and usage guide
 - **[`gsd:insert-phase`](references/commands/insert-phase.md)**: Insert urgent work as decimal phase (e.g., 72.1) between existing phases
 - **[`gsd:join-discord`](references/commands/join-discord.md)**: Join the GSD Discord community
 - **[`gsd:list-phase-assumptions`](references/commands/list-phase-assumptions.md)**: Surface Antigravity's assumptions about a phase approach before planning
+- **[`gsd:list-workspaces`](references/commands/list-workspaces.md)**: List active GSD workspaces and their status
+- **[`gsd:manager`](references/commands/manager.md)**: Interactive command center for managing multiple phases from one terminal
 - **[`gsd:map-codebase`](references/commands/map-codebase.md)**: Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents
+- **[`gsd:milestone-summary`](references/commands/milestone-summary.md)**: Generate a comprehensive project summary from milestone artifacts for team onboarding and review
 - **[`gsd:new-milestone`](references/commands/new-milestone.md)**: Start a new milestone cycle — update PROJECT.md and route to requirements
 - **[`gsd:new-project`](references/commands/new-project.md)**: Initialize a new project with deep context gathering and PROJECT.md
+- **[`gsd:new-workspace`](references/commands/new-workspace.md)**: Create an isolated workspace with repo copies and independent .planning/
 - **[`gsd:next`](references/commands/next.md)**: Automatically advance to the next logical step in the GSD workflow
 - **[`gsd:note`](references/commands/note.md)**: Zero-friction idea capture. Append, list, or promote notes to todos.
 - **[`gsd:pause-work`](references/commands/pause-work.md)**: Create context handoff when pausing work mid-phase
@@ -121,6 +132,7 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:quick`](references/commands/quick.md)**: Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents
 - **[`gsd:reapply-patches`](references/commands/reapply-patches.md)**: Reapply local modifications after a GSD update
 - **[`gsd:remove-phase`](references/commands/remove-phase.md)**: Remove a future phase from roadmap and renumber subsequent phases
+- **[`gsd:remove-workspace`](references/commands/remove-workspace.md)**: Remove a GSD workspace and clean up worktrees
 - **[`gsd:research-phase`](references/commands/research-phase.md)**: Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)
 - **[`gsd:resume-work`](references/commands/resume-work.md)**: Resume work from previous session with full context restoration
 - **[`gsd:review-backlog`](references/commands/review-backlog.md)**: Review and promote backlog items to active milestone
@@ -136,6 +148,7 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:update`](references/commands/update.md)**: Update GSD to latest version with changelog display
 - **[`gsd:validate-phase`](references/commands/validate-phase.md)**: Retroactively audit and fill Nyquist validation gaps for a completed phase
 - **[`gsd:verify-work`](references/commands/verify-work.md)**: Validate built features through conversational UAT
+- **[`gsd:workstreams`](references/commands/workstreams.md)**: Manage parallel workstreams — list, create, switch, status, progress, complete, and resume
 
 ### 3. Directory Structure
 The skill uses a standardized directory structure for portability and organization:
@@ -170,4 +183,4 @@ General documentation on the GSD philosophy, usage patterns, and configuration.
 5.  **CLI Invocation**: `gsd-tools` is **NOT** a global command. Always invoke it with the full node path: `node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args]`. Never run `gsd-tools` bare.
 
 ---
-*Generated by gsd-converter on 2026-03-21*
+*Generated by gsd-converter on 2026-03-22*

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { safeReadFile, loadConfig, isGitIgnored, execGit, normalizePhaseName, comparePhaseNum, getArchivedPhaseDirs, generateSlugInternal, getMilestoneInfo, getMilestonePhaseFilter, resolveModelInternal, stripShippedMilestones, extractCurrentMilestone, planningPaths, toPosixPath, output, error, findPhaseInternal, extractOneLinerFromBody, getRoadmapPhaseInternal } = require('./core.cjs');
+const { safeReadFile, loadConfig, isGitIgnored, execGit, normalizePhaseName, comparePhaseNum, getArchivedPhaseDirs, generateSlugInternal, getMilestoneInfo, getMilestonePhaseFilter, resolveModelInternal, stripShippedMilestones, extractCurrentMilestone, planningDir, planningPaths, toPosixPath, output, error, findPhaseInternal, extractOneLinerFromBody, getRoadmapPhaseInternal } = require('./core.cjs');
 const { extractFrontmatter } = require('./frontmatter.cjs');
 const { MODEL_PROFILES } = require('./model-profiles.cjs');
 
@@ -43,7 +43,7 @@ function cmdCurrentTimestamp(format, raw) {
 }
 
 function cmdListTodos(cwd, area, raw) {
-  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
+  const pendingDir = path.join(planningDir(cwd), 'todos', 'pending');
 
   let count = 0;
   const todos = [];
@@ -69,7 +69,7 @@ function cmdListTodos(cwd, area, raw) {
       created: createdMatch ? createdMatch[1].trim() : 'unknown',
       title: titleMatch ? titleMatch[1].trim() : 'Untitled',
       area: todoArea,
-      path: toPosixPath(path.join('.planning', 'todos', 'pending', file)),
+      path: toPosixPath(path.relative(cwd, path.join(pendingDir, file))),
     });
     } catch { /* intentionally empty */ }
   }
@@ -245,6 +245,43 @@ function cmdCommit(cwd, message, files, raw, amend, noVerify) {
   const result = { committed: false, hash: null, reason: 'skipped_gitignored' };
   output(result, raw, 'skipped');
   return;
+  }
+
+  // Ensure branching strategy branch exists before first commit (#1278).
+  // Pre-execution workflows (discuss, plan, research) commit artifacts but the branch
+  // was previously only created during execute-phase — too late.
+  if (config.branching_strategy && config.branching_strategy !== 'none') {
+  let branchName = null;
+  if (config.branching_strategy === 'phase') {
+    // Determine which phase we're committing for from the file paths
+    const phaseMatch = (files || []).join(' ').match(/(\d+)-/);
+    if (phaseMatch) {
+    const phaseNum = phaseMatch[1];
+    const phaseInfo = findPhaseInternal(cwd, phaseNum);
+    if (phaseInfo) {
+      branchName = config.phase_branch_template
+      .replace('{phase}', phaseInfo.phase_number)
+      .replace('{slug}', phaseInfo.phase_slug || 'phase');
+    }
+    }
+  } else if (config.branching_strategy === 'milestone') {
+    const milestone = getMilestoneInfo(cwd);
+    if (milestone && milestone.version) {
+    branchName = config.milestone_branch_template
+      .replace('{milestone}', milestone.version)
+      .replace('{slug}', generateSlugInternal(milestone.name) || 'milestone');
+    }
+  }
+  if (branchName) {
+    const currentBranch = execGit(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (currentBranch.exitCode === 0 && currentBranch.stdout.trim() !== branchName) {
+    // Create branch if it doesn't exist, or switch to it if it does
+    const create = execGit(cwd, ['checkout', '-b', branchName]);
+    if (create.exitCode !== 0) {
+      execGit(cwd, ['checkout', branchName]);
+    }
+    }
+  }
   }
 
   // Stage files
@@ -543,7 +580,7 @@ function cmdProgressRender(cwd, format, raw) {
 function cmdTodoMatchPhase(cwd, phase, raw) {
   if (!phase) { error('phase required for todo match-phase'); }
 
-  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
+  const pendingDir = path.join(planningDir(cwd), 'todos', 'pending');
   const todos = [];
 
   // Load pending todos
@@ -664,8 +701,8 @@ function cmdTodoComplete(cwd, filename, raw) {
   error('filename required for todo complete');
   }
 
-  const pendingDir = path.join(cwd, '.planning', 'todos', 'pending');
-  const completedDir = path.join(cwd, '.planning', 'todos', 'completed');
+  const pendingDir = path.join(planningDir(cwd), 'todos', 'pending');
+  const completedDir = path.join(planningDir(cwd), 'todos', 'completed');
   const sourcePath = path.join(pendingDir, filename);
 
   if (!fs.existsSync(sourcePath)) {
@@ -727,7 +764,7 @@ function cmdScaffold(cwd, type, options, raw) {
     fs.mkdirSync(phasesParent, { recursive: true });
     const dirPath = path.join(phasesParent, dirName);
     fs.mkdirSync(dirPath, { recursive: true });
-    output({ created: true, directory: `.planning/phases/${dirName}`, path: dirPath }, raw, dirPath);
+    output({ created: true, directory: toPosixPath(path.relative(cwd, dirPath)), path: dirPath }, raw, dirPath);
     return;
   }
   default:

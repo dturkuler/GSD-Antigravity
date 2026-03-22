@@ -6,6 +6,12 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v1.27.3 (2026-03-23)
+*   **Context**: `gsd-converter` and generated `gsd` skill.
+*   **Issue**: Inconsistent advanced feature availability in the generated `gsd` skill core library compared to the kit's internal expectations.
+*   **Root Cause Analysis**: The GSD core synchronization to 1.28.0 required updated initialization and artifact discovery patterns that weren't fully integrated into the existing converter logic.
+*   **How it was fixed**: Updated `optimize-gsd-tools.cjs` to inject `discoverPhaseArtifacts`, `MODEL_PROFILES`, and enhanced `Smart Inclusions` directly into the generated skill's core components, ensuring full feature parity across all GSD-related skills.
+
 ### v1.27.2 (2026-03-21)
 *   **Context:** `bin/install.js` (Linux/Unix execution)
 *   **Issue:** `npx` execution failed on Linux with `Syntax error: "(" unexpected`.
