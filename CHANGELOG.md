@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.30.0] - 2026-03-28
+
+### Changed
+- **Full GSD Parity 1.30.0**: Synchronized the Kit with the core GSD protocol (v1.30.0), ensuring full transparency and version alignment for all Antigravity users.
+- **Enhanced GSD Converter**: 
+    - Improved signature verification in `init.cjs` during migration.
+    - Robust handling of updated modular logic in `bin/lib/` for better dependency tracking.
+    - Reinforced rebranding consistency across all migrated agent prompts.
+
 ## [1.28.0] - 2026-03-23
+
 
 ### Changed
 - **Full GSD Parity 1.28.0**: Aligned the Kit version with the core GSD protocol (v1.28.0) to ensure transparency and version synchronization for end-users.

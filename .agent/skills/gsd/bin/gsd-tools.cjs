@@ -458,6 +458,11 @@ async function runCommand(command, args, cwd, raw) {
     break;
   }
 
+  case 'agent-skills': {
+    init.cmdAgentSkills(cwd, args[1], raw);
+    break;
+  }
+
   case 'history-digest': {
     commands.cmdHistoryDigest(cwd, raw);
     break;
@@ -553,8 +558,10 @@ async function runCommand(command, args, cwd, raw) {
     } else if (subcommand === 'health') {
     const repairFlag = args.includes('--repair');
     verify.cmdValidateHealth(cwd, { repair: repairFlag }, raw);
+    } else if (subcommand === 'agents') {
+    verify.cmdValidateAgents(cwd, raw);
     } else {
-    error('Unknown validate subcommand. Available: consistency, health');
+    error('Unknown validate subcommand. Available: consistency, health, agents');
     }
     break;
   }
@@ -568,6 +575,18 @@ async function runCommand(command, args, cwd, raw) {
   case 'audit-uat': {
     const uat = require('./lib/uat.cjs');
     uat.cmdAuditUat(cwd, raw);
+    break;
+  }
+
+  case 'uat': {
+    const subcommand = args[1];
+    const uat = require('./lib/uat.cjs');
+    if (subcommand === 'render-checkpoint') {
+    const options = parseNamedArgs(args, ['file']);
+    uat.cmdRenderCheckpoint(cwd, options, raw);
+    } else {
+    error('Unknown uat subcommand. Available: render-checkpoint');
+    }
     break;
   }
 

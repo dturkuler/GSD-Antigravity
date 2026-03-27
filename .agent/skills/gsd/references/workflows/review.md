@@ -128,7 +128,7 @@ antigravity -p "$(cat /tmp/gsd-review-prompt-{phase}.md)" --no-input 2>/dev/null
 
 **Codex:**
 ```bash
-codex -p "$(cat /tmp/gsd-review-prompt-{phase}.md)" 2>/dev/null > /tmp/gsd-review-codex-{phase}.md
+codex exec --skip-git-repo-check "$(cat /tmp/gsd-review-prompt-{phase}.md)" 2>/dev/null > /tmp/gsd-review-codex-{phase}.md
 ```
 
 If a CLI fails, log the error and continue with remaining CLIs.
