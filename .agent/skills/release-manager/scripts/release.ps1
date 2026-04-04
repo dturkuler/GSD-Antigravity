@@ -134,8 +134,15 @@ if (-not $dryRun) {
     Update-ReadmeBadge $newVersion
 } else {
     Write-Host "🧪 Dry-Run: Skipping file updates. Proposed Entries:" -ForegroundColor Gray
-    Write-Host "--- Proposed Changelog Header ---"
+    Write-Host "--- Proposed Changelog Preview ---" -ForegroundColor Cyan
     Write-Host "## [$newVersion] - $(Get-Date -Format 'yyyy-MM-dd')"
+    foreach ($cat in $groups.Keys) {
+        if ($groups[$cat].Count -gt 0) {
+            Write-Host "### $cat" -ForegroundColor DarkCyan
+            foreach ($item in $groups[$cat]) { Write-Host "  $item" }
+        }
+    }
+    Write-Host "-----------------------------------"
 }
 
 # 6. Phase 3: Archive

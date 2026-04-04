@@ -150,3 +150,12 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
     *   Added regex-based `discoverPhaseArtifacts` to traverse `.planning/` and phase subdirectories automatically.
     *   Introduced the `--include` flag (e.g., `--include state,roadmap`) to allow sub-agents to request only necessary context, optimizing token usage.
     *   Injected `MODEL_PROFILES` to centralize model selection logic keyed by GSD role.
+
+## [1.30.1] - 2026-04-05
+
+### fix: modernize release-manager with zero-manual automation
+- **Context**: Release Manager Skill Upgrade
+- **Issue**: The release process required manual interventions for documentation updates and lacked tight integration with the new dynamic GSD converter.
+- **Root Cause**: Legacy release scripts were based on a generic template incompatible with the GSD-Antigravity Kit's architecture.
+- **Technical Fix**: Implemented elease.ps1 to automate Git log parsing (conventional commits), CHANGELOG.md prepending, and README.md badge updates.
+

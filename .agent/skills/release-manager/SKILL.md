@@ -76,9 +76,9 @@ Create the release artifact for GitHub (Source Zip):
 2.  **Archive**: Zip the repository content. We exclude local project data (`.planning`, `.antigravity`, `__tobedeleted`), temporary Git files, and the local `gh.exe` binary to keep the release lightweight.
     ```powershell
     $packageName = $package.name
-    $excludes = @("node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak", "gh.exe")
+    $excludes = @("node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak", "gh.exe", ".agent/skills/release-manager/bin/gh.exe")
     $files = Get-ChildItem -Path . -Exclude $excludes
-    Compress-Archive -Path $files -DestinationPath "$packageName`_v$ver.zip" -Force
+    Compress-Archive -Path $files -DestinationPath "$packageName_v$ver.zip" -Force
     ```
 
 ### Phase 4: Release Execution
@@ -105,16 +105,12 @@ $env:GODEBUG="http2client=0"
 ```
 
 ### Phase 6: NPM Publication
-If the project is a package, publish it to the NPM registry to enable `npx` usage.
-
-**Command**:
-```powershell
-# For public packages
-npm publish
-
-# OR for scoped packages (e.g., @user/package)
-# npm publish --access public
-```
+1.  **Orchestrated Publish**: The `release.ps1` script will attempt `npm publish` automatically at the end of the workflow.
+2.  **Manual Fallback**: If the script is run with `--skipNpm` or fails, you can publish manually:
+    ```powershell
+    # For public packages
+    npm publish
+    ```
 
 **Verification**:
 ```powershell
@@ -139,10 +135,10 @@ Get-ChildItem "$packageName`_v*.zip" | Sort-Object LastWriteTime -Descending | S
     - [ ] `npm whoami`
 - [ ] **Phase 1: Strategic Versioning**
     - [ ] `npm version patch --no-git-tag-version`
-- [ ] **Phase 2: Documentation Synchronization**
-    - [ ] Update `CHANGELOG.md`
-    - [ ] Update `docs/DEV_KNOWLEDGEBASE.md` (Root Cause Analysis for fixes)
-    - [ ] Update `README.md` (Update version badge: `[![Release Version]`)
+- [ ] **Phase 2: Documentation Synchronization (Automated)**
+    - [ ] Update `CHANGELOG.md` (Self-writing via `release.ps1`)
+    - [ ] Update `docs/DEV_KNOWLEDGEBASE.md` (Fix summary via `release.ps1`)
+    - [ ] Update `README.md` (Badge URL replacement via `release.ps1`)
 - [ ] **Phase 3: Archive & Package**
     - [ ] Create ZIP archive: `gsd-antigravity-kit_v1.0.X.zip`
 - [ ] **Phase 4: Release Execution**
