@@ -35,10 +35,8 @@ function Get-SkillChecklist {
 
 function Set-Verified($item) {
     # Check for direct match or fuzzy match (without backticks/bold)
-    $cleanItem = $item -replace '\*\*|`', ''
     foreach ($key in $checklist.Keys) {
-        $cleanKey = $key -replace '\*\*|`', ''
-        if ($cleanKey -eq $cleanItem) {
+        if (($key -replace '\*\*|`', '') -eq ($item -replace '\*\*|`', '')) {
             $checklist[$key] = "x"
             Write-Host "✅ Verified: $key" -ForegroundColor Green
             return
@@ -88,12 +86,21 @@ function Get-GitCommits {
     return $groups
 }
 
+function Get-GsdVersion {
+    $manifestPath = ".claude/gsd-file-manifest.json"
+    if (Test-Path $manifestPath) {
+        $manifest = Get-Content $manifestPath | ConvertFrom-Json
+        return $manifest.version
+    }
+    return "Unknown"
+}
+
 # --- Main Logic ---
 
 Write-Host "🚀 Initializing Verified Release Orchestrator..." -ForegroundColor Cyan
 Get-SkillChecklist
 
-# 1. Phase 0: Readiness
+# 1. Phase 0: Readiness Verification
 Write-Host "🔍 Phase 0: Readiness Verification..." -ForegroundColor Yellow
 Set-Verified "Phase 0: Readiness Check"
 
@@ -137,7 +144,7 @@ if (-not $dryRun) {
     Set-Verified "npm version patch --no-git-tag-version"
 }
 
-# 3. Phase 2: Documentation Sync
+# 3. Phase 2: Documentation Synchronization
 $groups = Get-GitCommits
 Set-Verified "Phase 2: Documentation Synchronization (Automated)"
 if (-not $dryRun) {
@@ -163,8 +170,11 @@ if (-not $dryRun) {
     Set-Verified "Update docs/DEV_KNOWLEDGEBASE.md (Fix summary via release.ps1)"
 
     # Update README Badges
+    $gsdVersion = Get-GsdVersion
+    Write-Host "🏷️ Syncing README badges (Kit v$newVersion | GSD v$gsdVersion)..." -ForegroundColor Yellow
     $readme = Get-Content "README.md" -Raw
-    $readme = $readme -replace "gsd-v[0-9.]+", "gsd-v$newVersion"
+    $readme = $readme -replace "Release-v[0-9.]+", "Release-v$newVersion"
+    $readme = $readme -replace "gsd-v[0-9.]+", "gsd-v$gsdVersion"
     $readme | Set-Content "README.md" -Encoding utf8
     Set-Verified "Update README.md (Badge URL replacement via release.ps1)"
 }
