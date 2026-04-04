@@ -20,7 +20,7 @@ Extract from init JSON: `commit_docs`, `date`, `timestamp`, `todo_count`, `todos
 
 Ensure directories exist:
 ```bash
-mkdir -p .planning/todos/pending .planning/todos/done
+mkdir -p .planning/todos/pending .planning/todos/completed
 ```
 
 Note existing areas from the todos array for consistency in infer_area step.
@@ -28,7 +28,7 @@ Note existing areas from the todos array for consistency in infer_area step.
 
 <step name="extract_content">
 **With arguments:** Use as the title/focus.
-- `/gsd:add-todo Add auth token refresh` → title = "Add auth token refresh"
+- `/gsd-add-todo Add auth token refresh` → title = "Add auth token refresh"
 
 **Without arguments:** Analyze recent conversation to extract:
 - The specific problem, idea, or task discussed
@@ -141,7 +141,7 @@ Would you like to:
 
 1. Continue with current work
 2. Add another todo
-3. View all todos (/gsd:check-todos)
+3. View all todos (/gsd-check-todos)
 ```
 </step>
 

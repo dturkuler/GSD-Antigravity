@@ -21,12 +21,12 @@ Execute the requested `gsd-tools` command using Node.js.
 `node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args]`
 
 ### Available Commands:
-Commands: state, resolve-model, find-phase, commit, verify-summary, generate-slug,
-current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-set,
-config-get, history-digest, phases, roadmap, requirements, phase, milestone,
-validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
-websearch, frontmatter, verify, template, init
-Run with gsd:help command args for detailed usage of each command.
+Commands: state, roadmap, requirements, phase, milestone, todo, workstream,
+find-phase, resolve-model, commit, verify, template, init, check-commit,
+stats, audit-uat, uat, agent-skills, phases, docs-init, scan-sessions,
+extract-messages, profile-sample, write-profile, generate-antigravity-profile,
+generate-antigravity-md, history-digest, progress, scaffold, state-snapshot
+  Run with gsd:help <command> for detailed usage.
 
 ### Example
 To analyze the roadmap:

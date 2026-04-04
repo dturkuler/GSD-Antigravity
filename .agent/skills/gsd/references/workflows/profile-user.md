@@ -118,7 +118,7 @@ Use AskUserQuestion:
 - options:
   - "Let's go" -- Proceed to step 3 (session analysis)
   - "Use questionnaire instead" -- Jump to step 4b (questionnaire path)
-  - "Not now" -- Display "No worries. Run /gsd:profile-user when ready." and exit
+  - "Not now" -- Display "No worries. Run /gsd-profile-user when ready." and exit
 
 ---
 
@@ -333,7 +333,7 @@ Use AskUserQuestion with multiSelect:
 - header: "Artifacts"
 - question: "Which artifacts should I generate?"
 - options (ALL pre-selected by default):
-  - "/gsd:dev-preferences command file" -- "Load your preferences in any session"
+  - "/gsd-dev-preferences command file" -- "Load your preferences in any session"
   - "ANTIGRAVITY.md profile section" -- "Add profile to this project's ANTIGRAVITY.md"
   - "Global ANTIGRAVITY.md" -- "Add profile to C:/projects/GSD-Antigravity/.antigravity/ANTIGRAVITY.md for all projects"
 
@@ -345,13 +345,13 @@ Use AskUserQuestion with multiSelect:
 
 Generate selected artifacts sequentially (file I/O is fast, no benefit from parallel agents):
 
-**For /gsd:dev-preferences (if selected):**
+**For /gsd-dev-preferences (if selected):**
 
 ```bash
 .agent/skills/gsd/bin/gsd-tools.cjs generate-dev-preferences --analysis "$ANALYSIS_PATH" --json 2>/dev/null
 ```
 
-Display: "✓ Generated /gsd:dev-preferences at C:/projects/GSD-Antigravity/.antigravity/commands/gsd/dev-preferences.md"
+Display: "✓ Generated /gsd-dev-preferences at C:/projects/GSD-Antigravity/.antigravity/commands/gsd/dev-preferences.md"
 
 **For ANTIGRAVITY.md profile section (if selected):**
 
@@ -410,7 +410,7 @@ Your profile:    C:/projects/GSD-Antigravity/.antigravity/get-shit-done/USER-PRO
 Then list paths for each generated artifact:
 ```
 Artifacts:
-  ✓ /gsd:dev-preferences   C:/projects/GSD-Antigravity/.antigravity/commands/gsd/dev-preferences.md
+  ✓ /gsd-dev-preferences   C:/projects/GSD-Antigravity/.antigravity/commands/gsd/dev-preferences.md
   ✓ ANTIGRAVITY.md section       ./ANTIGRAVITY.md
   ✓ Global ANTIGRAVITY.md        C:/projects/GSD-Antigravity/.antigravity/ANTIGRAVITY.md
 ```

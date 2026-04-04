@@ -27,13 +27,18 @@ if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 .agent/skills/gsd/bin/gsd-tools.cjs" agent-skills gsd-researcher 2>/dev/null)
 .agent/skills/gsd/bin/gsd-tools.cjs" agent-skills gsd-planner 2>/dev/null)
 .agent/skills/gsd/bin/gsd-tools.cjs" agent-skills gsd-checker 2>/dev/null)
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get context_window 2>/dev/null || echo "200000")
 ```
 
-Parse JSON for: `researcher_model`, `planner_model`, `checker_model`, `research_enabled`, `plan_checker_enabled`, `nyquist_validation_enabled`, `commit_docs`, `text_mode`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_reviews`, `has_plans`, `plan_count`, `planning_exists`, `roadmap_exists`, `phase_req_ids`.
+When `CONTEXT_WINDOW >= 500000`, the planner prompt includes prior phase CONTEXT.md files so cross-phase decisions are consistent (e.g., "use library X for all data fetching" from Phase 2 is visible to Phase 5's planner).
+
+Parse JSON for: `researcher_model`, `planner_model`, `checker_model`, `research_enabled`, `plan_checker_enabled`, `nyquist_validation_enabled`, `commit_docs`, `text_mode`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_research`, `has_context`, `has_reviews`, `has_plans`, `plan_count`, `planning_exists`, `roadmap_exists`, `phase_req_ids`, `response_language`.
+
+**If `response_language` is set:** Include `response_language: {value}` in all spawned subagent prompts so any user-facing output stays in the configured language.
 
 **File paths (for <files_to_read> blocks):** `state_path`, `roadmap_path`, `requirements_path`, `context_path`, `research_path`, `verification_path`, `uat_path`, `reviews_path`. These are null if files don't exist.
 
-**If `planning_exists` is false:** Error — run `/gsd:new-project` first.
+**If `planning_exists` is false:** Error — run `/gsd-new-project` first.
 
 ## 2. Parse and Normalize Arguments
 
@@ -64,9 +69,9 @@ Error:
 ```
 No REVIEWS.md found for Phase {N}. Run reviews first:
 
-/gsd:review --phase {N}
+/gsd-review --phase {N}
 
-Then re-run /gsd:plan-phase {N} --reviews
+Then re-run /gsd-plan-phase {N} --reviews
 ```
 Exit workflow.
 
@@ -226,9 +231,9 @@ If "Run discuss-phase first":
   does not work correctly in nested subcontexts (#1009). Instead, display the command
   and exit so the user runs it as a top-level command:
   ```
-  Run this command first, then re-run /gsd:plan-phase {X} ${GSD_WS}:
+  Run this command first, then re-run /gsd-plan-phase {X} ${GSD_WS}:
 
-  /gsd:discuss-phase {X} ${GSD_WS}
+  /gsd-discuss-phase {X} ${GSD_WS}
   ```
   **Exit the plan-phase workflow. Do not continue.**
 
@@ -296,7 +301,7 @@ Answer: "What do I need to know to PLAN this phase well?"
 </objective>
 
 <files_to_read>
-- {context_path} (USER DECISIONS from /gsd:discuss-phase)
+- {context_path} (USER DECISIONS from /gsd-discuss-phase)
 - {requirements_path} (Project requirements)
 - {state_path} (Project decisions and history)
 </files_to_read>
@@ -360,6 +365,32 @@ test -f "${PHASE_DIR}/${PADDED_PHASE}-VALIDATION.md" && echo "VALIDATION_CREATED
 
 **If not found:** Warn and continue — plans may fail Dimension 8.
 
+## 5.55. Security Threat Model Gate
+
+> Skip if `workflow.security_enforcement` is explicitly `false`. Absent = enabled.
+
+```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.security_enforcement --raw 2>/dev/null || echo "true")
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.security_asvs_level --raw 2>/dev/null || echo "1")
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.security_block_on --raw 2>/dev/null || echo "high")
+```
+
+**If `SECURITY_CFG` is `false`:** Skip to step 5.6.
+
+**If `SECURITY_CFG` is `true`:** Display banner:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► SECURITY THREAT MODEL REQUIRED (ASVS L{SECURITY_ASVS})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each PLAN.md must include a <threat_model> block.
+Block on: {SECURITY_BLOCK} severity threats.
+Opt out: set security_enforcement: false in .planning/config.json
+```
+
+Continue to step 5.6. Security config is passed to the planner in step 8.
+
 ## 5.6. UI Design Contract Gate
 
 > Skip if `workflow.ui_phase` is explicitly `false` AND `workflow.ui_safety_gate` is explicitly `false` in `.planning/config.json`. If keys are absent, treat as enabled.
@@ -390,11 +421,31 @@ UI_SPEC_FILE=$(ls "${PHASE_DIR}"/*-UI-SPEC.md 2>/dev/null | head -1)
 
 **If UI-SPEC.md missing AND `UI_GATE_CFG` is `true`:**
 
+Read auto-chain state:
+```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
+```
+
+**If `AUTO_CHAIN` is `true` (running inside a `--chain` or `--auto` pipeline):**
+
+Auto-generate UI-SPEC without prompting:
+```
+Skill(skill="gsd-ui-phase", args="${PHASE} --auto ${GSD_WS}")
+```
+After `gsd-ui-phase` returns, re-read:
+```bash
+UI_SPEC_FILE=$(ls "${PHASE_DIR}"/*-UI-SPEC.md 2>/dev/null | head -1)
+UI_SPEC_PATH="${UI_SPEC_FILE}"
+```
+Continue to step 6.
+
+**If `AUTO_CHAIN` is `false` (manual invocation):**
+
 If `TEXT_MODE` is true, present as a plain-text numbered list:
 ```
 Phase {N} has frontend indicators but no UI-SPEC.md. Generate a design contract before planning?
 
-1. Generate UI-SPEC first — Run /gsd:ui-phase {N} then re-run /gsd:plan-phase {N}
+1. Generate UI-SPEC first — Run /gsd-ui-phase {N} then re-run /gsd-plan-phase {N}
 2. Continue without UI-SPEC
 3. Not a frontend phase
 
@@ -405,11 +456,73 @@ Otherwise use AskUserQuestion:
 - header: "UI Design Contract"
 - question: "Phase {N} has frontend indicators but no UI-SPEC.md. Generate a design contract before planning?"
 - options:
-  - "Generate UI-SPEC first" → Display: "Run `/gsd:ui-phase {N} ${GSD_WS}` then re-run `/gsd:plan-phase {N} ${GSD_WS}`". Exit workflow.
+  - "Generate UI-SPEC first" → Display: "Run `/gsd-ui-phase {N} ${GSD_WS}` then re-run `/gsd-plan-phase {N} ${GSD_WS}`". Exit workflow.
   - "Continue without UI-SPEC" → Continue to step 6.
   - "Not a frontend phase" → Continue to step 6.
 
-**If `HAS_UI` is 1 (no frontend indicators):** Skip silently to step 6.
+**If `HAS_UI` is 1 (no frontend indicators):** Skip silently to step 5.7.
+
+## 5.7. Schema Push Detection Gate
+
+> Detects schema-relevant files in the phase scope and injects a mandatory `[BLOCKING]` schema push task into the plan. Prevents false-positive verification where build/types pass because TypeScript types come from config, not the live database.
+
+Check if any files in the phase scope match schema patterns:
+
+```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" roadmap get-phase "${PHASE}" --pick section 2>/dev/null)
+```
+
+Scan `PHASE_SECTION`, `CONTEXT.md` (if loaded), and `RESEARCH.md` (if exists) for file paths matching these ORM patterns:
+
+| ORM | File Patterns |
+|-----|--------------|
+| Payload CMS | `src/collections/**/*.ts`, `src/globals/**/*.ts` |
+| Prisma | `prisma/schema.prisma`, `prisma/schema/*.prisma` |
+| Drizzle | `drizzle/schema.ts`, `src/db/schema.ts`, `drizzle/*.ts` |
+| Supabase | `supabase/migrations/*.sql` |
+| TypeORM | `src/entities/**/*.ts`, `src/migrations/**/*.ts` |
+
+Also check if any existing PLAN.md files for this phase already reference these file patterns in `files_modified`.
+
+**If schema-relevant files detected:**
+
+Set `SCHEMA_PUSH_REQUIRED=true` and `SCHEMA_ORM={detected_orm}`.
+
+Determine the push command for the detected ORM:
+
+| ORM | Push Command | Non-TTY Workaround |
+|-----|-------------|-------------------|
+| Payload CMS | `npx payload migrate` | `CI=true PAYLOAD_MIGRATING=true npx payload migrate` |
+| Prisma | `npx prisma db push` | `npx prisma db push --accept-data-loss` (if destructive) |
+| Drizzle | `npx drizzle-kit push` | `npx drizzle-kit push` |
+| Supabase | `supabase db push` | Set `SUPABASE_ACCESS_TOKEN` env var |
+| TypeORM | `npx typeorm migration:run` | `npx typeorm migration:run -d src/data-source.ts` |
+
+Inject the following into the planner prompt (step 8) as an additional constraint:
+
+```markdown
+<schema_push_requirement>
+**[BLOCKING] Schema Push Required**
+
+This phase modifies schema-relevant files ({detected_files}). The planner MUST include
+a `[BLOCKING]` task that runs the database schema push command AFTER all schema file
+modifications are complete but BEFORE verification.
+
+- ORM detected: {SCHEMA_ORM}
+- Push command: {push_command}
+- Non-TTY workaround: {env_hint}
+- If push requires interactive prompts that cannot be suppressed, flag the task for
+  manual intervention with `autonomous: false`
+
+This task is mandatory — the phase CANNOT pass verification without it. Build and
+type checks will pass without the push (types come from config, not the live database),
+creating a false-positive verification state.
+</schema_push_requirement>
+```
+
+Display: `Schema files detected ({SCHEMA_ORM}) — [BLOCKING] push task will be injected into plans`
+
+**If no schema-relevant files detected:** Skip silently to step 6.
 
 ## 6. Check Existing Plans
 
@@ -453,7 +566,7 @@ VALIDATION_EXISTS=$(ls "${PHASE_DIR}"/*-VALIDATION.md 2>/dev/null | head -1)
 ```
 
 If missing and Nyquist is still enabled/applicable — ask user:
-1. Re-run: `/gsd:plan-phase {PHASE} --research ${GSD_WS}`
+1. Re-run: `/gsd-plan-phase {PHASE} --research ${GSD_WS}`
 2. Disable Nyquist with the exact command:
 .agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow.nyquist_validation false`
 3. Continue anyway (plans fail Dimension 8)
@@ -482,12 +595,17 @@ Planner prompt:
 - {state_path} (Project State)
 - {roadmap_path} (Roadmap)
 - {requirements_path} (Requirements)
-- {context_path} (USER DECISIONS from /gsd:discuss-phase)
+- {context_path} (USER DECISIONS from /gsd-discuss-phase)
 - {research_path} (Technical Research)
 - {verification_path} (Verification Gaps - if --gaps)
 - {uat_path} (UAT Gaps - if --gaps)
 - {reviews_path} (Cross-AI Review Feedback - if --reviews)
 - {UI_SPEC_PATH} (UI Design Contract — visual/interaction specs, if exists)
+${CONTEXT_WINDOW >= 500000 ? `
+**Cross-phase context (1M model enrichment):**
+- Prior phase CONTEXT.md files (locked decisions from earlier phases — maintain consistency)
+- Prior phase SUMMARY.md files (what was actually built — reuse patterns, avoid duplication)
+` : ''}
 </files_to_read>
 
 ${AGENT_SKILLS_PLANNER}
@@ -496,10 +614,11 @@ ${AGENT_SKILLS_PLANNER}
 
 **Project instructions:** Read ./ANTIGRAVITY.md if exists — follow project-specific guidelines
 **Project skills:** Check .antigravity/skills/ or .agents/skills/ directory (if either exists) — read SKILL.md files, plans should account for project skill rules
+
 </planning_context>
 
 <downstream_consumer>
-Output consumed by /gsd:execute-phase. Plans need:
+Output consumed by /gsd-execute-phase. Plans need:
 - Frontmatter (wave, depends_on, files_modified, autonomous)
 - Tasks in XML format with read_first and acceptance_criteria fields (MANDATORY on every task)
 - Verification criteria
@@ -560,8 +679,41 @@ Task(
 ## 9. Handle Planner Return
 
 - **`## PLANNING COMPLETE`:** Display plan count. If `--skip-verify` or `plan_checker_enabled` is false (from init): skip to step 13. Otherwise: step 10.
+- **`## PHASE SPLIT RECOMMENDED`:** The planner determined the phase is too complex to implement all user decisions without simplifying them. Handle in step 9b.
 - **`## CHECKPOINT REACHED`:** Present to user, get response, spawn continuation (step 12)
 - **`## PLANNING INCONCLUSIVE`:** Show attempts, offer: Add context / Retry / Manual
+
+## 9b. Handle Phase Split Recommendation
+
+When the planner returns `## PHASE SPLIT RECOMMENDED`, it means the phase has too many decisions to implement at full fidelity within the plan budget. The planner proposes groupings.
+
+**Extract from planner return:**
+- Proposed sub-phases (e.g., "17a: processing core (D-01 to D-19)", "17b: billing + config UX (D-20 to D-27)")
+- Which D-XX decisions go in each sub-phase
+- Why the split is necessary (decision count, complexity estimate)
+
+**Present to user:**
+```
+## Phase {X} is too complex for full-fidelity implementation
+
+The planner found {N} decisions that cannot all be implemented without
+simplifying some. Instead of reducing your decisions, we recommend splitting:
+
+**Option 1: Split into sub-phases**
+- Phase {X}a: {name} — {D-XX to D-YY} ({N} decisions)
+- Phase {X}b: {name} — {D-XX to D-YY} ({M} decisions)
+
+**Option 2: Proceed anyway** (planner will attempt all, quality may degrade)
+
+**Option 3: Prioritize** — you choose which decisions to implement now,
+rest become a follow-up phase
+```
+
+Use AskUserQuestion with these 3 options.
+
+**If "Split":** Use `/gsd-insert-phase` to create the sub-phases, then replan each.
+**If "Proceed":** Return to planner with instruction to attempt all decisions at full fidelity, accepting more plans/tasks.
+**If "Prioritize":** Use AskUserQuestion (multiSelect) to let user pick which D-XX are "now" vs "later". Create CONTEXT.md for each sub-phase with the selected decisions.
 
 ## 10. Spawn gsd-plan-checker Agent
 
@@ -585,7 +737,7 @@ Checker prompt:
 - {PHASE_DIR}/*-PLAN.md (Plans to verify)
 - {roadmap_path} (Roadmap)
 - {requirements_path} (Requirements)
-- {context_path} (USER DECISIONS from /gsd:discuss-phase)
+- {context_path} (USER DECISIONS from /gsd-discuss-phase)
 - {research_path} (Technical Research — includes Validation Architecture)
 </files_to_read>
 
@@ -634,7 +786,7 @@ Revision prompt:
 
 <files_to_read>
 - {PHASE_DIR}/*-PLAN.md (Existing plans)
-- {context_path} (USER DECISIONS from /gsd:discuss-phase)
+- {context_path} (USER DECISIONS from /gsd-discuss-phase)
 </files_to_read>
 
 ${AGENT_SKILLS_PLANNER}
@@ -717,6 +869,16 @@ Options:
 
 If `TEXT_MODE` is true, present as a plain-text numbered list (options already shown in the block above). Otherwise use AskUserQuestion to present the options.
 
+## 13b. Record Planning Completion in STATE.md
+
+After plans pass all gates, record that planning is complete so STATE.md reflects the new phase status:
+
+```bash
+.agent/skills/gsd/bin/gsd-tools.cjs" state planned-phase --phase "${PHASE_NUMBER}" --name "${PHASE_NAME}" --plans "${PLAN_COUNT}"
+```
+
+This updates STATUS to "Ready to execute", sets the correct plan count, and timestamps Last Activity.
+
 ## 14. Present Final Status
 
 Route to `<offer_next>` OR `auto_advance` depending on flags/config.
@@ -725,10 +887,10 @@ Route to `<offer_next>` OR `auto_advance` depending on flags/config.
 
 Check for auto-advance trigger:
 
-1. Parse `--auto` flag from $ARGUMENTS
-2. **Sync chain flag with intent** — if user invoked manually (no `--auto`), clear the ephemeral chain flag from any previous interrupted `--auto` chain. This does NOT touch `workflow.auto_advance` (the user's persistent settings preference):
+1. Parse `--auto` and `--chain` flags from $ARGUMENTS
+2. **Sync chain flag with intent** — if user invoked manually (no `--auto` and no `--chain`), clear the ephemeral chain flag from any previous interrupted `--auto` chain. This does NOT touch `workflow.auto_advance` (the user's persistent settings preference):
    ```bash
-   if [[ ! "$ARGUMENTS" =~ --auto ]]; then
+   if [[ ! "$ARGUMENTS" =~ --auto ]] && [[ ! "$ARGUMENTS" =~ --chain ]]; then
 .agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
    fi
    ```
@@ -738,7 +900,14 @@ Check for auto-advance trigger:
 .agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
    ```
 
-**If `--auto` flag present OR `AUTO_CHAIN` is true OR `AUTO_CFG` is true:**
+**If `--auto` or `--chain` flag present AND `AUTO_CHAIN` is not true:** Persist chain flag to config (handles direct invocation without prior discuss-phase):
+```bash
+if ([[ "$ARGUMENTS" =~ --auto ]] || [[ "$ARGUMENTS" =~ --chain ]]) && [[ "$AUTO_CHAIN" != "true" ]]; then
+.agent/skills/gsd/bin/gsd-tools.cjs" config-set workflow._auto_chain_active true
+fi
+```
+
+**If `--auto` or `--chain` flag present OR `AUTO_CHAIN` is true OR `AUTO_CFG` is true:**
 
 Display banner:
 ```
@@ -751,7 +920,7 @@ Plans ready. Launching execute-phase...
 
 Launch execute-phase using the Skill tool to avoid nested Task sessions (which cause runtime freezes due to deep agent nesting):
 ```
-Skill(skill="gsd:execute-phase", args="${PHASE} --auto --no-transition ${GSD_WS}")
+Skill(skill="gsd-execute-phase", args="${PHASE} --auto --no-transition ${GSD_WS}")
 ```
 
 The `--no-transition` flag tells execute-phase to return status after verification instead of chaining further. This keeps the auto-advance chain flat — each phase runs at the same nesting level rather than spawning deeper Task agents.
@@ -765,14 +934,14 @@ The `--no-transition` flag tells execute-phase to return status after verificati
 
   Auto-advance pipeline finished.
 
-  Next: /gsd:discuss-phase ${NEXT_PHASE} --auto ${GSD_WS}
+  Next: /gsd-discuss-phase ${NEXT_PHASE} --auto ${GSD_WS}
   ```
 - **GAPS FOUND / VERIFICATION FAILED** → Display result, stop chain:
   ```
   Auto-advance stopped: Execution needs review.
 
   Review the output above and continue manually:
-  /gsd:execute-phase ${PHASE} ${GSD_WS}
+  /gsd-execute-phase ${PHASE} ${GSD_WS}
   ```
 
 **If neither `--auto` nor config enabled:**
@@ -803,17 +972,17 @@ Verification: {Passed | Passed with override | Skipped}
 
 **Execute Phase {X}** — run all {N} plans
 
-/gsd:execute-phase {X} ${GSD_WS}
+/clear then:
 
-<sub>/clear first → fresh context window</sub>
+/gsd-execute-phase {X} ${GSD_WS}
 
 ───────────────────────────────────────────────────────────────
 
 **Also available:**
 - cat .planning/phases/{phase-dir}/*-PLAN.md — review plans
-- /gsd:plan-phase {X} --research — re-research first
-- /gsd:review --phase {X} --all — peer review plans with external AIs
-- /gsd:plan-phase {X} --reviews — replan incorporating review feedback
+- /gsd-plan-phase {X} --research — re-research first
+- /gsd-review --phase {X} --all — peer review plans with external AIs
+- /gsd-plan-phase {X} --reviews — replan incorporating review feedback
 
 ───────────────────────────────────────────────────────────────
 </offer_next>
@@ -834,11 +1003,11 @@ stdio deadlocks with MCP servers — see Antigravity issue anthropics/antigravit
    Remove-Item -Recurse -Force "$env:USERPROFILE\.antigravity\tasks\*" -ErrorAction SilentlyContinue
    ```
 4. **Reduce MCP server count:** Temporarily disable non-essential MCP servers in settings.json
-5. **Retry:** Restart Antigravity and run `/gsd:plan-phase` again
+5. **Retry:** Restart Antigravity and run `/gsd-plan-phase` again
 
 If freezes persist, try `--skip-research` to reduce the agent chain from 3 to 2 agents:
 ```
-/gsd:plan-phase N --skip-research
+/gsd-plan-phase N --skip-research
 ```
 </windows_troubleshooting>
 

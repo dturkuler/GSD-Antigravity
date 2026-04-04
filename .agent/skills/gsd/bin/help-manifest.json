@@ -1,312 +1,198 @@
 {
-  "version": "1.30.0",
+  "version": "1.32.0",
   "commands": {
-    "add-backlog": {
-      "description": "Add an idea to the backlog parking lot (999.x numbering)"
-    },
-    "add-phase": {
-      "description": "Add phase to end of current milestone in roadmap"
-    },
-    "add-tests": {
-      "description": "Generate tests for a completed phase based on UAT criteria and implementation"
-    },
-    "add-todo": {
-      "description": "Capture idea or task as todo from current conversation context"
-    },
-    "audit-milestone": {
-      "description": "Audit milestone completion against original intent before archiving"
-    },
-    "audit-uat": {
-      "description": "Cross-phase audit of all outstanding UAT and verification items"
-    },
-    "autonomous": {
-      "description": "Run all remaining phases autonomously \u2014 discuss\u2192plan\u2192execute per phase"
-    },
-    "check-todos": {
-      "description": "List pending todos and select one to work on"
-    },
-    "cleanup": {
-      "description": "Archive accumulated phase directories from completed milestones"
-    },
-    "complete-milestone": {
-      "description": "Archive completed milestone and prepare for next version"
-    },
-    "debug": {
-      "description": "Systematic debugging with persistent state across context resets"
-    },
-    "discuss-phase": {
-      "description": "Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults)."
-    },
-    "do": {
-      "description": "Route freeform text to the right GSD command automatically"
-    },
-    "execute-phase": {
-      "description": "Execute all plans in a phase with wave-based parallelization"
-    },
-    "fast": {
-      "description": "Execute a trivial task inline \u2014 no subagents, no planning overhead"
-    },
-    "forensics": {
-      "description": "Post-mortem investigation for failed GSD workflows \u2014 analyzes git history, artifacts, and state to diagnose what went wrong"
-    },
-    "health": {
-      "description": "Diagnose planning directory health and optionally repair issues"
-    },
-    "help": {
-      "description": "Show available GSD commands and usage guide"
-    },
-    "insert-phase": {
-      "description": "Insert urgent work as decimal phase (e.g., 72.1) between existing phases"
-    },
-    "join-discord": {
-      "description": "Join the GSD Discord community"
-    },
-    "list-phase-assumptions": {
-      "description": "Surface Antigravity's assumptions about a phase approach before planning"
-    },
-    "list-workspaces": {
-      "description": "List active GSD workspaces and their status"
-    },
-    "manager": {
-      "description": "Interactive command center for managing multiple phases from one terminal"
-    },
-    "map-codebase": {
-      "description": "Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents"
-    },
-    "milestone-summary": {
-      "description": "Generate a comprehensive project summary from milestone artifacts for team onboarding and review"
-    },
-    "new-milestone": {
-      "description": "Start a new milestone cycle \u2014 update PROJECT.md and route to requirements"
-    },
-    "new-project": {
-      "description": "Initialize a new project with deep context gathering and PROJECT.md"
-    },
-    "new-workspace": {
-      "description": "Create an isolated workspace with repo copies and independent .planning/"
-    },
-    "next": {
-      "description": "Automatically advance to the next logical step in the GSD workflow"
-    },
-    "note": {
-      "description": "Zero-friction idea capture. Append, list, or promote notes to todos."
-    },
-    "pause-work": {
-      "description": "Create context handoff when pausing work mid-phase"
-    },
-    "plan-milestone-gaps": {
-      "description": "Create phases to close all gaps identified by milestone audit"
-    },
-    "plan-phase": {
-      "description": "Create detailed phase plan (PLAN.md) with verification loop"
-    },
-    "plant-seed": {
-      "description": "Capture a forward-looking idea with trigger conditions \u2014 surfaces automatically at the right milestone"
-    },
-    "pr-branch": {
-      "description": "Create a clean PR branch by filtering out .planning/ commits \u2014 ready for code review"
-    },
-    "profile-user": {
-      "description": "Generate developer behavioral profile and create Antigravity-discoverable artifacts"
-    },
-    "progress": {
-      "description": "Calculate and render project completion percentage.",
-      "subcommands": {
-        "json": "Output progress as raw JSON.",
-        "render": "Output a pretty-formatted progress bar (default)."
-      }
-    },
-    "quick": {
-      "description": "Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents"
-    },
-    "reapply-patches": {
-      "description": "Reapply local modifications after a GSD update"
-    },
-    "remove-phase": {
-      "description": "Remove a future phase from roadmap and renumber subsequent phases"
-    },
-    "remove-workspace": {
-      "description": "Remove a GSD workspace and clean up worktrees"
-    },
-    "research-phase": {
-      "description": "Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)"
-    },
-    "resume-work": {
-      "description": "Resume work from previous session with full context restoration"
-    },
-    "review-backlog": {
-      "description": "Review and promote backlog items to active milestone"
-    },
-    "review": {
-      "description": "Request cross-AI peer review of phase plans from external AI CLIs"
-    },
-    "session-report": {
-      "description": "Generate a session report with token usage estimates, work summary, and outcomes"
-    },
-    "set-profile": {
-      "description": "Switch model profile for GSD agents (quality/balanced/budget/inherit)"
-    },
-    "settings": {
-      "description": "Configure GSD workflow toggles and model profile"
-    },
-    "ship": {
-      "description": "Create PR, run review, and prepare for merge after verification passes"
-    },
-    "stats": {
-      "description": "Display project statistics \u2014 phases, plans, requirements, git metrics, and timeline"
-    },
-    "thread": {
-      "description": "Manage persistent context threads for cross-session work"
-    },
-    "ui-phase": {
-      "description": "Generate UI design contract (UI-SPEC.md) for frontend phases"
-    },
-    "ui-review": {
-      "description": "Retroactive 6-pillar visual audit of implemented frontend code"
-    },
-    "update": {
-      "description": "Update GSD to latest version with changelog display"
-    },
-    "validate-phase": {
-      "description": "Retroactively audit and fill Nyquist validation gaps for a completed phase"
-    },
-    "verify-work": {
-      "description": "Validate built features through conversational UAT"
-    },
-    "workstreams": {
-      "description": "Manage parallel workstreams \u2014 list, create, switch, status, progress, complete, and resume"
-    },
     "state": {
-      "description": "Manage and query project state memory.",
+      "description": "State operations.",
       "subcommands": {
-        "json": "Output full state as raw JSON.",
-        "update": "Update a state key. usage: state update <key> <value>",
-        "get": "Retrieve a specific state value. usage: state get <key>",
-        "patch": "Apply multiple state changes via flags.",
-        "advance-plan": "Advance to the next plan in the current phase.",
-        "record-metric": "Record execution metrics (duration, files, tasks).",
-        "update-progress": "Sync STATE.md progress with ROADMAP.md status.",
-        "add-decision": "Record a design decision with rationale.",
-        "add-blocker": "Record a new blocking issue.",
-        "resolve-blocker": "Mark a blocker as resolved.",
-        "record-session": "Record session continuity metadata."
+        "load": "Load project config + state",
+        "json": "Output STATE.md frontmatter as JSON",
+        "update": "Update a STATE.md field",
+        "get": "Get STATE.md content or section",
+        "patch": "Batch update STATE.md fields",
+        "signal-resume": "Remove WAITING.json signal",
+        "advance-plan": "Increment plan counter",
+        "record-metric": "Record execution metrics",
+        "update-progress": "Recalculate progress bar",
+        "add-blocker": "Add blocker",
+        "record-session": "Update session continuity"
       }
     },
-    "roadmap": {
-      "description": "Manage and analyze project roadmap and phases.",
+    "resolve-model": {
+      "description": "Resolve-model operations.",
       "subcommands": {
-        "get-phase": "Retrieve details for a specific phase number.",
-        "analyze": "Analyze roadmap completion and next steps.",
-        "update-plan-progress": "Update completion status for a plan in ROADMAP.md."
+        "<agent-type>": "Get model for agent based on profile"
       }
     },
     "find-phase": {
-      "description": "Search for a phase directory by number or name. usage: find-phase <query>"
-    },
-    "resolve-model": {
-      "description": "Resolve the optimal AI model for a specific agent type. usage: resolve-model <agent-type>"
+      "description": "Find-phase operations.",
+      "subcommands": {
+        "<phase>": "Find phase directory by number"
+      }
     },
     "commit": {
-      "description": "Create a standardized GSD commit. usage: commit [message] --files [file1...]",
+      "description": "Commit operations.",
       "subcommands": {
-        "--amend": "Amend the last commit instead of creating a new one."
+        "<message>": "Commit planning docs"
       }
     },
     "verify-summary": {
-      "description": "Verify that a SUMMARY.md matches the corresponding PLAN.md. usage: verify-summary <path>"
+      "description": "Verify-summary operations.",
+      "subcommands": {
+        "<path>": "Verify a SUMMARY.md file"
+      }
     },
     "generate-slug": {
-      "description": "Convert a string into a URL-friendly slug. usage: generate-slug <text>"
+      "description": "Generate-slug operations.",
+      "subcommands": {
+        "<text>": "Convert text to URL-safe slug"
+      }
     },
     "current-timestamp": {
-      "description": "Output the current timestamp in various formats. usage: current-timestamp [format]"
+      "description": "Current-timestamp operations.",
+      "subcommands": {
+        "[format]": "Get timestamp (full|date|filename)"
+      }
     },
     "list-todos": {
-      "description": "List all pending todos in the project. usage: list-todos [area]"
+      "description": "List-todos operations.",
+      "subcommands": {
+        "[area]": "Count and enumerate pending todos"
+      }
     },
     "verify-path-exists": {
-      "description": "Check if a specific path exists within the project. usage: verify-path-exists <path>"
+      "description": "Verify-path-exists operations.",
+      "subcommands": {
+        "<path>": "Check file/directory existence"
+      }
+    },
+    "config-ensure-section": {
+      "description": "Initialize .planning/config.json"
     },
     "history-digest": {
-      "description": "Generate a concise digest of recent project activity."
-    },
-    "todo": {
-      "description": "Atomic operations on a single todo file.",
-      "subcommands": {
-        "complete": "Mark a todo as done. usage: todo complete <path>"
-      }
-    },
-    "scaffold": {
-      "description": "Scaffold new project structures or phase directories. usage: scaffold <type> --name <name>",
-      "subcommands": {
-        "phase": "Initialize a new phase structure."
-      }
-    },
-    "phase-plan-index": {
-      "description": "Sync and re-index plans within a phase directory."
+      "description": "Aggregate all SUMMARY.md data"
     },
     "state-snapshot": {
-      "description": "Create a persistent snapshot of the current project state."
+      "description": "Structured parse of STATE.md"
     },
-    "summary-extract": {
-      "description": "Extract specific fields from a SUMMARY.md file. usage: summary-extract <path> --fields <f1,f2>"
+    "phase-plan-index": {
+      "description": "Phase-plan-index operations.",
+      "subcommands": {
+        "<phase>": "Index plans with waves and status"
+      }
     },
     "websearch": {
-      "description": "Perform a low-latency web search for technical info. usage: websearch <query>"
+      "description": "Websearch operations.",
+      "subcommands": {
+        "<query>": "Search web via Brave API (if configured)"
+      }
     },
     "phase": {
-      "description": "Atomic phase operations in the roadmap.",
+      "description": "Phase operations.",
       "subcommands": {
-        "next-decimal": "Calculate the next available decimal phase for insertion.",
-        "add": "Add a new phase at the end of the milestone.",
-        "insert": "Insert a new decimal phase at a specific position.",
-        "remove": "Remove a phase and re-number subsequent phases.",
-        "complete": "Mark a phase as 100% complete in ROADMAP.md."
+        "next-decimal": "Calculate next decimal phase number",
+        "add": "Append new phase to roadmap + create dir",
+        "remove": "Remove phase, renumber all subsequent",
+        "complete": "Mark phase done, update state + roadmap"
       }
     },
-    "verify": {
-      "description": "Run verification and consistency checks.",
+    "roadmap": {
+      "description": "Roadmap operations.",
       "subcommands": {
-        "plan-structure": "Validate PLAN.md formatting and required sections.",
-        "phase-completeness": "Verify that all plans in a phase have summaries.",
-        "references": "Check for broken internal or artifact references.",
-        "commits": "Verify that git commits match planned work.",
-        "artifacts": "Confirm existence of required phase artifacts.",
-        "key-links": "Validate critical links and external references.",
-        "consistency": "Ensure ROADMAP.md, STATE.md and REQUIREMENTS.md are in sync.",
-        "health": "Check directory structure and general project health."
+        "get-phase": "Extract phase section from ROADMAP.md",
+        "analyze": "Full roadmap parse with disk status",
+        "update-plan-progress": "Update progress table row from disk (PLAN vs SUMMARY counts)"
       }
     },
-    "template": {
-      "description": "Manage and fill GSD artifact templates.",
+    "requirements": {
+      "description": "Requirements operations.",
       "subcommands": {
-        "select": "Suggest the best template for a specific task.",
-        "fill": "Generate artifact content from a template with variables."
+        "mark-complete": "Mark requirement IDs as complete in REQUIREMENTS.md"
+      }
+    },
+    "milestone": {
+      "description": "Milestone operations.",
+      "subcommands": {
+        "complete": "Archive milestone, create MILESTONES.md"
+      }
+    },
+    "[--archive-phases]": {
+      "description": "Move phase dirs to milestones/vX.Y-phases/"
+    },
+    "validate": {
+      "description": "Validate operations.",
+      "subcommands": {
+        "consistency": "Check phase numbering, disk/roadmap sync",
+        "health": "Check .planning/ integrity, optionally repair",
+        "agents": "Check GSD agent installation status"
+      }
+    },
+    "progress": {
+      "description": "Progress operations.",
+      "subcommands": {
+        "[json|table|bar]": "Render progress in various formats"
+      }
+    },
+    "todo": {
+      "description": "Todo operations.",
+      "subcommands": {
+        "complete": "Move todo from pending to completed"
+      }
+    },
+    "audit-uat": {
+      "description": "Scan all phases for unresolved UAT/verification items"
+    },
+    "scaffold": {
+      "description": "Scaffold operations.",
+      "subcommands": {
+        "context": "Create CONTEXT.md template",
+        "uat": "Create UAT.md template",
+        "phase-dir": "Create phase directory"
       }
     },
     "frontmatter": {
-      "description": "Query or modify Markdown frontmatter.",
+      "description": "Frontmatter operations.",
       "subcommands": {
-        "get": "Retrieve a value from frontmatter. usage: frontmatter get <file> --field <key>",
-        "set": "Update a frontmatter field. usage: frontmatter set <file> --field <key> --value <val>",
-        "merge": "Merge a JSON object into file frontmatter.",
-        "validate": "Validate frontmatter against a specific schema."
+        "set": "Update single frontmatter field",
+        "merge": "Merge JSON into frontmatter",
+        "validate": "Validate required fields"
+      }
+    },
+    "verify": {
+      "description": "Verify operations.",
+      "subcommands": {
+        "plan-structure": "Check PLAN.md structure + tasks",
+        "references": "Check @-refs + paths resolve",
+        "commits": "Batch verify commit hashes",
+        "artifacts": "Check must_haves.artifacts",
+        "key-links": "Check must_haves.key_links"
+      }
+    },
+    "template": {
+      "description": "Template operations.",
+      "subcommands": {
+        "fill": "Create pre-filled VERIFICATION.md"
       }
     },
     "init": {
-      "description": "Initialize specialized GSD workflows.",
+      "description": "Init operations.",
       "subcommands": {
-        "execute-phase": "Init execution state for a phase.",
-        "plan-phase": "Init planning state for a phase.",
-        "new-project": "Init a fresh project structure.",
-        "new-milestone": "Init a new milestone cycle.",
-        "quick": "Init a quick-task context.",
-        "resume": "Restore context from a paused session.",
-        "verify-work": "Init UAT/verification workflow.",
-        "map-codebase": "Init parallel codebase mapping.",
-        "progress": "Calculate current project progress metrics."
+        "execute-phase": "All context for execute-phase workflow",
+        "plan-phase": "All context for plan-phase workflow",
+        "new-project": "All context for new-project workflow",
+        "new-milestone": "All context for new-milestone workflow",
+        "quick": "All context for quick workflow",
+        "resume": "All context for resume-project workflow",
+        "verify-work": "All context for verify-work workflow",
+        "phase-op": "Generic phase operation context",
+        "todos": "All context for todo workflows",
+        "milestone-op": "All context for milestone operations",
+        "map-codebase": "All context for map-codebase workflow",
+        "progress": "All context for progress workflow"
       }
+    },
+    "docs-init": {
+      "description": "Project context for docs-update workflow"
     }
   },
-  "tools_usage": "Commands: state, resolve-model, find-phase, commit, verify-summary, generate-slug,\ncurrent-timestamp, list-todos, verify-path-exists, config-ensure-section, config-set,\nconfig-get, history-digest, phases, roadmap, requirements, phase, milestone,\nvalidate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,\nwebsearch, frontmatter, verify, template, init\nRun with gsd:help command args for detailed usage of each command."
+  "tools_usage": "Commands: state, roadmap, requirements, phase, milestone, todo, workstream,\nfind-phase, resolve-model, commit, verify, template, init, check-commit,\nstats, audit-uat, uat, agent-skills, phases, docs-init, scan-sessions,\nextract-messages, profile-sample, write-profile, generate-antigravity-profile,\ngenerate-antigravity-md, history-digest, progress, scaffold, state-snapshot\n  Run with gsd:help <command> for detailed usage."
 }

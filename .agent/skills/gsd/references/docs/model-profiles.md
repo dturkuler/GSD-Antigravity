@@ -39,11 +39,11 @@ Model profiles control which Antigravity model each GSD agent uses. This allows 
 
 **inherit** - Follow the current session model
 - All agents resolve to `inherit`
-- Best when you switch models interactively (for example OpenCode `/model`)
+- Best when you switch models interactively (for example OpenCode or Kilo `/model`)
 - **Required when using non-Anthropic providers** (OpenRouter, local models, etc.) — otherwise GSD may call Anthropic models directly, incurring unexpected costs
 - Use when: you want GSD to follow your currently selected runtime model
 
-## Using Non-Antigravity Runtimes (Codex, OpenCode, Gemini CLI)
+## Using Non-Antigravity Runtimes (Codex, OpenCode, Gemini CLI, Kilo)
 
 When installed for a non-Antigravity runtime, the GSD installer sets `resolve_model_ids: "omit"` in `~/.gsd/defaults.json`. This returns an empty model parameter for all agents, so each agent uses the runtime's default model. No manual setup is needed.
 
@@ -69,7 +69,7 @@ If you're using Antigravity with OpenRouter, a local model, or any non-Anthropic
 
 ```bash
 # Via settings command
-/gsd:settings
+/gsd-settings
 # → Select "Inherit" for model profile
 
 # Or manually in .planning/config.json
@@ -109,7 +109,7 @@ Overrides take precedence over the profile. Valid values: `opus`, `sonnet`, `hai
 
 ## Switching Profiles
 
-Runtime: `/gsd:set-profile <profile>`
+Runtime: `/gsd-set-profile <profile>`
 
 Per-project default: Set in `.planning/config.json`:
 ```json

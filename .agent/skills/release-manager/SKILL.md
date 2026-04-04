@@ -3,15 +3,16 @@ name: release-manager
 description: Orchestrate the transition from "ready" to "released" for GSD-Antigravity. Manage version numbers in package.json, update changelogs, build release artifacts, and trigger Git tagging, GitHub releases, and NPM package publishing. Triggers on keywords like 'release', 'tagging', 'versioning', 'changelog update', and intents like 'perform a release' or 'prepare v1.0.1'.
 ---
 
-# Release Manager (GSD-Antigravity)
+# Release Manager (Zero-Manual Automation)
 
-Comprehensive guide for managing the software release lifecycle for **gsd-antigravity-kit**, ensuring data integrity, documentation synchronization, and a zero-mistake Git tagging and NPM publishing process.
+Comprehensive automation engine for managing the software release lifecycle for **gsd-antigravity-kit**. The orchestrator handles data integrity, automated documentation synchronization (Changelog/KB/README), and a one-click Git/NPM distribution process.
 
-## 🛑 Manual Trigger Only
-**CRITICAL**: This skill must **NOT** be executed automatically after feature implementation. It is a manual process to be initiated **ONLY** when the user explicitly requests a "Release", "New Version", or "Distribution".
+## ⚡ Zero-Manual Execution
+This skill is designed for full automation. Initiating a release handles versioning, changelog generation, and publication in a single pass.
 
-1.  Implement features/fixes as requested.
-2.  **WAIT** for an explicit instruction to "Release" or "Tag" before starting Phase 1.
+1.  Finalize your features/fixes.
+2.  Run the orchestrator: `pwsh .agent/skills/release-manager/scripts/release.ps1`
+3.  The system will sync GSD, update docs, tag, push, and publish automatically.
 
 ## Purpose
 To provide a deterministic, multi-phase procedure for transitioning the codebase from a "ready" state to a "tagged and released" state on GitHub and as a published package on NPM.
@@ -32,7 +33,7 @@ Before starting a release, ensure the following:
     ```powershell
     py .agent/skills/gsd-converter/scripts/convert.py gsd
     ```
-3.  **Dynamic Documentation Check**: Verify `\.agent\skills\gsd\references\commands\gsd-tools.md` contains the expected command list.
+3.  **Command Library Check**: Verify that `\.agent\skills\gsd\references\commands\` is populated with all migrated Skill documents (approx. 17+ files).
 4.  **Tests**: Run `npm test` if tests are defined.
 5.  **Auth Check (GitHub)**:
     ```powershell
@@ -72,10 +73,11 @@ Create the release artifact for GitHub (Source Zip):
     $package = Get-Content package.json | ConvertFrom-Json
     $ver = $package.version
     ```
-2.  **Archive**: Zip the repository content. We exclude local project data (`.planning`, `.antigravity`, `__tobedeleted`) and temporary Git files to keep the release clean.
+2.  **Archive**: Zip the repository content. We exclude local project data (`.planning`, `.antigravity`, `__tobedeleted`), temporary Git files, and the local `gh.exe` binary to keep the release lightweight.
     ```powershell
     $packageName = $package.name
-    $files = Get-ChildItem -Path . -Exclude "node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak"
+    $excludes = @("node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak", "gh.exe")
+    $files = Get-ChildItem -Path . -Exclude $excludes
     Compress-Archive -Path $files -DestinationPath "$packageName`_v$ver.zip" -Force
     ```
 
@@ -131,7 +133,7 @@ Get-ChildItem "$packageName`_v*.zip" | Sort-Object LastWriteTime -Descending | S
 - [ ] **Phase 0: Readiness Check**
     - [ ] Git Cleanliness
     - [ ] GSD Sync (`convert.py gsd`)
-    - [ ] Verify `gsd-tools.md` is dynamic/updated
+    - [ ] Verify `references/commands/` population
     - [ ] `npm test` (if applicable)
     - [ ] `gh auth status`
     - [ ] `npm whoami`

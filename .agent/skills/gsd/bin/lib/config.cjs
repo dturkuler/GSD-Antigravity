@@ -22,9 +22,14 @@ const VALID_CONFIG_KEYS = new Set([
   'workflow.discuss_mode',
   'workflow.skip_discuss',
   'workflow._auto_chain_active',
-  'git.branching_strategy', 'git.phase_branch_template', 'git.milestone_branch_template', 'git.quick_branch_template',
+  'workflow.use_worktrees',
+  'git.branching_strategy', 'git.base_branch', 'git.phase_branch_template', 'git.milestone_branch_template', 'git.quick_branch_template',
   'planning.commit_docs', 'planning.search_gitignored',
+  'workflow.subagent_timeout',
   'hooks.context_warnings',
+  'project_code', 'phase_naming',
+  'manager.flags.discuss', 'manager.flags.plan', 'manager.flags.execute',
+  'response_language',
 ]);
 
 /**
@@ -60,7 +65,7 @@ function validateKnownConfigKeyPath(keyPath) {
  * Merges (increasing priority):
  *   1. Hardcoded defaults — every key that loadConfig() resolves, plus mode/granularity
  *   2. User-level defaults from ~/.gsd/defaults.json (if present)
- *   3. userChoices — the settings the user explicitly selected during /gsd:new-project
+ *   3. userChoices — the settings the user explicitly selected during /gsd-new-project
  *
  * Uses the canonical `git` namespace for branching keys (consistent with VALID_CONFIG_KEYS
  * and the settings workflow). loadConfig() handles both flat and nested formats, so this
@@ -132,6 +137,8 @@ function buildNewProjectConfig(userChoices) {
   hooks: {
     context_warnings: true,
   },
+  project_code: null,
+  phase_naming: 'sequential',
   agent_skills: {},
   };
 
@@ -167,7 +174,7 @@ function buildNewProjectConfig(userChoices) {
  * Command: create a fully-materialized .planning/config.json for a new project.
  *
  * Accepts user-chosen settings as a JSON string (the keys the user explicitly
- * configured during /gsd:new-project). All remaining keys are filled from
+ * configured during /gsd-new-project). All remaining keys are filled from
  * hardcoded defaults and optional ~/.gsd/defaults.json.
  *
  * Idempotent: if config.json already exists, returns { created: false }.
@@ -434,6 +441,7 @@ function getCmdConfigSetModelProfileResultMessage(
 }
 
 module.exports = {
+  VALID_CONFIG_KEYS,
   cmdConfigEnsureSection,
   cmdConfigSet,
   cmdConfigGet,

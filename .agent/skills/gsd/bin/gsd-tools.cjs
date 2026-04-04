@@ -22,13 +22,13 @@ function showHelp(cmd, sub) {
  * GSD Tools — CLI utility for GSD workflow operations
  * Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--include field1,field2]
  *
- * Commands: state, resolve-model, find-phase, commit, verify-summary, generate-slug,
- *   current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-set,
- *   config-get, history-digest, phases, roadmap, requirements, phase, milestone,
- *   validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
- *   websearch, frontmatter, verify, template, init
+ * Commands: state, roadmap, requirements, phase, milestone, todo, workstream,
+ *   find-phase, resolve-model, commit, verify, template, init, check-commit,
+ *   stats, audit-uat, uat, agent-skills, phases, docs-init, scan-sessions,
+ *   extract-messages, profile-sample, write-profile, generate-antigravity-profile,
+ *   generate-antigravity-md, history-digest, progress, scaffold, state-snapshot
  *
- * Run with gsd:help command args for detailed usage of each command.
+ * Run with gsd:help <command> for detailed usage.
  */
 
 const fs = require('fs');
@@ -49,6 +49,7 @@ const frontmatter = require('./lib/frontmatter.cjs');
 const profilePipeline = require('./lib/profile-pipeline.cjs');
 const profileOutput = require('./lib/profile-output.cjs');
 const workstream = require('./lib/workstream.cjs');
+const docs = require('./lib/docs.cjs');
 
 // ─── Arg parsing helpers ──────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ async function main() {
   }
 
   // Optional workstream override for parallel milestone work.
-  // Priority: --ws flag > GSD_WORKSTREAM env var > active-workstream file > null (flat mode)
+  // Priority: --ws flag > GSD_WORKSTREAM env var > session-scoped pointer > shared legacy pointer > null
   const wsEqArg = args.find(arg => arg.startsWith('--ws='));
   const wsIdx = args.indexOf('--ws');
   let ws = null;
@@ -183,7 +184,7 @@ async function main() {
   const command = args[0];
 
   if (!command) {
-  error('Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--pick <field>] [--cwd <path>] [--ws <name>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-new-project, init, workstream');
+  error('Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--pick <field>] [--cwd <path>] [--ws <name>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-new-project, init, workstream, docs-init');
   }
 
   // Multi-repo guard: resolve project root for commands that read/write .planning/.
@@ -303,6 +304,14 @@ async function runCommand(command, args, cwd, raw) {
     state.cmdSignalWaiting(cwd, type, question, options, p, raw);
     } else if (subcommand === 'signal-resume') {
     state.cmdSignalResume(cwd, raw);
+    } else if (subcommand === 'planned-phase') {
+    const { phase: p, name, plans } = parseNamedArgs(args, ['phase', 'name', 'plans']);
+    state.cmdStatePlannedPhase(cwd, p, plans !== null ? parseInt(plans, 10) : null, raw);
+    } else if (subcommand === 'validate') {
+    state.cmdStateValidate(cwd, raw);
+    } else if (subcommand === 'sync') {
+    const { verify } = parseNamedArgs(args, [], ['verify']);
+    state.cmdStateSync(cwd, { verify }, raw);
     } else {
     state.cmdStateLoad(cwd, raw);
     }
@@ -331,6 +340,11 @@ async function runCommand(command, args, cwd, raw) {
     const message = messageArgs.join(' ') || undefined;
     const files = filesIndex !== -1 ? args.slice(filesIndex + 1).filter(a => !a.startsWith('--')) : [];
     commands.cmdCommit(cwd, message, files, raw, amend, noVerify);
+    break;
+  }
+
+  case 'check-commit': {
+    commands.cmdCheckCommit(cwd, raw);
     break;
   }
 
@@ -407,8 +421,11 @@ async function runCommand(command, args, cwd, raw) {
     verify.cmdVerifyArtifacts(cwd, args[2], raw);
     } else if (subcommand === 'key-links') {
     verify.cmdVerifyKeyLinks(cwd, args[2], raw);
+    } else if (subcommand === 'schema-drift') {
+    const skipFlag = args.includes('--skip');
+    verify.cmdVerifySchemaDrift(cwd, args[2], skipFlag, raw);
     } else {
-    error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links');
+    error('Unknown verify subcommand. Available: plan-structure, phase-completeness, references, commits, artifacts, key-links, schema-drift');
     }
     break;
   }
@@ -479,8 +496,10 @@ async function runCommand(command, args, cwd, raw) {
       includeArchived: args.includes('--include-archived'),
     };
     phase.cmdPhasesList(cwd, options, raw);
+    } else if (subcommand === 'clear') {
+    milestone.cmdPhasesClear(cwd, raw);
     } else {
-    error('Unknown phases subcommand. Available: list');
+    error('Unknown phases subcommand. Available: list, clear');
     }
     break;
   }
@@ -622,53 +641,57 @@ async function runCommand(command, args, cwd, raw) {
     const workflow = args[1];
     const includes = parseIncludeFlag(args);
     switch (workflow) {
-    case 'execute-phase':
-      init.cmdInitExecutePhase(cwd, args[2], includes, raw);
+    case 'execute-phase': {
+      const { validate: epValidate } = parseNamedArgs(args, [], ['validate']);
+      init.cmdInitExecutePhase(cwd, args[2], includes, raw, { validate: epValidate });
       break;
-    case 'plan-phase':
-      init.cmdInitPlanPhase(cwd, args[2], includes, raw);
+    }
+    case 'plan-phase': {
+      const { validate: ppValidate } = parseNamedArgs(args, [], ['validate']);
+      init.cmdInitPlanPhase(cwd, args[2], includes, raw, { validate: ppValidate });
       break;
+    }
     case 'new-project':
-      init.cmdInitNewProject(cwd, raw);
+      init.cmdInitNewProject(cwd, includes, raw);
       break;
     case 'new-milestone':
-      init.cmdInitNewMilestone(cwd, raw);
+      init.cmdInitNewMilestone(cwd, includes, raw);
       break;
     case 'quick':
-      init.cmdInitQuick(cwd, args.slice(2).join(' '), raw);
+      init.cmdInitQuick(cwd, args.slice(2, includes).join(' '), raw);
       break;
     case 'resume':
-      init.cmdInitResume(cwd, raw);
+      init.cmdInitResume(cwd, includes, raw);
       break;
     case 'verify-work':
-      init.cmdInitVerifyWork(cwd, args[2], raw);
+      init.cmdInitVerifyWork(cwd, args[2], includes, raw);
       break;
     case 'phase-op':
-      init.cmdInitPhaseOp(cwd, args[2], raw);
+      init.cmdInitPhaseOp(cwd, args[2], includes, raw);
       break;
     case 'todos':
-      init.cmdInitTodos(cwd, args[2], raw);
+      init.cmdInitTodos(cwd, args[2], includes, raw);
       break;
     case 'milestone-op':
-      init.cmdInitMilestoneOp(cwd, raw);
+      init.cmdInitMilestoneOp(cwd, includes, raw);
       break;
     case 'map-codebase':
-      init.cmdInitMapCodebase(cwd, raw);
+      init.cmdInitMapCodebase(cwd, includes, raw);
       break;
     case 'progress':
       init.cmdInitProgress(cwd, includes, raw);
       break;
     case 'manager':
-      init.cmdInitManager(cwd, raw);
+      init.cmdInitManager(cwd, includes, raw);
       break;
     case 'new-workspace':
-      init.cmdInitNewWorkspace(cwd, raw);
+      init.cmdInitNewWorkspace(cwd, includes, raw);
       break;
     case 'list-workspaces':
-      init.cmdInitListWorkspaces(cwd, raw);
+      init.cmdInitListWorkspaces(cwd, includes, raw);
       break;
     case 'remove-workspace':
-      init.cmdInitRemoveWorkspace(cwd, args[2], raw);
+      init.cmdInitRemoveWorkspace(cwd, args[2], includes, raw);
       break;
     default:
       error(`Unknown init workflow: ${workflow}\nAvailable: execute-phase, plan-phase, new-project, new-milestone, quick, resume, verify-work, phase-op, todos, milestone-op, map-codebase, progress, manager, new-workspace, list-workspaces, remove-workspace`);
@@ -817,6 +840,13 @@ async function runCommand(command, args, cwd, raw) {
     } else {
     error('Unknown workstream subcommand. Available: create, list, status, complete, set, get, progress');
     }
+    break;
+  }
+
+  // ─── Documentation ────────────────────────────────────────────────────
+
+  case 'docs-init': {
+    docs.cmdDocsInit(cwd, raw);
     break;
   }
 

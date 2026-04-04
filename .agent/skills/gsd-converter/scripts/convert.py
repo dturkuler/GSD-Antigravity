@@ -48,12 +48,75 @@ def run_gsd_install():
         print(f"  Output: {e.output}")
         sys.exit(1)
 
+def discover_commands(source_gsd_tools_path):
+    """Dynamic discovery of commands and subcommands from gsd-tools.cjs header."""
+    commands = {}
+    
+    if not os.path.exists(source_gsd_tools_path):
+        print(f"  ⚠️ gsd-tools.cjs not found at {source_gsd_tools_path}, using fallback.")
+        return commands
+
+    try:
+        with open(source_gsd_tools_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract JSDoc style header
+        header_match = re.search(r'/\*\*(.*?)\*/', content, re.DOTALL)
+        if not header_match:
+            return commands
+
+        lines = header_match.group(1).split('\n')
+        current_cmd = None
+        
+        # Section titles to identify top-level commands (ends with colon)
+        SECTION_PATTERN = re.compile(r'^\s*\*?\s+([A-Z][a-zA-Z\s/]+):\s*$')
+
+        for line in lines:
+            line = line.strip()
+            if not line: continue
+            if line.startswith('*'): line = line[1:].strip()
+            if not line: continue
+
+            # Detect sections (Atomic Commands, Phase Operations, etc.)
+            section_match = SECTION_PATTERN.match(line)
+            if section_match:
+                continue
+
+            # Robust split: Find the first word(s) before a large gap of spaces (3+)
+            # Example: "state load                         Load project config"
+            parts = re.split(r'\s{3,}', line)
+            if len(parts) >= 2:
+                call_part = parts[0].strip()
+                desc = parts[1].strip()
+                
+                # Split the call part into command and potentially subcommand
+                call_words = call_part.split()
+                if not call_words: continue
+                
+                name = call_words[0]
+                if len(call_words) > 1:
+                    sub = call_words[1]
+                    if name not in commands:
+                        commands[name] = {"description": f"{name.capitalize()} operations.", "subcommands": {}}
+                    if "subcommands" not in commands[name]:
+                        commands[name]["subcommands"] = {}
+                    commands[name]["subcommands"][sub] = desc
+                else:
+                    if name not in commands:
+                        commands[name] = {"description": desc}
+                    else:
+                        commands[name]["description"] = desc
+
+    except Exception as e:
+        print(f"  ⚠️ Error during dynamic command discovery: {e}")
+        
+    return commands
+
 def migrate_files(source_base, target_base):
     print(f"🚀 Starting migration from {source_base} to {target_base}...")
     
     # Define mappings (source_rel, target_rel)
     mappings = [
-        ('commands/gsd', 'references/commands'),
         ('get-shit-done/references', 'references/docs'),
         ('get-shit-done/workflows', 'references/workflows'),
         ('agents', 'references/agents'),
@@ -80,6 +143,22 @@ def migrate_files(source_base, target_base):
                     shutil.copy2(s, d)
         else:
             print(f"  ⚠️ Source not found: {src_path}")
+
+    # Recursive Skill Migration (new in 1.32.0)
+    skills_src = os.path.join(source_base, 'skills')
+    commands_tgt = os.path.join(target_base, 'references/commands')
+    if os.path.exists(skills_src):
+        print(f"  📁 Migrating modular skills -> references/commands")
+        os.makedirs(commands_tgt, exist_ok=True)
+        for skill_dir in os.listdir(skills_src):
+            s_full = os.path.join(skills_src, skill_dir)
+            if os.path.isdir(s_full):
+                skill_md = os.path.join(s_full, 'SKILL.md')
+                if os.path.exists(skill_md):
+                    # Flatten into references/commands/gsd-name.md
+                    # Clean up the name (remove gsd- prefix if present for redundancy, or keep it)
+                    target_name = skill_dir + '.md'
+                    shutil.copy2(skill_md, os.path.join(commands_tgt, target_name))
 
     # Migrate internal documentation (mapping.md)
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -114,6 +193,8 @@ def refactor_content(target_base):
         (r'\bClaude\b', 'Antigravity'),
         (r'\bclaude\b', 'antigravity'),
         (r'\bCLAUDE\b', 'ANTIGRAVITY'),
+        (r'generate-antigravity-profile', 'generate-antigravity-profile'), # Ensure double rebrands don't break
+        (r'generate-antigravity-md', 'generate-antigravity-md'),
     ]
     
     exact_replacements = [
@@ -142,19 +223,22 @@ def refactor_content(target_base):
             file_path = os.path.join(root, file)
             # Process content
             if file.endswith(('.md', '.json', '.js', '.cjs')):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
-                new_content = content
-                for exact, repl in exact_replacements:
-                    new_content = new_content.replace(exact, repl)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    new_content = content
+                    for exact, repl in exact_replacements:
+                        new_content = new_content.replace(exact, repl)
 
-                for pattern, replacement in replacements:
-                    new_content = re.sub(pattern, replacement, new_content)
-                
-                if new_content != content:
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(new_content)
+                    for pattern, replacement in replacements:
+                        new_content = re.sub(pattern, replacement, new_content)
+                    
+                    if new_content != content:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(new_content)
+                except Exception as e:
+                    print(f"  ⚠️ Error processing {file_path}: {e}")
     
     # Cleanup .bak files
     for root, dirs, files in os.walk(target_base):
@@ -219,11 +303,11 @@ def extract_gsd_tools_help(target_base):
                 if any(x in line for x in ['GSD Tools', 'Replaces repetitive', 'Centralizes:', 'Usage:']):
                     continue
                 if line:
-                    # Format section headers as bold (starts with capital, ends with colon)
-                    if re.match(r'^[A-Z].*:$', line):
+                    # Format section headers as bold (section titles in 1.32.0 ends with :)
+                    if re.match(r'^[A-Z][a-zA-Z\s]+:$', line):
                         extracted.append(f"\n#### {line}")
-                    elif line.startswith('['):
-                        # Indent option lines
+                    elif re.match(r'^\s*([a-zA-Z0-9_-]+)\s+', line):
+                        # Indent command lines
                         extracted.append(f"  {line}")
                     else:
                         extracted.append(line)
@@ -243,15 +327,11 @@ def scan_commands(target_base):
                 description = ""
                 try:
                     with open(file_path, 'r', encoding='utf-8') as cf:
-                        lines = cf.readlines()
-                        # Simple frontmatter parsing
-                        if lines and lines[0].strip() == '---':
-                            for line in lines[1:]:
-                                if line.strip() == '---':
-                                    break
-                                if line.strip().startswith('description:'):
-                                    description = line.split(':', 1)[1].strip().strip('"').strip("'")
-                                    break
+                        text = cf.read()
+                        # Parse frontmatter description
+                        match = re.search(r'---[\s\S]*?description:\s*["\']?(.*?)["\']?\n[\s\S]*?---', text)
+                        if match:
+                            description = match.group(1).strip()
                 except Exception as e:
                     print(f"  ⚠️ Error parsing {f}: {e}")
                 
@@ -261,9 +341,6 @@ def scan_commands(target_base):
 def create_skill_md(target_base, skill_name, version):
     skill_md_path = os.path.join(target_base, 'SKILL.md')
     
-    # We deliberately overwrite SKILL.md to ensure the command list is always up to date
-    # on every run of the converter.
-
     # Locate the template file relative to this script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     template_path = os.path.join(script_dir, '..', 'assets', 'gsd_skill_template.md')
@@ -274,7 +351,6 @@ def create_skill_md(target_base, skill_name, version):
     command_triggers_str = "\n".join([f"- `gsd:{cmd['name']}`" for cmd in commands])
     
     # Format for detailed list: bold command name with link, then description
-    # Example: - **[gsd:new-project](references/commands/new-project.md)**: Initialize a new project...
     commands_list_str = "\n".join([
         f"- **[`gsd:{cmd['name']}`](references/commands/{cmd['name']}.md)**: {cmd['description']}" 
         for cmd in commands
@@ -308,7 +384,6 @@ Template missing.
             )
         except KeyError as e:
             print(f"  ⚠️ Error formatting template: {e}")
-            print("  Check if template contains matching keys.")
             content = template_content
 
     with open(skill_md_path, 'w', encoding='utf-8') as f:
@@ -321,197 +396,59 @@ def main():
     # Enforce 'gsd' as the skill name
     skill_name = 'gsd'
     target_base = os.path.abspath(os.path.join(args.path, skill_name))
-    
+    source_base = args.source
+
     print(f"🧹 Cleaning up existing skill folder: {target_base}")
     if os.path.exists(target_base):
-        shutil.rmtree(target_base)
+        # Retry logic for Windows directory locking issues
+        import time
+        max_retries = 3
+        for i in range(max_retries):
+            try:
+                shutil.rmtree(target_base)
+                break
+            except Exception:
+                if i == max_retries - 1: raise
+                time.sleep(1)
     
     # 0. Capture old version
-    old_version = get_gsd_version(args.source)
+    old_version = get_gsd_version(source_base)
     
     # 1. Run the fresh GSD installation
     run_gsd_install()
     
     # 1.1 Capture new version
-    new_version = get_gsd_version(args.source)
+    new_version = get_gsd_version(source_base)
     
     # 2. Re-create the skill directory
     os.makedirs(target_base, exist_ok=True)
     
     # 3. Perform migration and refactoring
-    migrate_files(args.source, target_base)
+    migrate_files(source_base, target_base)
     
     refactor_content(target_base)
     optimize_gsd_tools(target_base)
 
-    # 4. Inject Antigravity-specific command definitions
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # 4. Inject Dynamic Help Manifest
+    gsd_tools_source = os.path.join(source_base, 'get-shit-done/bin/gsd-tools.cjs')
+    discovered_help = discover_commands(gsd_tools_source)
     
-    # Dynamic gsd-tools help extraction
-    gsd_tools_help = extract_gsd_tools_help(target_base)
+    # Dynamic gsd-tools help extraction for markdown
+    gsd_tools_help_markdown = extract_gsd_tools_help(target_base)
 
-    # Generate help-manifest.json
-    commands = scan_commands(target_base)
-    
-    internal_help = {
-        "state": {
-            "description": "Manage and query project state memory.",
-            "subcommands": {
-                "json": "Output full state as raw JSON.",
-                "update": "Update a state key. usage: state update <key> <value>",
-                "get": "Retrieve a specific state value. usage: state get <key>",
-                "patch": "Apply multiple state changes via flags.",
-                "advance-plan": "Advance to the next plan in the current phase.",
-                "record-metric": "Record execution metrics (duration, files, tasks).",
-                "update-progress": "Sync STATE.md progress with ROADMAP.md status.",
-                "add-decision": "Record a design decision with rationale.",
-                "add-blocker": "Record a new blocking issue.",
-                "resolve-blocker": "Mark a blocker as resolved.",
-                "record-session": "Record session continuity metadata."
-            }
-        },
-        "roadmap": {
-            "description": "Manage and analyze project roadmap and phases.",
-            "subcommands": {
-                "get-phase": "Retrieve details for a specific phase number.",
-                "analyze": "Analyze roadmap completion and next steps.",
-                "update-plan-progress": "Update completion status for a plan in ROADMAP.md."
-            }
-        },
-        "find-phase": {
-            "description": "Search for a phase directory by number or name. usage: find-phase <query>"
-        },
-        "resolve-model": {
-            "description": "Resolve the optimal AI model for a specific agent type. usage: resolve-model <agent-type>"
-        },
-        "commit": {
-            "description": "Create a standardized GSD commit. usage: commit [message] --files [file1...]",
-            "subcommands": {
-                "--amend": "Amend the last commit instead of creating a new one."
-            }
-        },
-        "verify-summary": {
-            "description": "Verify that a SUMMARY.md matches the corresponding PLAN.md. usage: verify-summary <path>"
-        },
-        "generate-slug": {
-            "description": "Convert a string into a URL-friendly slug. usage: generate-slug <text>"
-        },
-        "current-timestamp": {
-            "description": "Output the current timestamp in various formats. usage: current-timestamp [format]"
-        },
-        "list-todos": {
-            "description": "List all pending todos in the project. usage: list-todos [area]"
-        },
-        "verify-path-exists": {
-            "description": "Check if a specific path exists within the project. usage: verify-path-exists <path>"
-        },
-        "history-digest": {
-            "description": "Generate a concise digest of recent project activity."
-        },
-        "progress": {
-            "description": "Calculate and render project completion percentage.",
-            "subcommands": {
-                "json": "Output progress as raw JSON.",
-                "render": "Output a pretty-formatted progress bar (default)."
-            }
-        },
-        "todo": {
-            "description": "Atomic operations on a single todo file.",
-            "subcommands": {
-                "complete": "Mark a todo as done. usage: todo complete <path>"
-            }
-        },
-        "scaffold": {
-            "description": "Scaffold new project structures or phase directories. usage: scaffold <type> --name <name>",
-            "subcommands": {
-                "phase": "Initialize a new phase structure."
-            }
-        },
-        "phase-plan-index": {
-            "description": "Sync and re-index plans within a phase directory."
-        },
-        "state-snapshot": {
-            "description": "Create a persistent snapshot of the current project state."
-        },
-        "summary-extract": {
-            "description": "Extract specific fields from a SUMMARY.md file. usage: summary-extract <path> --fields <f1,f2>"
-        },
-        "websearch": {
-            "description": "Perform a low-latency web search for technical info. usage: websearch <query>"
-        },
-        "phase": {
-            "description": "Atomic phase operations in the roadmap.",
-            "subcommands": {
-                "next-decimal": "Calculate the next available decimal phase for insertion.",
-                "add": "Add a new phase at the end of the milestone.",
-                "insert": "Insert a new decimal phase at a specific position.",
-                "remove": "Remove a phase and re-number subsequent phases.",
-                "complete": "Mark a phase as 100% complete in ROADMAP.md."
-            }
-        },
-        "verify": {
-            "description": "Run verification and consistency checks.",
-            "subcommands": {
-                "plan-structure": "Validate PLAN.md formatting and required sections.",
-                "phase-completeness": "Verify that all plans in a phase have summaries.",
-                "references": "Check for broken internal or artifact references.",
-                "commits": "Verify that git commits match planned work.",
-                "artifacts": "Confirm existence of required phase artifacts.",
-                "key-links": "Validate critical links and external references.",
-                "consistency": "Ensure ROADMAP.md, STATE.md and REQUIREMENTS.md are in sync.",
-                "health": "Check directory structure and general project health."
-            }
-        },
-        "template": {
-            "description": "Manage and fill GSD artifact templates.",
-            "subcommands": {
-                "select": "Suggest the best template for a specific task.",
-                "fill": "Generate artifact content from a template with variables."
-            }
-        },
-        "frontmatter": {
-            "description": "Query or modify Markdown frontmatter.",
-            "subcommands": {
-                "get": "Retrieve a value from frontmatter. usage: frontmatter get <file> --field <key>",
-                "set": "Update a frontmatter field. usage: frontmatter set <file> --field <key> --value <val>",
-                "merge": "Merge a JSON object into file frontmatter.",
-                "validate": "Validate frontmatter against a specific schema."
-            }
-        },
-        "init": {
-            "description": "Initialize specialized GSD workflows.",
-            "subcommands": {
-                "execute-phase": "Init execution state for a phase.",
-                "plan-phase": "Init planning state for a phase.",
-                "new-project": "Init a fresh project structure.",
-                "new-milestone": "Init a new milestone cycle.",
-                "quick": "Init a quick-task context.",
-                "resume": "Restore context from a paused session.",
-                "verify-work": "Init UAT/verification workflow.",
-                "map-codebase": "Init parallel codebase mapping.",
-                "progress": "Calculate current project progress metrics."
-            }
-        }
-    }
-
-    help_manifest = {
+    final_manifest = {
         "version": new_version,
-        "commands": {cmd['name']: {"description": cmd['description']} for cmd in commands},
-        "tools_usage": gsd_tools_help
+        "commands": discovered_help,
+        "tools_usage": gsd_tools_help_markdown
     }
     
-    # Merge internal help
-    for cmd, data in internal_help.items():
-        if cmd in help_manifest["commands"]:
-            help_manifest["commands"][cmd].update(data)
-        else:
-            help_manifest["commands"][cmd] = data
-
     manifest_path = os.path.join(target_base, 'bin', 'help-manifest.json')
     with open(manifest_path, 'w', encoding='utf-8') as f:
-        json.dump(help_manifest, f, indent=2)
-    print("  ✅ Generated help-manifest.json")
+        json.dump(final_manifest, f, indent=2)
+    print("  ✅ Generated help-manifest.json dynamically from source")
 
+    # 5. Inject custom assets
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     custom_assets = [
         ('gsd-tools.md', 'references/commands/gsd-tools.md'),
     ]
@@ -520,18 +457,19 @@ def main():
         target_path = os.path.join(target_base, target_rel)
         if os.path.exists(asset_path):
             print(f"  🛠️ Injecting custom asset: {asset_name}")
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
             if asset_name == 'gsd-tools.md':
                 with open(asset_path, 'r', encoding='utf-8') as f:
                     template = f.read()
                 with open(target_path, 'w', encoding='utf-8') as f:
-                    f.write(template.replace('{gsd_tools_help}', gsd_tools_help))
+                    f.write(template.replace('{gsd_tools_help}', gsd_tools_help_markdown))
             else:
                 shutil.copy2(asset_path, target_path)
 
     create_skill_md(target_base, skill_name, new_version)
     
-    print(f"\n{"-"*40}")
-    print(f"✨ Skill '{skill_name}' is ready at {target_base}")
+    print(f"\n{'='*40}")
+    print(f"✨ Dynamic Skill '{skill_name}' is ready at {target_base}")
     print(f"📊 GSD Version: {old_version} -> {new_version}\n")
     sys.stdout.flush()
 

@@ -18,12 +18,16 @@ Check which AI CLIs are available on the system:
 command -v gemini >/dev/null 2>&1 && echo "gemini:available" || echo "gemini:missing"
 command -v antigravity >/dev/null 2>&1 && echo "antigravity:available" || echo "antigravity:missing"
 command -v codex >/dev/null 2>&1 && echo "codex:available" || echo "codex:missing"
+command -v coderabbit >/dev/null 2>&1 && echo "coderabbit:available" || echo "coderabbit:missing"
+command -v opencode >/dev/null 2>&1 && echo "opencode:available" || echo "opencode:missing"
 ```
 
 Parse flags from `$ARGUMENTS`:
 - `--gemini` → include Gemini
 - `--antigravity` → include Antigravity
 - `--codex` → include Codex
+- `--coderabbit` → include CodeRabbit
+- `--opencode` → include OpenCode
 - `--all` → include all available
 - No flags → include all available
 
@@ -33,8 +37,9 @@ No external AI CLIs found. Install at least one:
 - gemini: https://github.com/google-gemini/gemini-cli
 - codex: https://github.com/openai/codex
 - antigravity: https://github.com/anthropics/antigravity-code
+- opencode: https://opencode.ai (leverages GitHub Copilot subscription models)
 
-Then run /gsd:review again.
+Then run /gsd-review again.
 ```
 Exit.
 
@@ -131,6 +136,22 @@ antigravity -p "$(cat /tmp/gsd-review-prompt-{phase}.md)" --no-input 2>/dev/null
 codex exec --skip-git-repo-check "$(cat /tmp/gsd-review-prompt-{phase}.md)" 2>/dev/null > /tmp/gsd-review-codex-{phase}.md
 ```
 
+**CodeRabbit:**
+
+Note: CodeRabbit reviews the current git diff/working tree — it does not accept a prompt. It may take up to 5 minutes. Use `timeout: 360000` on the Bash tool call.
+
+```bash
+coderabbit review --prompt-only 2>/dev/null > /tmp/gsd-review-coderabbit-{phase}.md
+```
+
+**OpenCode (via GitHub Copilot):**
+```bash
+cat /tmp/gsd-review-prompt-{phase}.md | opencode run - 2>/dev/null > /tmp/gsd-review-opencode-{phase}.md
+if [ ! -s /tmp/gsd-review-opencode-{phase}.md ]; then
+  echo "OpenCode review failed or returned empty output." > /tmp/gsd-review-opencode-{phase}.md
+fi
+```
+
 If a CLI fails, log the error and continue with remaining CLIs.
 
 Display progress:
@@ -150,7 +171,7 @@ Combine all review responses into `{phase_dir}/{padded_phase}-REVIEWS.md`:
 ```markdown
 ---
 phase: {N}
-reviewers: [gemini, antigravity, codex]
+reviewers: [gemini, antigravity, codex, coderabbit, opencode]
 reviewed_at: {ISO timestamp}
 plans_reviewed: [{list of PLAN.md files}]
 ---
@@ -172,6 +193,18 @@ plans_reviewed: [{list of PLAN.md files}]
 ## Codex Review
 
 {codex review content}
+
+---
+
+## CodeRabbit Review
+
+{coderabbit review content}
+
+---
+
+## OpenCode Review
+
+{opencode review content}
 
 ---
 
@@ -211,7 +244,7 @@ Consensus concerns:
 Full review: {padded_phase}-REVIEWS.md
 
 To incorporate feedback into planning:
-  /gsd:plan-phase {N} --reviews
+  /gsd-plan-phase {N} --reviews
 ```
 
 Clean up temp files.
@@ -224,5 +257,5 @@ Clean up temp files.
 - [ ] REVIEWS.md written with structured feedback
 - [ ] Consensus summary synthesized from multiple reviewers
 - [ ] Temp files cleaned up
-- [ ] User knows how to use feedback (/gsd:plan-phase --reviews)
+- [ ] User knows how to use feedback (/gsd-plan-phase --reviews)
 </success_criteria>

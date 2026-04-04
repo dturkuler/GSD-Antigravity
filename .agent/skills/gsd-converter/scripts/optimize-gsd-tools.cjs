@@ -37,11 +37,23 @@ function formatFile(filePath) {
     const lines = content.split('\n');
     const reformatted = lines.map(line => {
         const match = line.match(/^( +)/);
-        if (!match) return line;
+        if (!match) {
+            // Rebranding deep pass on non-indented lines
+            return line.replace(/\bClaude Code\b/g, 'Antigravity')
+                       .replace(/\bClaude\b/g, 'Antigravity')
+                       .replace(/\bclaude\b/g, 'antigravity')
+                       .replace(/\bCLAUDE\b/g, 'ANTIGRAVITY');
+        };
         const spaces = match[1].length;
         const indentLevel = Math.floor(spaces / 4);
         const remainder = spaces % 4;
-        return ' '.repeat(indentLevel * 2 + remainder) + line.trimStart();
+        let newLine = ' '.repeat(indentLevel * 2 + remainder) + line.trimStart();
+        
+        // Similarly for indented lines
+        return newLine.replace(/\bClaude Code\b/g, 'Antigravity')
+                      .replace(/\bClaude\b/g, 'Antigravity')
+                      .replace(/\bclaude\b/g, 'antigravity')
+                      .replace(/\bCLAUDE\b/g, 'ANTIGRAVITY');
     });
 
     content = reformatted.join('\n');
@@ -72,7 +84,7 @@ for (const file of allCjsFiles) {
     formatFile(file);
 }
 
-console.log(`  ✅ Formatted ${allCjsFiles.length} .cjs files across bin/ and lib/`);
+console.log(`  ✅ Formatted and rebranded ${allCjsFiles.length} .cjs files across bin/ and lib/`);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Step 3: Condense the header comment in gsd-tools.cjs
@@ -85,13 +97,13 @@ if (fs.existsSync(gsdToolsPath)) {
  * GSD Tools — CLI utility for GSD workflow operations
  * Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--include field1,field2]
  *
- * Commands: state, resolve-model, find-phase, commit, verify-summary, generate-slug,
- *   current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-set,
- *   config-get, history-digest, phases, roadmap, requirements, phase, milestone,
- *   validate, progress, todo, scaffold, phase-plan-index, state-snapshot, summary-extract,
- *   websearch, frontmatter, verify, template, init
+ * Commands: state, roadmap, requirements, phase, milestone, todo, workstream,
+ *   find-phase, resolve-model, commit, verify, template, init, check-commit,
+ *   stats, audit-uat, uat, agent-skills, phases, docs-init, scan-sessions,
+ *   extract-messages, profile-sample, write-profile, generate-antigravity-profile,
+ *   generate-antigravity-md, history-digest, progress, scaffold, state-snapshot
  *
- * Run with gsd:help command args for detailed usage of each command.
+ * Run with gsd:help <command> for detailed usage.
  */`;
 
     const headerRegex = /\/\*\*[\s\S]*?\*\/\s*(?=\nconst fs = require)/;
@@ -105,9 +117,22 @@ if (fs.existsSync(gsdToolsPath)) {
         const initCasePattern = /case 'init': \{\n(\s+)const workflow = args\[1\];/;
         const initMatch = gsdContent.match(initCasePattern);
         if (initMatch) {
+            const indent = initMatch[1];
             gsdContent = gsdContent.replace(initCasePattern,
-                `case 'init': {\n${initMatch[1]}const workflow = args[1];\n${initMatch[1]}const includes = parseIncludeFlag(args);`);
-            console.log('  ✅ Added parseIncludeFlag(args) to init router');
+                `case 'init': {\n${indent}const workflow = args[1];\n${indent}const includes = parseIncludeFlag(args);`);
+            
+            // Generic injection into all init calls within the switch
+            // Matches calls like init.cmdInitSomething(cwd, args[2], raw)
+            const initCallRegex = /init\.cmdInit[a-zA-Z]+\(([^)]+)\)/g;
+            gsdContent = gsdContent.replace(initCallRegex, (match, argsList) => {
+              if (argsList.includes('includes')) return match;
+              if (argsList.includes('raw')) {
+                return match.replace('raw', 'includes, raw');
+              }
+              return match.replace(')', ', includes)');
+            });
+            
+            console.log('  ✅ Added parseIncludeFlag(args) and injected into all init calls');
         }
 
         // Also inject parseIncludeFlag import if it doesn't exist
@@ -123,19 +148,6 @@ if (fs.existsSync(gsdToolsPath)) {
                     gsdContent = gsdContent.slice(0, importPoint) + "const { parseIncludeFlag } = require('./lib/core.cjs');\n" + gsdContent.slice(importPoint);
                 }
             }
-        }
-    }
-
-    const INIT_CALL_PATTERNS = [
-        { from: 'init.cmdInitExecutePhase(cwd, args[2], raw)', to: 'init.cmdInitExecutePhase(cwd, args[2], includes, raw)' },
-        { from: 'init.cmdInitPlanPhase(cwd, args[2], raw)', to: 'init.cmdInitPlanPhase(cwd, args[2], includes, raw)' },
-        { from: 'init.cmdInitProgress(cwd, raw)', to: 'init.cmdInitProgress(cwd, includes, raw)' },
-    ];
-
-    for (const { from, to } of INIT_CALL_PATTERNS) {
-        if (gsdContent.includes(from) && !gsdContent.includes(to)) {
-            gsdContent = gsdContent.replace(from, to);
-            console.log(`  ✅ Updated router call: ${from.split('(')[0]}`);
         }
     }
 
@@ -315,44 +327,27 @@ if (fs.existsSync(initPath)) {
         console.log(`  ✅ Replaced ${phaseInfoReplacements.length} phase info block(s) with ...buildPhaseBase() in init.cjs`);
     }
 
-    const INIT_FUNCTIONS_WITH_INCLUDES = [
-        { name: 'cmdInitExecutePhase', call: 'applyIncludes(result, includes, cwd, result.phase_dir);' },
-        { name: 'cmdInitPlanPhase', call: 'applyIncludes(result, includes, cwd, result.phase_dir);' },
-        { name: 'cmdInitProgress', call: 'applyIncludes(result, includes, cwd, result.current_phase?.directory);' },
-    ];
+    // Generic injection of applyIncludes into all cmdInit functions
+    // Find every function cmdInitX(...) { ... }
+    const initFuncRegex = /function (cmdInit[a-zA-Z0-9]+)\(([^)]+)\)\s*\{/g;
+    initContent = initContent.replace(initFuncRegex, (match, name, argsList) => {
+      // Add 'includes' to signature if not present
+      if (argsList.includes('includes')) return match;
+      if (argsList.includes('raw')) {
+        return match.replace('raw', 'includes, raw');
+      }
+      return match.replace(')', ', includes)');
+    });
+    console.log('  ✅ Updated all cmdInit* function signatures in init.cjs');
 
-    for (const { name, call } of INIT_FUNCTIONS_WITH_INCLUDES) {
-        const funcStart = initContent.indexOf(`function ${name}(`);
-        if (funcStart === -1) continue;
-
-        const searchFrom = funcStart;
-        const outputStr = 'output(result, raw)';
-        const outputPos = initContent.indexOf(outputStr, searchFrom);
-        if (outputPos === -1) continue;
-
-        const between = initContent.slice(funcStart, outputPos);
-        if (between.includes('applyIncludes')) continue;
-
-        const lineStart = initContent.lastIndexOf('\n', outputPos) + 1;
-        const outputLine = initContent.slice(lineStart, outputPos + outputStr.length);
-        const indent = outputLine.match(/^(\s*)/)?.[1] || '  ';
-        const insertion = `${indent}${call}\n`;
-        initContent = initContent.slice(0, lineStart) + insertion + initContent.slice(lineStart);
-        console.log(`  ✅ Injected ${call.split('(')[0]}() in ${name} within init.cjs`);
-    }
-
-    const SIGNATURE_PATTERNS = [
-        { from: 'function cmdInitExecutePhase(cwd, phase, raw)', to: 'function cmdInitExecutePhase(cwd, phase, includes, raw)' },
-        { from: 'function cmdInitPlanPhase(cwd, phase, raw)', to: 'function cmdInitPlanPhase(cwd, phase, includes, raw)' },
-        { from: 'function cmdInitProgress(cwd, raw)', to: 'function cmdInitProgress(cwd, includes, raw)' },
-    ];
-
-    for (const { from, to } of SIGNATURE_PATTERNS) {
-        if (initContent.includes(from)) {
-            initContent = initContent.replace(from, to);
-            console.log(`  ✅ Updated init.cjs signature: ${from.split('(')[0].replace('function ', '')}`);
-        }
-    }
+    // Inject applyIncludes before output(result, raw)
+    const outputRegex = /output\(result, raw\);/g;
+    initContent = initContent.replace(outputRegex, (match) => {
+      // Find the context (phase_dir or current_phase?.directory)
+      // We'll use a heuristic: if we are in cmdInitProgress use current_phase, else use phase_dir
+      return `applyIncludes(result, includes, cwd, result.phase_dir || result.current_phase?.directory);\n    ${match}`;
+    });
+    console.log('  ✅ Injected applyIncludes() before output in all init results');
 
     fs.writeFileSync(initPath, initContent, 'utf-8');
 }
