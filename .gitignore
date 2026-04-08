@@ -24,7 +24,8 @@ Thumbs.db
 .claude
 __tobedeleted/
 __current_gsd/
-
+__backup/
+selectpaste-update
 # Archive/Distribution
 *.zip
 *.tgz

@@ -1,5 +1,5 @@
 {
-  "version": "1.32.0",
+  "version": "1.34.2",
   "commands": {
     "state": {
       "description": "State operations.",
@@ -141,6 +141,19 @@
     "audit-uat": {
       "description": "Scan all phases for unresolved UAT/verification items"
     },
+    "intel": {
+      "description": "Intel operations.",
+      "subcommands": {
+        "query": "Query intel files for a term",
+        "status": "Show intel file freshness",
+        "update": "Trigger intel refresh (returns agent spawn hint)",
+        "diff": "Show changed intel entries since last snapshot",
+        "snapshot": "Save current intel state as diff baseline",
+        "patch-meta": "Update _meta.updated_at in an intel file",
+        "validate": "Validate intel file structure",
+        "extract-exports": "Extract exported symbols from a source file"
+      }
+    },
     "scaffold": {
       "description": "Scaffold operations.",
       "subcommands": {
@@ -192,6 +205,16 @@
     },
     "docs-init": {
       "description": "Project context for docs-update workflow"
+    },
+    "learnings": {
+      "description": "Learnings operations.",
+      "subcommands": {
+        "list": "List all global learnings (JSON)",
+        "query": "Query learnings by tag",
+        "copy": "Copy from current project's LEARNINGS.md",
+        "prune": "Remove entries older than duration (e.g. 90d)",
+        "delete": "Delete a learning by ID"
+      }
     }
   },
   "tools_usage": "Commands: state, roadmap, requirements, phase, milestone, todo, workstream,\nfind-phase, resolve-model, commit, verify, template, init, check-commit,\nstats, audit-uat, uat, agent-skills, phases, docs-init, scan-sessions,\nextract-messages, profile-sample, write-profile, generate-antigravity-profile,\ngenerate-antigravity-md, history-digest, progress, scaffold, state-snapshot\n  Run with gsd:help <command> for detailed usage."

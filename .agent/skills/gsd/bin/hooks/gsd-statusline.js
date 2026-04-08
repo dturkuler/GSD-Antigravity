@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// gsd-hook-version: 1.32.0
+// gsd-hook-version: 1.34.2
 // Antigravity Statusline - GSD Edition
 // Shows: model | current task | directory | context usage
 
@@ -72,9 +72,9 @@ process.stdin.on('end', () => {
     // Current task from todos
     let task = '';
     const homeDir = os.homedir();
-    // Respect CLAUDE_CONFIG_DIR for custom config directory setups (#870)
-    const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(homeDir, '.antigravity');
-    const todosDir = path.join(claudeDir, 'todos');
+    // Respect ANTIGRAVITY_CONFIG_DIR for custom config directory setups (#870)
+    const antigravityDir = process.env.ANTIGRAVITY_CONFIG_DIR || path.join(homeDir, '.antigravity');
+    const todosDir = path.join(antigravityDir, 'todos');
     if (session && fs.existsSync(todosDir)) {
       try {
         const files = fs.readdirSync(todosDir)
@@ -99,7 +99,7 @@ process.stdin.on('end', () => {
     // backward compatibility with older gsd-check-update.js versions.
     let gsdUpdate = '';
     const sharedCacheFile = path.join(homeDir, '.cache', 'gsd', 'gsd-update-check.json');
-    const legacyCacheFile = path.join(claudeDir, 'cache', 'gsd-update-check.json');
+    const legacyCacheFile = path.join(antigravityDir, 'cache', 'gsd-update-check.json');
     const cacheFile = fs.existsSync(sharedCacheFile) ? sharedCacheFile : legacyCacheFile;
     if (fs.existsSync(cacheFile)) {
       try {

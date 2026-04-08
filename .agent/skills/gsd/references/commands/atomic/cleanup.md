@@ -1,0 +1,25 @@
+---
+name: gsd:cleanup
+description: Archive accumulated phase directories from completed milestones
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - AskUserQuestion
+gsd-source-version: 1.34.2
+migration-date: 2026-04-08
+---
+<objective>
+Archive phase directories from completed milestones into `.planning/milestones/v{X.Y}-phases/`.
+
+Use when `.planning/phases/` has accumulated directories from past milestones.
+</objective>
+
+<execution_context>
+@references/workflows/cleanup.md
+</execution_context>
+
+<process>
+Follow the cleanup workflow at @references/workflows/cleanup.md.
+Identify completed milestones, show a dry-run summary, and archive on confirmation.
+</process>

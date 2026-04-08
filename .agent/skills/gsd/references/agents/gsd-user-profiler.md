@@ -98,7 +98,7 @@ For each of the 8 dimensions defined in the reference document:
 
 6. **Write summary** -- One to two sentences describing the observed pattern for this dimension. Include context-dependent notes if applicable.
 
-7. **Write claude_instruction** -- An imperative directive for Antigravity's consumption. This tells Antigravity how to behave based on the profile finding:
+7. **Write antigravity_instruction** -- An imperative directive for Antigravity's consumption. This tells Antigravity how to behave based on the profile finding:
    - MUST be imperative: "Provide concise explanations with code" not "You tend to prefer brief explanations"
    - MUST be actionable: Antigravity should be able to follow this instruction directly
    - For LOW confidence dimensions: include a hedging instruction: "Try X -- ask if this matches their preference"
@@ -127,10 +127,10 @@ Construct the complete analysis JSON matching the exact schema defined in the re
 
 Verify before returning:
 - All 8 dimensions are present in the output
-- Each dimension has all required fields (rating, confidence, evidence_count, cross_project_consistent, evidence_quotes, summary, claude_instruction)
+- Each dimension has all required fields (rating, confidence, evidence_count, cross_project_consistent, evidence_quotes, summary, antigravity_instruction)
 - Rating values match the defined spectrums (no invented ratings)
 - Confidence values are one of: HIGH, MEDIUM, LOW, UNSCORED
-- claude_instruction fields are imperative directives, not descriptions
+- antigravity_instruction fields are imperative directives, not descriptions
 - sensitive_excluded array is populated (empty array if nothing was excluded)
 - message_threshold reflects the actual message count
 
@@ -153,7 +153,7 @@ Format:
 </analysis>
 ```
 
-If data is insufficient for all dimensions, still return the full schema with UNSCORED dimensions noting "insufficient data" in their summaries and neutral fallback claude_instructions.
+If data is insufficient for all dimensions, still return the full schema with UNSCORED dimensions noting "insufficient data" in their summaries and neutral fallback antigravity_instructions.
 
 Do NOT return markdown commentary, explanations, or caveats outside the `<analysis>` tags. The orchestrator parses the tags programmatically.
 </output>
@@ -165,7 +165,7 @@ Do NOT return markdown commentary, explanations, or caveats outside the `<analys
 - Never invent dimensions beyond the 8 defined in the reference document
 - Weight recent messages approximately 3x (last 30 days) per reference doc guidelines
 - Report context-dependent splits rather than forcing a single rating when contradictory signals exist across projects
-- claude_instruction fields must be imperative directives, not descriptions -- the profile is an instruction document for Antigravity's consumption
+- antigravity_instruction fields must be imperative directives, not descriptions -- the profile is an instruction document for Antigravity's consumption
 - Deprioritize log pastes, session context dumps, and large code blocks when selecting evidence
 - When evidence is genuinely insufficient, report UNSCORED with "insufficient data" -- do not guess
 </constraints>

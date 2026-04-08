@@ -50,6 +50,7 @@ const profilePipeline = require('./lib/profile-pipeline.cjs');
 const profileOutput = require('./lib/profile-output.cjs');
 const workstream = require('./lib/workstream.cjs');
 const docs = require('./lib/docs.cjs');
+const learnings = require('./lib/learnings.cjs');
 
 // ─── Arg parsing helpers ──────────────────────────────────────────────────────
 
@@ -185,6 +186,16 @@ async function main() {
 
   if (!command) {
   error('Usage: node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args] [--raw] [--pick <field>] [--cwd <path>] [--ws <name>]\nCommands: state, resolve-model, find-phase, commit, verify-summary, verify, frontmatter, template, generate-slug, current-timestamp, list-todos, verify-path-exists, config-ensure-section, config-new-project, init, workstream, docs-init');
+  }
+
+  // Reject flags that are never valid for any gsd-tools command. AI agents
+  // sometimes hallucinate --help or --version on tool invocations; silently
+  // ignoring them can cause destructive operations to proceed unchecked.
+  const NEVER_VALID_FLAGS = new Set(['-h', '--help', '-?', '--h', '--version', '-v', '--usage']);
+  for (const arg of args) {
+  if (NEVER_VALID_FLAGS.has(arg)) {
+    error(`Unknown flag: ${arg}\ngsd-tools does not accept help or version flags. Run "gsd-tools" with no arguments for usage.`);
+  }
   }
 
   // Multi-repo guard: resolve project root for commands that read/write .planning/.
@@ -497,7 +508,7 @@ async function runCommand(command, args, cwd, raw) {
     };
     phase.cmdPhasesList(cwd, options, raw);
     } else if (subcommand === 'clear') {
-    milestone.cmdPhasesClear(cwd, raw);
+    milestone.cmdPhasesClear(cwd, raw, args.slice(2));
     } else {
     error('Unknown phases subcommand. Available: list, clear');
     }
@@ -803,7 +814,7 @@ async function runCommand(command, args, cwd, raw) {
     const outputIdx = args.indexOf('--output');
     const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
     const globalFlag = args.includes('--global');
-    profileOutput.cmdGenerateClaudeProfile(cwd, { analysis: analysisPath, output: outputPath, global: globalFlag }, raw);
+    profileOutput.cmdGenerateAntigravityProfile(cwd, { analysis: analysisPath, output: outputPath, global: globalFlag }, raw);
     break;
   }
 
@@ -812,7 +823,7 @@ async function runCommand(command, args, cwd, raw) {
     const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : null;
     const autoFlag = args.includes('--auto');
     const forceFlag = args.includes('--force');
-    profileOutput.cmdGenerateClaudeMd(cwd, { output: outputPath, auto: autoFlag, force: forceFlag }, raw);
+    profileOutput.cmdGenerateAntigravityMd(cwd, { output: outputPath, auto: autoFlag, force: forceFlag }, raw);
     break;
   }
 
@@ -843,10 +854,77 @@ async function runCommand(command, args, cwd, raw) {
     break;
   }
 
+  // ─── Intel ────────────────────────────────────────────────────────────
+
+  case 'intel': {
+    const intel = require('./lib/intel.cjs');
+    const subcommand = args[1];
+    if (subcommand === 'query') {
+    const term = args[2];
+    if (!term) error('Usage: gsd-tools intel query <term>');
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelQuery(term, planningDir), raw);
+    } else if (subcommand === 'status') {
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelStatus(planningDir), raw);
+    } else if (subcommand === 'diff') {
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelDiff(planningDir), raw);
+    } else if (subcommand === 'snapshot') {
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelSnapshot(planningDir), raw);
+    } else if (subcommand === 'patch-meta') {
+    const filePath = args[2];
+    if (!filePath) error('Usage: gsd-tools intel patch-meta <file-path>');
+    core.output(intel.intelPatchMeta(path.resolve(cwd, filePath)), raw);
+    } else if (subcommand === 'validate') {
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelValidate(planningDir), raw);
+    } else if (subcommand === 'extract-exports') {
+    const filePath = args[2];
+    if (!filePath) error('Usage: gsd-tools intel extract-exports <file-path>');
+    core.output(intel.intelExtractExports(path.resolve(cwd, filePath)), raw);
+    } else if (subcommand === 'update') {
+    const planningDir = path.join(cwd, '.planning');
+    core.output(intel.intelUpdate(planningDir), raw);
+    } else {
+    error('Unknown intel subcommand. Available: query, status, update, diff, snapshot, patch-meta, validate, extract-exports');
+    }
+    break;
+  }
+
   // ─── Documentation ────────────────────────────────────────────────────
 
   case 'docs-init': {
     docs.cmdDocsInit(cwd, raw);
+    break;
+  }
+
+  // ─── Learnings ─────────────────────────────────────────────────────────
+
+  case 'learnings': {
+    const subcommand = args[1];
+    if (subcommand === 'list') {
+    learnings.cmdLearningsList(raw);
+    } else if (subcommand === 'query') {
+    const tagIdx = args.indexOf('--tag');
+    const tag = tagIdx !== -1 ? args[tagIdx + 1] : null;
+    if (!tag) error('Usage: gsd-tools learnings query --tag <tag>');
+    learnings.cmdLearningsQuery(tag, raw);
+    } else if (subcommand === 'copy') {
+    learnings.cmdLearningsCopy(cwd, raw);
+    } else if (subcommand === 'prune') {
+    const olderIdx = args.indexOf('--older-than');
+    const olderThan = olderIdx !== -1 ? args[olderIdx + 1] : null;
+    if (!olderThan) error('Usage: gsd-tools learnings prune --older-than <duration>');
+    learnings.cmdLearningsPrune(olderThan, raw);
+    } else if (subcommand === 'delete') {
+    const id = args[2];
+    if (!id) error('Usage: gsd-tools learnings delete <id>');
+    learnings.cmdLearningsDelete(id, raw);
+    } else {
+    error('Unknown learnings subcommand. Available: list, query, copy, prune, delete');
+    }
     break;
   }
 

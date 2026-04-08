@@ -12,8 +12,8 @@ const { MODEL_PROFILES } = require('./model-profiles.cjs');
 const WORKSTREAM_SESSION_ENV_KEYS = [
   'GSD_SESSION_KEY',
   'CODEX_THREAD_ID',
-  'CLAUDE_SESSION_ID',
-  'CLAUDE_CODE_SSE_PORT',
+  'ANTIGRAVITY_SESSION_ID',
+  'ANTIGRAVITY_SSE_PORT',
   'OPENCODE_SESSION_ID',
   'GEMINI_SESSION_ID',
   'CURSOR_SESSION_ID',
@@ -269,9 +269,10 @@ function safeReadFile(filePath) {
   }
 }
 
-function loadConfig(cwd) {
-  const configPath = path.join(planningDir(cwd), 'config.json');
-  const defaults = {
+/**
+ * Canonical config defaults. Single source of truth — imported by config.cjs and verify.cjs.
+ */
+const CONFIG_DEFAULTS = {
   model_profile: 'balanced',
   commit_docs: true,
   search_gitignored: false,
@@ -294,7 +295,11 @@ function loadConfig(cwd) {
   phase_naming: 'sequential', // 'sequential' (default, auto-increment) or 'custom' (arbitrary string IDs)
   project_code: null, // optional short prefix for phase dirs (e.g., 'CK' → 'CK-01-foundation')
   subagent_timeout: 300000, // 5 min default; increase for large codebases or slower models (ms)
-  };
+};
+
+function loadConfig(cwd) {
+  const configPath = path.join(planningDir(cwd), 'config.json');
+  const defaults = CONFIG_DEFAULTS;
 
   try {
   const raw = fs.readFileSync(configPath, 'utf-8');
@@ -350,7 +355,7 @@ function loadConfig(cwd) {
     // Extract top-level key names from dot-notation paths (e.g., 'workflow.research' → 'workflow')
     ...[...VALID_CONFIG_KEYS].map(k => k.split('.')[0]),
     // Section containers that hold nested sub-keys
-    'git', 'workflow', 'planning', 'hooks',
+    'git', 'workflow', 'planning', 'hooks', 'features',
     // Internal keys loadConfig reads but config-set doesn't expose
     'model_overrides', 'agent_skills', 'context_window', 'resolve_model_ids',
     // Deprecated keys (still accepted for migration, not in config-set)
@@ -415,7 +420,36 @@ function loadConfig(cwd) {
     response_language: get('response_language') || null,
   };
   } catch {
-  return defaults;
+  // Fall back to ~/.gsd/defaults.json only for truly pre-project contexts (#1683)
+  // If .planning/ exists, the project is initialized — just missing config.json
+  if (fs.existsSync(planningDir(cwd))) {
+    return defaults;
+  }
+  try {
+    const home = process.env.GSD_HOME || os.homedir();
+    const globalDefaultsPath = path.join(home, '.gsd', 'defaults.json');
+    const raw = fs.readFileSync(globalDefaultsPath, 'utf-8');
+    const globalDefaults = JSON.parse(raw);
+    return {
+    ...defaults,
+    model_profile: globalDefaults.model_profile ?? defaults.model_profile,
+    commit_docs: globalDefaults.commit_docs ?? defaults.commit_docs,
+    research: globalDefaults.research ?? defaults.research,
+    plan_checker: globalDefaults.plan_checker ?? defaults.plan_checker,
+    verifier: globalDefaults.verifier ?? defaults.verifier,
+    nyquist_validation: globalDefaults.nyquist_validation ?? defaults.nyquist_validation,
+    parallelization: globalDefaults.parallelization ?? defaults.parallelization,
+    text_mode: globalDefaults.text_mode ?? defaults.text_mode,
+    resolve_model_ids: globalDefaults.resolve_model_ids ?? defaults.resolve_model_ids,
+    context_window: globalDefaults.context_window ?? defaults.context_window,
+    subagent_timeout: globalDefaults.subagent_timeout ?? defaults.subagent_timeout,
+    model_overrides: globalDefaults.model_overrides || null,
+    agent_skills: globalDefaults.agent_skills || {},
+    response_language: globalDefaults.response_language || null,
+    };
+  } catch {
+    return defaults;
+  }
   }
 }
 
@@ -636,8 +670,8 @@ function withPlanningLock(cwd, fn) {
       }
     } catch { continue; }
 
-    // Wait and retry
-    spawnSync('sleep', ['0.1'], { stdio: 'ignore' });
+    // Wait and retry (cross-platform, no shell dependency)
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
     continue;
     }
     throw err;
@@ -1313,9 +1347,9 @@ function checkAgentsInstalled() {
  * Users can override with model_overrides in config.json for custom/latest models.
  */
 const MODEL_ALIAS_MAP = {
-  'opus': 'antigravity-opus-4-0',
-  'sonnet': 'antigravity-sonnet-4-5',
-  'haiku': 'antigravity-haiku-3-5',
+  'opus': 'antigravity-opus-4-6',
+  'sonnet': 'antigravity-sonnet-4-6',
+  'haiku': 'antigravity-haiku-4-5',
 };
 
 function resolveModelInternal(cwd, agentType) {
@@ -1543,6 +1577,7 @@ module.exports = {
   detectSubRepos,
   reapStaleTempFiles,
   MODEL_ALIAS_MAP,
+  CONFIG_DEFAULTS,
   planningDir,
   planningRoot,
   planningPaths,

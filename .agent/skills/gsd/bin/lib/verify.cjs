@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { safeReadFile, loadConfig, normalizePhaseName, escapeRegex, execGit, findPhaseInternal, getMilestoneInfo, stripShippedMilestones, extractCurrentMilestone, planningDir, planningRoot, output, error, checkAgentsInstalled } = require('./core.cjs');
+const { safeReadFile, loadConfig, normalizePhaseName, escapeRegex, execGit, findPhaseInternal, getMilestoneInfo, stripShippedMilestones, extractCurrentMilestone, planningDir, planningRoot, output, error, checkAgentsInstalled, CONFIG_DEFAULTS } = require('./core.cjs');
 const { extractFrontmatter, parseMustHavesBlock } = require('./frontmatter.cjs');
 const { writeStateMd } = require('./state.cjs');
 
@@ -777,7 +777,7 @@ function cmdValidateHealth(cwd, options, raw) {
       if (statusVal !== 'complete' && statusVal !== 'done') {
       addIssue('warning', 'W011',
         `STATE.md says current phase is ${statePhase} (status: ${statusVal || 'unknown'}) but ROADMAP.md shows it as [x] complete — state files may be out of sync`,
-        'Run /gsd:progress to re-derive current position, or manually update STATE.md');
+        'Run /gsd-progress to re-derive current position, or manually update STATE.md');
       }
     }
     }
@@ -831,21 +831,21 @@ function cmdValidateHealth(cwd, options, raw) {
       case 'createConfig':
       case 'resetConfig': {
       const defaults = {
-        model_profile: 'balanced',
-        commit_docs: true,
-        search_gitignored: false,
-        branching_strategy: 'none',
-        phase_branch_template: 'gsd/phase-{phase}-{slug}',
-        milestone_branch_template: 'gsd/{milestone}-{slug}',
-        quick_branch_template: null,
+        model_profile: CONFIG_DEFAULTS.model_profile,
+        commit_docs: CONFIG_DEFAULTS.commit_docs,
+        search_gitignored: CONFIG_DEFAULTS.search_gitignored,
+        branching_strategy: CONFIG_DEFAULTS.branching_strategy,
+        phase_branch_template: CONFIG_DEFAULTS.phase_branch_template,
+        milestone_branch_template: CONFIG_DEFAULTS.milestone_branch_template,
+        quick_branch_template: CONFIG_DEFAULTS.quick_branch_template,
         workflow: {
-        research: true,
-        plan_check: true,
-        verifier: true,
-        nyquist_validation: true,
+        research: CONFIG_DEFAULTS.research,
+        plan_check: CONFIG_DEFAULTS.plan_checker,
+        verifier: CONFIG_DEFAULTS.verifier,
+        nyquist_validation: CONFIG_DEFAULTS.nyquist_validation,
         },
-        parallelization: true,
-        brave_search: false,
+        parallelization: CONFIG_DEFAULTS.parallelization,
+        brave_search: CONFIG_DEFAULTS.brave_search,
       };
       fs.writeFileSync(configPath, JSON.stringify(defaults, null, 2), 'utf-8');
       repairActions.push({ action: repair, success: true, path: 'config.json' });

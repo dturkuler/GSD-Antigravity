@@ -1,0 +1,26 @@
+---
+name: gsd:audit-uat
+description: Cross-phase audit of all outstanding UAT and verification items
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash
+gsd-source-version: 1.34.2
+migration-date: 2026-04-08
+---
+<objective>
+Scan all phases for pending, skipped, blocked, and human_needed UAT items. Cross-reference against codebase to detect stale documentation. Produce prioritized human test plan.
+</objective>
+
+<execution_context>
+@references/workflows/audit-uat.md
+</execution_context>
+
+<context>
+Core planning files are loaded in-workflow via CLI.
+
+**Scope:**
+Glob: .planning/phases/*/*-UAT.md
+Glob: .planning/phases/*/*-VERIFICATION.md
+</context>

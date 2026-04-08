@@ -121,7 +121,7 @@ const PROFILING_QUESTIONS = [
   },
 ];
 
-const CLAUDE_INSTRUCTIONS = {
+const ANTIGRAVITY_INSTRUCTIONS = {
   communication_style: {
   'terse-direct': 'Keep responses concise and action-oriented. Skip lengthy preambles. Match this developer\'s direct style.',
   'conversational': 'Use a natural conversational tone. Explain reasoning briefly alongside code. Engage with the developer\'s questions.',
@@ -172,7 +172,7 @@ const CLAUDE_INSTRUCTIONS = {
   },
 };
 
-const CLAUDE_MD_FALLBACKS = {
+const ANTIGRAVITY_MD_FALLBACKS = {
   project: 'Project not yet initialized. Run /gsd-new-project to set up.',
   stack: 'Technology stack not yet documented. Will populate after codebase mapping or first phase.',
   conventions: 'Conventions not yet established. Will populate as patterns emerge during development.',
@@ -183,7 +183,7 @@ const CLAUDE_MD_FALLBACKS = {
 // Directories where project skills may live (checked in order)
 const SKILL_SEARCH_DIRS = ['.antigravity/skills', '.agents/skills', '.cursor/skills', '.github/skills'];
 
-const CLAUDE_MD_WORKFLOW_ENFORCEMENT = [
+const ANTIGRAVITY_MD_WORKFLOW_ENFORCEMENT = [
   'Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.',
   '',
   'Use these entry points:',
@@ -194,7 +194,7 @@ const CLAUDE_MD_WORKFLOW_ENFORCEMENT = [
   'Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.',
 ].join('\n');
 
-const CLAUDE_MD_PROFILE_PLACEHOLDER = [
+const ANTIGRAVITY_MD_PROFILE_PLACEHOLDER = [
   '<!-- GSD:profile-start -->',
   '## Developer Profile',
   '',
@@ -214,8 +214,8 @@ function isAmbiguousAnswer(dimension, value) {
   return option.rating === 'mixed';
 }
 
-function generateClaudeInstruction(dimension, rating) {
-  const dimInstructions = CLAUDE_INSTRUCTIONS[dimension];
+function generateAntigravityInstruction(dimension, rating) {
+  const dimInstructions = ANTIGRAVITY_INSTRUCTIONS[dimension];
   if (dimInstructions && dimInstructions[rating]) {
   return dimInstructions[rating];
   }
@@ -285,7 +285,7 @@ function generateProjectSection(cwd) {
   const projectPath = path.join(cwd, '.planning', 'PROJECT.md');
   const content = safeReadFile(projectPath);
   if (!content) {
-  return { content: CLAUDE_MD_FALLBACKS.project, source: 'PROJECT.md', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.project, source: 'PROJECT.md', hasFallback: true };
   }
   const parts = [];
   const h1Match = content.match(/^# (.+)$/m);
@@ -306,7 +306,7 @@ function generateProjectSection(cwd) {
   if (body) parts.push(`### Constraints\n\n${body}`);
   }
   if (parts.length === 0) {
-  return { content: CLAUDE_MD_FALLBACKS.project, source: 'PROJECT.md', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.project, source: 'PROJECT.md', hasFallback: true };
   }
   return { content: parts.join('\n\n'), source: 'PROJECT.md', hasFallback: false };
 }
@@ -321,7 +321,7 @@ function generateStackSection(cwd) {
   source = 'research/STACK.md';
   }
   if (!content) {
-  return { content: CLAUDE_MD_FALLBACKS.stack, source: 'STACK.md', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.stack, source: 'STACK.md', hasFallback: true };
   }
   const lines = content.split('\n');
   const summaryLines = [];
@@ -343,7 +343,7 @@ function generateConventionsSection(cwd) {
   const conventionsPath = path.join(cwd, '.planning', 'codebase', 'CONVENTIONS.md');
   const content = safeReadFile(conventionsPath);
   if (!content) {
-  return { content: CLAUDE_MD_FALLBACKS.conventions, source: 'CONVENTIONS.md', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.conventions, source: 'CONVENTIONS.md', hasFallback: true };
   }
   const lines = content.split('\n');
   const summaryLines = [];
@@ -359,7 +359,7 @@ function generateArchitectureSection(cwd) {
   const architecturePath = path.join(cwd, '.planning', 'codebase', 'ARCHITECTURE.md');
   const content = safeReadFile(architecturePath);
   if (!content) {
-  return { content: CLAUDE_MD_FALLBACKS.architecture, source: 'ARCHITECTURE.md', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.architecture, source: 'ARCHITECTURE.md', hasFallback: true };
   }
   const lines = content.split('\n');
   const summaryLines = [];
@@ -373,7 +373,7 @@ function generateArchitectureSection(cwd) {
 
 function generateWorkflowSection() {
   return {
-  content: CLAUDE_MD_WORKFLOW_ENFORCEMENT,
+  content: ANTIGRAVITY_MD_WORKFLOW_ENFORCEMENT,
   source: 'GSD defaults',
   hasFallback: false,
   };
@@ -421,7 +421,7 @@ function generateSkillsSection(cwd) {
   }
 
   if (discovered.length === 0) {
-  return { content: CLAUDE_MD_FALLBACKS.skills, source: 'skills/', hasFallback: true };
+  return { content: ANTIGRAVITY_MD_FALLBACKS.skills, source: 'skills/', hasFallback: true };
   }
 
   const lines = ['| Skill | Description | Path |', '|-------|-------------|------|'];
@@ -565,10 +565,10 @@ function cmdWriteProfile(cwd, options, raw) {
   if (conf === 'HIGH' || conf === 'MEDIUM' || conf === 'LOW') dimensionsScored++;
   if (conf === 'HIGH') {
     highCount++;
-    if (dim.claude_instruction) summaryLines.push(`- **${dimensionLabels[dimKey] || dimKey}:** ${dim.claude_instruction} (HIGH)`);
+    if (dim.antigravity_instruction) summaryLines.push(`- **${dimensionLabels[dimKey] || dimKey}:** ${dim.antigravity_instruction} (HIGH)`);
   } else if (conf === 'MEDIUM') {
     mediumCount++;
-    if (dim.claude_instruction) summaryLines.push(`- **${dimensionLabels[dimKey] || dimKey}:** ${dim.claude_instruction} (MEDIUM)`);
+    if (dim.antigravity_instruction) summaryLines.push(`- **${dimensionLabels[dimKey] || dimKey}:** ${dim.antigravity_instruction} (MEDIUM)`);
   } else if (conf === 'LOW') {
     lowCount++;
   }
@@ -596,7 +596,7 @@ function cmdWriteProfile(cwd, options, raw) {
   const dim = analysis.dimensions[dimKey] || {};
   const rating = dim.rating || 'UNSCORED';
   const confidence = dim.confidence || 'UNSCORED';
-  const instruction = dim.claude_instruction || 'No strong preference detected. Ask the developer when this dimension is relevant.';
+  const instruction = dim.antigravity_instruction || 'No strong preference detected. Ask the developer when this dimension is relevant.';
   const summary = dim.summary || '';
 
   let evidenceBlock = '';
@@ -615,7 +615,7 @@ function cmdWriteProfile(cwd, options, raw) {
 
   template = template.replace(new RegExp(`\\{\\{${dimKey}\\.rating\\}\\}`, 'g'), rating);
   template = template.replace(new RegExp(`\\{\\{${dimKey}\\.confidence\\}\\}`, 'g'), confidence);
-  template = template.replace(new RegExp(`\\{\\{${dimKey}\\.claude_instruction\\}\\}`, 'g'), instruction);
+  template = template.replace(new RegExp(`\\{\\{${dimKey}\\.antigravity_instruction\\}\\}`, 'g'), instruction);
   template = template.replace(new RegExp(`\\{\\{${dimKey}\\.summary\\}\\}`, 'g'), summary);
   template = template.replace(new RegExp(`\\{\\{${dimKey}\\.evidence\\}\\}`, 'g'), evidenceBlock);
   }
@@ -697,7 +697,7 @@ function cmdProfileQuestionnaire(options, raw) {
     project: 'N/A (questionnaire)',
     }],
     summary: `Developer self-reported as ${selectedOption.rating} for ${question.header.toLowerCase()}.`,
-    claude_instruction: generateClaudeInstruction(question.dimension, selectedOption.rating),
+    antigravity_instruction: generateAntigravityInstruction(question.dimension, selectedOption.rating),
   };
   }
 
@@ -745,9 +745,9 @@ function cmdGenerateDevPreferences(cwd, options, raw) {
   if (!dim) continue;
   const label = devPrefLabels[dimKey] || dimKey;
   const confidence = dim.confidence || 'UNSCORED';
-  let instruction = dim.claude_instruction;
+  let instruction = dim.antigravity_instruction;
   if (!instruction) {
-    const lookup = CLAUDE_INSTRUCTIONS[dimKey];
+    const lookup = ANTIGRAVITY_INSTRUCTIONS[dimKey];
     if (lookup && dim.rating && lookup[dim.rating]) {
     instruction = lookup[dim.rating];
     } else {
@@ -793,7 +793,7 @@ function cmdGenerateDevPreferences(cwd, options, raw) {
   output(result, raw);
 }
 
-function cmdGenerateClaudeProfile(cwd, options, raw) {
+function cmdGenerateAntigravityProfile(cwd, options, raw) {
   if (!options.analysis) error('--analysis <path> is required');
 
   let analysisPath = options.analysis;
@@ -834,9 +834,9 @@ function cmdGenerateClaudeProfile(cwd, options, raw) {
   const rating = dim.rating || 'UNSCORED';
   const confidence = dim.confidence || 'UNSCORED';
   tableRows.push(`| ${label} | ${rating} | ${confidence} |`);
-  let instruction = dim.claude_instruction;
+  let instruction = dim.antigravity_instruction;
   if (!instruction) {
-    const lookup = CLAUDE_INSTRUCTIONS[dimKey];
+    const lookup = ANTIGRAVITY_INSTRUCTIONS[dimKey];
     if (lookup && dim.rating && lookup[dim.rating]) {
     instruction = lookup[dim.rating];
     } else {
@@ -899,7 +899,7 @@ function cmdGenerateClaudeProfile(cwd, options, raw) {
   }
 
   const result = {
-  claude_md_path: targetPath,
+  antigravity_md_path: targetPath,
   action,
   dimensions_included: dimensionsIncluded,
   is_global: !!options.global,
@@ -908,7 +908,7 @@ function cmdGenerateClaudeProfile(cwd, options, raw) {
   output(result, raw);
 }
 
-function cmdGenerateClaudeMd(cwd, options, raw) {
+function cmdGenerateAntigravityMd(cwd, options, raw) {
   const MANAGED_SECTIONS = ['project', 'stack', 'conventions', 'architecture', 'skills', 'workflow'];
   const generators = {
   project: generateProjectSection,
@@ -961,7 +961,7 @@ function cmdGenerateClaudeMd(cwd, options, raw) {
     sections.push(buildSection(name, gen.source, body));
   }
   sections.push('');
-  sections.push(CLAUDE_MD_PROFILE_PLACEHOLDER);
+  sections.push(ANTIGRAVITY_MD_PROFILE_PLACEHOLDER);
   existingContent = sections.join('\n\n') + '\n';
   action = 'created';
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -998,7 +998,7 @@ function cmdGenerateClaudeMd(cwd, options, raw) {
   }
 
   if (!options.auto && fileContent.indexOf('<!-- GSD:profile-start') === -1) {
-    fileContent = fileContent.trimEnd() + '\n\n' + CLAUDE_MD_PROFILE_PLACEHOLDER + '\n';
+    fileContent = fileContent.trimEnd() + '\n\n' + ANTIGRAVITY_MD_PROFILE_PLACEHOLDER + '\n';
   }
 
   fs.writeFileSync(outputPath, fileContent, 'utf-8');
@@ -1024,7 +1024,7 @@ function cmdGenerateClaudeMd(cwd, options, raw) {
   if (profileStatus === 'placeholder_added') message += ' Run /gsd-profile-user to unlock Developer Profile.';
 
   const result = {
-  claude_md_path: outputPath,
+  antigravity_md_path: outputPath,
   action,
   sections_generated: sectionsGenerated,
   sections_fallback: sectionsFallback,
@@ -1041,8 +1041,8 @@ module.exports = {
   cmdWriteProfile,
   cmdProfileQuestionnaire,
   cmdGenerateDevPreferences,
-  cmdGenerateClaudeProfile,
-  cmdGenerateClaudeMd,
+  cmdGenerateAntigravityProfile,
+  cmdGenerateAntigravityMd,
   PROFILING_QUESTIONS,
-  CLAUDE_INSTRUCTIONS,
+  ANTIGRAVITY_INSTRUCTIONS,
 };

@@ -4,6 +4,12 @@ Extract implementation decisions that downstream agents need. Analyze the phase 
 You are a thinking partner, not an interviewer. The user is the visionary — you are the builder. Your job is to capture decisions that will guide research and planning, not to figure out implementation yourself.
 </purpose>
 
+<required_reading>
+@references/docs/domain-probes.md
+@references/docs/gate-prompts.md
+@references/docs/universal-anti-patterns.md
+</required_reading>
+
 <downstream_awareness>
 **CONTEXT.md feeds into:**
 
@@ -600,6 +606,20 @@ Table-first discussion flow — present research-backed comparison tables, then 
 3. **Record the user's selection:**
    - If user picks from table options → record as locked decision for that area
    - If user picks "Other" → receive their input, reflect it back for confirmation, record
+
+   **Thinking partner (conditional):**
+   If `features.thinking_partner` is enabled in config, check the user's answer for tradeoff signals
+   (see `references/thinking-partner.md` for signal list). If tradeoff detected:
+
+   ```
+   I notice competing priorities here — {option_A} optimizes for {goal_A} while {option_B} optimizes for {goal_B}.
+
+   Want me to think through the tradeoffs before we lock this in?
+   [Yes, analyze] / [No, decision made]
+   ```
+
+   If yes: provide 3-5 bullet analysis (what each optimizes/sacrifices, alignment with PROJECT.md goals, recommendation). Then return to normal flow.
+   If no or thinking_partner disabled: continue to next area.
 
 4. **After recording pick, Antigravity decides whether follow-up questions are needed:**
    - If the pick has ambiguity that would affect downstream planning → ask 1-2 targeted follow-up questions using AskUserQuestion

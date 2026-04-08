@@ -26,6 +26,12 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 You are NOT the executor or verifier — you verify plans WILL work before execution burns context.
 </role>
 
+<required_reading>
+@references/docs/gates.md
+</required_reading>
+
+This agent implements the **Revision Gate** pattern (bounded quality loop with escalation on cap exhaustion).
+
 <project_context>
 Before verifying, discover project context:
 
@@ -79,6 +85,12 @@ Same methodology (goal-backward), different timing, different subject matter.
 </core_principle>
 
 <verification_dimensions>
+
+At decision points during plan verification, apply structured reasoning:
+@references/docs/thinking-models-planning.md
+
+For calibration on scoring and issue identification, reference these examples:
+@references/docs/few-shot-examples/plan-checker.md
 
 ## Dimension 1: Requirement Coverage
 
@@ -457,12 +469,12 @@ If FAIL: return to planner with specific fixes. Same revision loop as other dime
 **Example — forbidden pattern:**
 ```yaml
 issue:
-  dimension: claude_md_compliance
+  dimension: antigravity_md_compliance
   severity: blocker
   description: "Plan uses Jest for testing but ANTIGRAVITY.md requires Vitest"
   plan: "01"
   task: 1
-  claude_md_rule: "Testing: Always use Vitest, never Jest"
+  antigravity_md_rule: "Testing: Always use Vitest, never Jest"
   plan_action: "Install Jest and create test suite..."
   fix_hint: "Replace Jest with Vitest per project ANTIGRAVITY.md"
 ```
@@ -470,11 +482,11 @@ issue:
 **Example — skipped required step:**
 ```yaml
 issue:
-  dimension: claude_md_compliance
+  dimension: antigravity_md_compliance
   severity: warning
   description: "Plan does not include lint step required by ANTIGRAVITY.md"
   plan: "02"
-  claude_md_rule: "All tasks must run eslint before committing"
+  antigravity_md_rule: "All tasks must run eslint before committing"
   fix_hint: "Add eslint verification step to each task's <verify> block"
 ```
 

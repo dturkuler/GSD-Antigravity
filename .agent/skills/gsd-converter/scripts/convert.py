@@ -7,6 +7,15 @@ import subprocess
 import json
 from datetime import datetime
 
+def load_manifest():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    manifest_path = os.path.join(script_dir, '..', 'assets', 'migration-manifest.json')
+    if not os.path.exists(manifest_path):
+        print(f"  ❌ Manifest not found at {manifest_path}")
+        sys.exit(1)
+    with open(manifest_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
 def setup_args():
     # Force UTF-8 for Windows terminals
     if sys.platform == 'win32':
@@ -112,18 +121,48 @@ def discover_commands(source_gsd_tools_path):
         
     return commands
 
-def migrate_files(source_base, target_base):
+def get_command_category(cmd_name):
+    """Categorize GSD commands based on their primary function."""
+    atomic = ['add-todo', 'check-todos', 'note', 'ship', 'cleanup', 'undo', 'help', 'do', 'stats', 'thread', 'session-report', 'join-discord']
+    phase = ['plan-phase', 'execute-phase', 'research-phase', 'validate-phase', 'discuss-phase', 'remove-phase', 'insert-phase', 'add-phase', 'list-phase-assumptions', 'secure-phase', 'ui-phase', 'ui-review', 'add-tests', 'workstreams']
+    milestone = ['new-milestone', 'complete-milestone', 'audit-milestone', 'milestone-summary', 'plan-milestone-gaps', 'review-backlog', 'add-backlog', 'plant-seed']
+    project = ['new-project', 'new-workspace', 'list-workspaces', 'remove-workspace', 'map-codebase', 'scan', 'intel', 'analyze-dependencies', 'explore', 'import']
+    system = ['gsd-tools', 'health', 'settings', 'profile-user', 'set-profile', 'update', 'pause-work', 'resume-work', 'reapply-patches', 'debug', 'forensics', 'manager', 'autonomous', 'fast', 'quick', 'code-review', 'code-review-fix', 'review', 'docs-update', 'pr-branch']
+    
+    if cmd_name in atomic: return 'atomic'
+    if cmd_name in phase: return 'phase'
+    if cmd_name in milestone: return 'milestone'
+    if cmd_name in project: return 'project'
+    if cmd_name in system: return 'system'
+    return 'misc'
+
+def inject_metadata(file_path, version):
+    """Inject GSD version and migration date into markdown frontmatter."""
+    if not file_path.endswith('.md'): return
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse frontmatter
+        match = re.match(r'^(---\s*\n)(.*?\n)(---)', content, re.DOTALL)
+        if match:
+            start, mid, end = match.groups()
+            # Check if already injected
+            if 'gsd-source-version' in mid: return
+            
+            new_meta = f"gsd-source-version: {version}\nmigration-date: {datetime.now().strftime('%Y-%m-%d')}\n"
+            new_content = start + mid + new_meta + end + content[match.end():]
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+    except Exception as e:
+        print(f"  ⚠️ Failed to inject metadata to {file_path}: {e}")
+
+def migrate_files(source_base, target_base, manifest):
     print(f"🚀 Starting migration from {source_base} to {target_base}...")
     
-    # Define mappings (source_rel, target_rel)
-    mappings = [
-        ('get-shit-done/references', 'references/docs'),
-        ('get-shit-done/workflows', 'references/workflows'),
-        ('agents', 'references/agents'),
-        ('get-shit-done/templates', 'assets/templates'),
-        ('get-shit-done/bin', 'bin'),
-        ('hooks', 'bin/hooks')
-    ]
+    # Define mappings (source_rel, target_rel) from manifest
+    mappings = [(m['source'], m['target']) for m in manifest['mappings']]
     
     for src_rel, tgt_rel in mappings:
         src_path = os.path.join(source_base, src_rel)
@@ -136,7 +175,17 @@ def migrate_files(source_base, target_base):
             
             for item in os.listdir(src_path):
                 s = os.path.join(src_path, item)
-                d = os.path.join(tgt_path, item)
+                
+                # Special handling for command categorization
+                if src_rel == 'commands/gsd/':
+                    cmd_name = item[:-3] if item.endswith('.md') else item
+                    category = get_command_category(cmd_name)
+                    cat_path = os.path.join(tgt_path, category)
+                    os.makedirs(cat_path, exist_ok=True)
+                    d = os.path.join(cat_path, item)
+                else:
+                    d = os.path.join(tgt_path, item)
+
                 if os.path.isdir(s):
                     shutil.copytree(s, d, dirs_exist_ok=True)
                 else:
@@ -148,17 +197,16 @@ def migrate_files(source_base, target_base):
     skills_src = os.path.join(source_base, 'skills')
     commands_tgt = os.path.join(target_base, 'references/commands')
     if os.path.exists(skills_src):
-        print(f"  📁 Migrating modular skills -> references/commands")
-        os.makedirs(commands_tgt, exist_ok=True)
+        print(f"  📁 Migrating modular skills -> references/commands/modular")
+        modular_tgt = os.path.join(commands_tgt, 'modular')
+        os.makedirs(modular_tgt, exist_ok=True)
         for skill_dir in os.listdir(skills_src):
             s_full = os.path.join(skills_src, skill_dir)
             if os.path.isdir(s_full):
                 skill_md = os.path.join(s_full, 'SKILL.md')
                 if os.path.exists(skill_md):
-                    # Flatten into references/commands/gsd-name.md
-                    # Clean up the name (remove gsd- prefix if present for redundancy, or keep it)
                     target_name = skill_dir + '.md'
-                    shutil.copy2(skill_md, os.path.join(commands_tgt, target_name))
+                    shutil.copy2(skill_md, os.path.join(modular_tgt, target_name))
 
     # Migrate internal documentation (mapping.md)
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -169,33 +217,37 @@ def migrate_files(source_base, target_base):
         os.makedirs(os.path.dirname(mapping_tgt), exist_ok=True)
         shutil.copy2(mapping_src, mapping_tgt)
 
-def refactor_content(target_base):
+def refactor_content(target_base, version, manifest):
     print("🔧 Refactoring file contents and paths...")
     
-    replacements = [
+    # Load rebranding rules from manifest
+    rebranding_rules = manifest.get('rebranding', {}).get('replacements', [])
+    replacements = []
+    for rule in rebranding_rules:
+        replacements.append((re.compile(rule['pattern']), rule['replacement']))
+    
+    # Standard GSD replacements (preserved)
+    standard_replacements = [
         # Skill-relative internal references
-        (r'@.*?\.claude/commands/gsd/', '@references/commands/'),
-        (r'@.*?\.claude/get-shit-done/references/', '@references/docs/'),
-        (r'@.*?\.claude/get-shit-done/workflows/', '@references/workflows/'),
-        (r'@.*?\.claude/get-shit-done/templates/', '@assets/templates/'),
-        (r'@.*?\.claude/agents/', '@references/agents/'),
-        (r'@.*?\.claude/hooks/', '@bin/hooks/'),
+        (re.compile(r'@.*?\.claude/commands/gsd/'), '@references/commands/'),
+        (re.compile(r'@.*?\.claude/get-shit-done/references/'), '@references/docs/'),
+        (re.compile(r'@.*?\.claude/get-shit-done/workflows/'), '@references/workflows/'),
+        (re.compile(r'@.*?\.claude/get-shit-done/contexts/'), '@references/agents/profiles/'),
+        (re.compile(r'@.*?\.claude/get-shit-done/templates/'), '@assets/templates/'),
+        (re.compile(r'@.*?\.claude/agents/'), '@references/agents/'),
+        (re.compile(r'@.*?\.claude/hooks/'), '@bin/hooks/'),
 
         # Local filesystem paths
-        (r'\.?/?.*?\.claude/agents/', 'references/agents/'),
-        (r'\.?/?.*?\.claude/get-shit-done/templates/', 'assets/templates/'),
-        (r'\.?/?.*?\.claude/get-shit-done/workflows/', 'references/workflows/'),
-        (r'\.?/?.*?\.claude/get-shit-done/bin/', '.agent/skills/gsd/bin/'),
-        (r'\.?/?.*?\.claude/hooks/', '.agent/skills/gsd/bin/hooks/'),
-
-        # Rebranding
-        (r'\bClaude Code\b', 'Antigravity'),
-        (r'\bClaude\b', 'Antigravity'),
-        (r'\bclaude\b', 'antigravity'),
-        (r'\bCLAUDE\b', 'ANTIGRAVITY'),
-        (r'generate-antigravity-profile', 'generate-antigravity-profile'), # Ensure double rebrands don't break
-        (r'generate-antigravity-md', 'generate-antigravity-md'),
+        (re.compile(r'\.?/?.*?\.claude/agents/'), 'references/agents/'),
+        (re.compile(r'\.?/?.*?\.claude/get-shit-done/templates/'), 'assets/templates/'),
+        (re.compile(r'\.?/?.*?\.claude/get-shit-done/workflows/'), 'references/workflows/'),
+        (re.compile(r'\.?/?.*?\.claude/get-shit-done/contexts/'), 'references/agents/profiles/'),
+        (re.compile(r'\.?/?.*?\.claude/get-shit-done/bin/'), '.agent/skills/gsd/bin/'),
+        (re.compile(r'\.?/?.*?\.claude/hooks/'), '.agent/skills/gsd/bin/hooks/'),
     ]
+    
+    # Rebranding aliases to prevent double rebrands breaking things
+    # These are handled by the manifest now, but we keep some specific ones if needed
     
     exact_replacements = [
         ("@~/.claude/commands/gsd/", "@references/commands/"),
@@ -204,6 +256,8 @@ def refactor_content(target_base):
         ("@$HOME/.claude/get-shit-done/references/", "@references/docs/"),
         ("@~/.claude/get-shit-done/workflows/", "@references/workflows/"),
         ("@$HOME/.claude/get-shit-done/workflows/", "@references/workflows/"),
+        ("@~/.claude/get-shit-done/contexts/", "@references/agents/profiles/"),
+        ("@$HOME/.claude/get-shit-done/contexts/", "@references/agents/profiles/"),
         ("@~/.claude/get-shit-done/templates/", "@assets/templates/"),
         ("@$HOME/.claude/get-shit-done/templates/", "@assets/templates/"),
         ("@~/.claude/agents/", "@references/agents/"),
@@ -218,6 +272,7 @@ def refactor_content(target_base):
         ("path.join(homeDir, '.claude', 'get-shit-done'", "path.join(homeDir, '.gemini', 'antigravity', 'skills', 'gsd'")
     ]
     
+    # Pass 1: Content processing
     for root, dirs, files in os.walk(target_base):
         for file in files:
             file_path = os.path.join(root, file)
@@ -231,8 +286,25 @@ def refactor_content(target_base):
                     for exact, repl in exact_replacements:
                         new_content = new_content.replace(exact, repl)
 
+                    for pattern, replacement in standard_replacements:
+                        new_content = pattern.sub(replacement, new_content)
+
                     for pattern, replacement in replacements:
-                        new_content = re.sub(pattern, replacement, new_content)
+                        new_content = pattern.sub(replacement, new_content)
+                    
+                    # Pass 2: Categorized path resolution for commands
+                    # We need to find @references/commands/cmd.md and fix it
+                    def fix_cmd_path(match):
+                        p = match.group(1)
+                        cmd_filename = os.path.basename(p)
+                        cmd_name = cmd_filename[:-3] if cmd_filename.endswith('.md') else cmd_filename
+                        category = get_command_category(cmd_name)
+                        # Special case for modular or injected
+                        if 'modular' in p: category = 'modular'
+                        if cmd_name == 'gsd-tools': category = 'system'
+                        return f"@references/commands/{category}/{cmd_filename}"
+
+                    new_content = re.sub(r'@references/commands/([^/\s]+?\.md)', fix_cmd_path, new_content)
                     
                     if new_content != content:
                         with open(file_path, 'w', encoding='utf-8') as f:
@@ -240,6 +312,13 @@ def refactor_content(target_base):
                 except Exception as e:
                     print(f"  ⚠️ Error processing {file_path}: {e}")
     
+    # Metadata Injection
+    for root, dirs, files in os.walk(target_base):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if file.endswith('.md') and 'commands' in root:
+                inject_metadata(file_path, version)
+
     # Cleanup .bak files
     for root, dirs, files in os.walk(target_base):
         for file in files:
@@ -320,23 +399,34 @@ def scan_commands(target_base):
     commands_dir = os.path.join(target_base, 'references', 'commands')
     commands = []
     if os.path.exists(commands_dir):
-        for f in sorted(os.listdir(commands_dir)):
-            if f.endswith('.md'):
-                cmd_name = f[:-3] # remove .md
-                file_path = os.path.join(commands_dir, f)
-                description = ""
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as cf:
-                        text = cf.read()
-                        # Parse frontmatter description
-                        match = re.search(r'---[\s\S]*?description:\s*["\']?(.*?)["\']?\n[\s\S]*?---', text)
-                        if match:
-                            description = match.group(1).strip()
-                except Exception as e:
-                    print(f"  ⚠️ Error parsing {f}: {e}")
-                
-                commands.append({'name': cmd_name, 'description': description})
-    return commands
+        for root, dirs, files in os.walk(commands_dir):
+            for f in sorted(files):
+                if f.endswith('.md'):
+                    cmd_name = f[:-3] # remove .md
+                    file_path = os.path.join(root, f)
+                    description = ""
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as cf:
+                            text = cf.read()
+                            # Parse frontmatter description
+                            match = re.search(r'---[\s\S]*?description:\s*["\']?(.*?)["\']?\n[\s\S]*?---', text)
+                            if match:
+                                description = match.group(1).strip()
+                    except Exception as e:
+                        print(f"  ⚠️ Error parsing {f}: {e}")
+                    
+                    commands.append({'name': cmd_name, 'description': description})
+    
+    # Sort into categories for SKILL.md
+    categorized = {}
+    for cmd in commands:
+        cat = get_command_category(cmd['name'])
+        # If it's in a different folder than its category, we should still respect it
+        # but for GSD commands we use the categorizer
+        if cat not in categorized: categorized[cat] = []
+        categorized[cat].append(cmd)
+    
+    return categorized
 
 def create_skill_md(target_base, skill_name, version):
     skill_md_path = os.path.join(target_base, 'SKILL.md')
@@ -345,16 +435,22 @@ def create_skill_md(target_base, skill_name, version):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     template_path = os.path.join(script_dir, '..', 'assets', 'gsd_skill_template.md')
     
-    commands = scan_commands(target_base)
+    categorized_commands = scan_commands(target_base)
+    
+    # Flatten for triggers
+    all_commands = []
+    for cat in categorized_commands:
+        all_commands.extend(categorized_commands[cat])
     
     # Format for triggers: - `gsd:command`
-    command_triggers_str = "\n".join([f"- `gsd:{cmd['name']}`" for cmd in commands])
+    command_triggers_str = "\n".join([f"- `gsd:{cmd['name']}`" for cmd in sorted(all_commands, key=lambda x: x['name'])])
     
-    # Format for detailed list: bold command name with link, then description
-    commands_list_str = "\n".join([
-        f"- **[`gsd:{cmd['name']}`](references/commands/{cmd['name']}.md)**: {cmd['description']}" 
-        for cmd in commands
-    ])
+    # Format for detailed list: categorized bold command name with link
+    commands_list_str = ""
+    for cat in sorted(categorized_commands.keys()):
+        commands_list_str += f"\n### {cat.capitalize()} Commands\n"
+        for cmd in categorized_commands[cat]:
+            commands_list_str += f"- **[`gsd:{cmd['name']}`](references/commands/{cat}/{cmd['name']}.md)**: {cmd['description']}\n"
 
     if not os.path.exists(template_path):
         print(f"  ⚠️ Template not found at {template_path}. Using fallback.")
@@ -373,32 +469,251 @@ Template missing.
         title_name = skill_name.upper()
         date_str = datetime.now().strftime('%Y-%m-%d')
         
-        try:
-            content = template_content.format(
-                skill_name=skill_name,
-                version=version,
-                title_name=title_name,
-                date=date_str,
-                command_triggers=command_triggers_str,
-                commands_list=commands_list_str
-            )
-        except KeyError as e:
-            print(f"  ⚠️ Error formatting template: {e}")
-            content = template_content
+        # Use .replace() instead of .format() to avoid issues with literal braces in the template
+        content = template_content.replace('{skill_name}', skill_name) \
+                                   .replace('{version}', version) \
+                                   .replace('{title_name}', title_name) \
+                                   .replace('{date}', date_str) \
+                                   .replace('{command_triggers}', command_triggers_str) \
+                                   .replace('{commands_list}', commands_list_str)
 
     with open(skill_md_path, 'w', encoding='utf-8') as f:
         f.write(content)
     print("  ✅ Created SKILL.md from template with updated commands")
 
+def run_regression_tests(target_base):
+    """Run Phase 2 regression tests on the generated skill."""
+    print("🧪 Running regression tests...")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    test_script = os.path.join(script_dir, 'regression_test.py')
+    
+    if not os.path.exists(test_script):
+        # Create it if it doesn't exist (self-bootstrapping for this turn)
+        with open(test_script, 'w', encoding='utf-8') as f:
+            f.write("""import os, re, sys
+def test_skill(base):
+    print(f"  Checking {base}...")
+    errors = []
+    # 1. Check categorized paths
+    cmd_dir = os.path.join(base, 'references', 'commands')
+    if not os.path.exists(cmd_dir): return ["Commands dir missing"]
+    
+    for root, dirs, files in os.walk(cmd_dir):
+        for f in files:
+            if f.endswith('.md'):
+                path = os.path.join(root, f)
+                with open(path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    # Check metadata
+                    if 'gsd-source-version' not in content:
+                        errors.append(f"Missing metadata in {f}")
+                    # Check internal inclusions
+                    inclusions = re.findall(r"@references/commands/([^/]+?\\\\.md)", content)
+                    if inclusions:
+                        # Find where they should be
+                        cmd_name = inclusions[0][:-3]
+                        category = get_command_category(cmd_name)
+                        errors.append(f"Broken inclusive path in {f}: {inclusions[0]}. Should be {category}/{inclusions[0]}")
+    return errors
+
+if __name__ == '__main__':
+    target = sys.argv[1] if len(sys.argv) > 1 else '.'
+    errs = test_skill(target)
+    if errs:
+        for e in errs: print(f"  ❌ {e}")
+        sys.exit(1)
+    print("  ✅ Regression tests passed.")
+""")
+
+    try:
+        result = subprocess.run(
+            [sys.executable, test_script, target_base],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"  ❌ Regression tests failed!")
+        print(e.stdout)
+        print(e.stderr)
+        return False
+    return True
+
+def discover_source_structure(source_base):
+    """Scan .claude for directories and identify unmapped ones."""
+    print("🔍 Discovering source structure...")
+    mappings = [
+        'commands/gsd/',
+        'get-shit-done/references/',
+        'get-shit-done/workflows/',
+        'get-shit-done/contexts/',
+        'agents/',
+        'get-shit-done/templates/',
+        'get-shit-done/bin/',
+        'hooks/',
+        'skills/'
+    ]
+    
+    # Directories we expect to see as parents but aren't mapped directly
+    allowed_parents = ['', 'commands', 'get-shit-done']
+    
+    unmapped = []
+    for root, dirs, files in os.walk(source_base):
+        rel_root = os.path.relpath(root, source_base).replace('\\', '/')
+        if rel_root == '.': rel_root = ''
+        
+        if rel_root not in allowed_parents and not any(rel_root.startswith(m.strip('/')) for m in mappings):
+            # This dir itself might be unmapped
+            if rel_root + '/' not in mappings:
+                unmapped.append(rel_root)
+        
+        # Check subdirs of current root
+        for d in dirs:
+            full_rel = os.path.join(rel_root, d).replace('\\', '/') + '/'
+            if full_rel not in mappings and os.path.dirname(full_rel.strip('/')) in allowed_parents:
+                unmapped.append(full_rel)
+    
+    # Deduplicate and filter out parents
+    unmapped = sorted(list(set([u for u in unmapped if u.strip('/') not in allowed_parents])))
+    
+    if unmapped:
+        print(f"  ⚠️ Found unmapped directories in source: {', '.join(unmapped)}")
+    else:
+        print("  ✅ All recognized source directories are mapped.")
+    return unmapped
+
+def audit_spec(manifest):
+    """Verify code mappings against internal mapping.md documentation."""
+    print("📋 Auditing code against spec (mapping.md)...")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    mapping_md_path = os.path.abspath(os.path.join(script_dir, '..', 'references', 'mapping.md'))
+    
+    if not os.path.exists(mapping_md_path):
+        print("  ⚠️ mapping.md not found, skipping spec audit.")
+        return True
+
+    try:
+        with open(mapping_md_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Simple extraction of | .claude/path | ... |
+        spec_paths = re.findall(r'\|\s*`\.claude/(.*?)`\s*\|', content)
+        code_paths = [m['source'] for m in manifest['mappings']]
+        
+        mismatches = []
+        for sp in spec_paths:
+            if sp not in code_paths:
+                mismatches.append(f"Spec path '{sp}' missing in code")
+        for cp in code_paths:
+            if cp not in spec_paths:
+                mismatches.append(f"Code path '{cp}' missing in spec")
+        
+        if mismatches:
+            print("  ❌ Spec Audit Failed:")
+            for m in mismatches:
+                print(f"    - {m}")
+            return False
+        
+        print("  ✅ Code mappings are in sync with mapping.md.")
+        return True
+    except Exception as e:
+        print(f"  ⚠️ Error during spec audit: {e}")
+        return False
+
+def verify_migration(target_base):
+    """Pre-flight check for the migrated skill."""
+    print("🛡️ Verifying migrated skill integrity...")
+    checks = [
+        (os.path.join(target_base, 'bin', 'gsd-tools.cjs'), "GSD Tools CLI"),
+        (os.path.join(target_base, 'bin', 'help-manifest.json'), "Help Manifest"),
+        (os.path.join(target_base, 'references', 'commands'), "Commands Directory"),
+        (os.path.join(target_base, 'references', 'agents', 'profiles'), "Context Profiles"),
+        (os.path.join(target_base, 'references', 'agents'), "Agents Directory"),
+        (os.path.join(target_base, 'SKILL.md'), "Skill Specification")
+    ]
+    
+    failures = []
+    for path, label in checks:
+        if not os.path.exists(path):
+            failures.append(f"Missing {label}: {path}")
+            
+    # Check if commands dir is empty
+    cmd_dir = os.path.join(target_base, 'references', 'commands')
+    if os.path.exists(cmd_dir) and not os.listdir(cmd_dir):
+        failures.append("Commands directory is empty - migration likely failed to copy core prompts.")
+        
+    if failures:
+        print("  ❌ Verification Failed:")
+        for f in failures:
+            print(f"    - {f}")
+        return False
+    
+    print("  ✅ Skill integrity verified.")
+    return True
+
+def sync_mapping_docs(target_base, manifest):
+    """Regenerate mapping.md from manifest to ensure documentation is always in sync."""
+    print("📝 Syncing mapping.md documentation from manifest...")
+    
+    docs_to_sync = [
+        os.path.join(target_base, 'references', 'mapping.md')
+    ]
+    
+    # Also sync the converter's own reference if it exists
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    internal_mapping = os.path.abspath(os.path.join(script_dir, '..', 'references', 'mapping.md'))
+    if os.path.exists(internal_mapping):
+        docs_to_sync.append(internal_mapping)
+    
+    content = [
+        "# Path Mapping Reference",
+        "",
+        "When converting from a standard GSD installation to an Antigravity Skill, paths are refactored to ensure the skill is self-contained and portable.",
+        "",
+        "## Directory Mapping",
+        "",
+        "| Source GSD Path | Target Skill Path | Purpose |",
+        "|-----------------|-------------------|---------|"
+    ]
+    
+    for m in manifest['mappings']:
+        content.append(f"| `.claude/{m['source']}` | `{m['target']}` | {m['purpose']} |")
+    
+    content.extend([
+        "",
+        "## Project Context",
+        "References to `@.planning/` are **preserved**, as these refer to the active project's local planning directory, not the skill's own resources.",
+        "",
+        "---",
+        f"*Generated by gsd-converter on {datetime.now().strftime('%Y-%m-%d')}*"
+    ])
+    
+    markdown = "\n".join(content)
+    
+    for path in docs_to_sync:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(markdown)
+        print(f"  ✅ {os.path.basename(os.path.dirname(os.path.dirname(path)))} mapping.md updated.")
+
 def main():
     args = setup_args()
+    manifest = load_manifest()
     
     # Enforce 'gsd' as the skill name
     skill_name = 'gsd'
     target_base = os.path.abspath(os.path.join(args.path, skill_name))
     source_base = args.source
 
-    print(f"🧹 Cleaning up existing skill folder: {target_base}")
+    # 1. Audit Spec
+    audit_spec(manifest)
+
+    # 2. Discover Structure
+    unmapped_dirs = discover_source_structure(source_base)
+
+    print(f"\n🧹 Cleaning up existing skill folder: {target_base}")
     if os.path.exists(target_base):
         # Retry logic for Windows directory locking issues
         import time
@@ -424,9 +739,10 @@ def main():
     os.makedirs(target_base, exist_ok=True)
     
     # 3. Perform migration and refactoring
-    migrate_files(source_base, target_base)
+    migrate_files(source_base, target_base, manifest)
     
-    refactor_content(target_base)
+    refactor_content(target_base, new_version, manifest)
+    sync_mapping_docs(target_base, manifest)
     optimize_gsd_tools(target_base)
 
     # 4. Inject Dynamic Help Manifest
@@ -449,9 +765,12 @@ def main():
 
     # 5. Inject custom assets
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    custom_assets = [
-        ('gsd-tools.md', 'references/commands/gsd-tools.md'),
-    ]
+    
+    # Write VERSION file to skill root
+    with open(os.path.join(target_base, 'VERSION'), 'w', encoding='utf-8') as f:
+        f.write(new_version)
+    
+    custom_assets = [(a['name'], a['target_rel']) for a in manifest.get('injected_assets', [])]
     for asset_name, target_rel in custom_assets:
         asset_path = os.path.join(script_dir, '..', 'assets', asset_name)
         target_path = os.path.join(target_base, target_rel)
@@ -467,6 +786,26 @@ def main():
                 shutil.copy2(asset_path, target_path)
 
     create_skill_md(target_base, skill_name, new_version)
+    
+    # 6. Final Verification
+    verify_migration(target_base)
+
+    # 7. Regression Testing
+    run_regression_tests(target_base)
+
+    # 8. Generate Report
+    report_path = os.path.join(target_base, 'migration_report.md')
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write(f"# GSD Migration Report\n\n")
+        f.write(f"- **Timestamp**: {datetime.now().isoformat()}\n")
+        f.write(f"- **Version**: {old_version} -> {new_version}\n")
+        f.write(f"- **Skill Name**: {skill_name}\n")
+        if unmapped_dirs:
+            f.write(f"\n### ⚠️ Unmapped Source Directories\n")
+            for d in unmapped_dirs:
+                f.write(f"- {d}\n")
+        else:
+            f.write(f"\n✅ All recognized source directories were successfully mapped and migrated.\n")
     
     print(f"\n{'='*40}")
     print(f"✨ Dynamic Skill '{skill_name}' is ready at {target_base}")

@@ -1,0 +1,74 @@
+{
+  "version": "1.1.0",
+  "mappings": [
+    {
+      "source": "commands/gsd/",
+      "target": "references/commands/",
+      "purpose": "Interactive slash commands"
+    },
+    {
+      "source": "get-shit-done/references/",
+      "target": "references/docs/",
+      "purpose": "Static domain knowledge and guides"
+    },
+    {
+      "source": "get-shit-done/workflows/",
+      "target": "references/workflows/",
+      "purpose": "Multi-step procedural logic"
+    },
+    {
+      "source": "get-shit-done/contexts/",
+      "target": "references/agents/profiles/",
+      "purpose": "Project-specific context profiles"
+    },
+    {
+      "source": "agents/",
+      "target": "references/agents/",
+      "purpose": "Specialized sub-agent system prompts"
+    },
+    {
+      "source": "get-shit-done/templates/",
+      "target": "assets/templates/",
+      "purpose": "File boilerplate (PROJECT.md, etc.)"
+    },
+    {
+      "source": "get-shit-done/bin/",
+      "target": "bin/",
+      "purpose": "Internal GSD CLI tools"
+    },
+    {
+      "source": "hooks/",
+      "target": "bin/hooks/",
+      "purpose": "Lifecycle and guard hooks"
+    }
+  ],
+  "rebranding": {
+    "replacements": [
+      { "pattern": "\\bClaude Code\\b", "replacement": "Antigravity" },
+      { "pattern": "\\bClaude\\b", "replacement": "Antigravity" },
+      { "pattern": "\\bclaude\\b", "replacement": "antigravity" },
+      { "pattern": "\\bCLAUDE\\b", "replacement": "ANTIGRAVITY" },
+      { "pattern": "CLAUDE_CODE_", "replacement": "ANTIGRAVITY_" },
+      { "pattern": "CLAUDE_", "replacement": "ANTIGRAVITY_" },
+      { "pattern": "([a-z])Claude([A-Z])", "replacement": "\\1Antigravity\\2" },
+      { "pattern": "([a-z])Claude", "replacement": "\\1Antigravity" },
+      { "pattern": "Claude([A-Z])", "replacement": "Antigravity\\1" },
+      { "pattern": "([A-Z])claude([A-Z])", "replacement": "\\1antigravity\\2" },
+      { "pattern": "claude([A-Z])", "replacement": "antigravity\\1" },
+      { "pattern": "_claude", "replacement": "_antigravity" },
+      { "pattern": "claude_", "replacement": "antigravity_" }
+    ],
+    "exclusions": [
+      "gemini",
+      "openai",
+      "codex",
+      "coderabbit"
+    ]
+  },
+  "injected_assets": [
+    {
+      "name": "gsd-tools.md",
+      "target_rel": "references/commands/system/gsd-tools.md"
+    }
+  ]
+}

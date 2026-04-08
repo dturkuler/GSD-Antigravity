@@ -66,7 +66,7 @@ if [ -z "$PREFERRED_RUNTIME" ]; then
     PREFERRED_RUNTIME="kilo"
   elif [ -n "$OPENCODE_CONFIG_DIR" ] || [ -n "$OPENCODE_CONFIG" ]; then
     PREFERRED_RUNTIME="opencode"
-  elif [ -n "$CLAUDE_CONFIG_DIR" ]; then
+  elif [ -n "$ANTIGRAVITY_CONFIG_DIR" ]; then
     PREFERRED_RUNTIME="antigravity"
   else
     PREFERRED_RUNTIME="antigravity"
@@ -99,8 +99,8 @@ if [ -n "$PREFERRED_CONFIG_DIR" ] && { [ -f "$PREFERRED_CONFIG_DIR/get-shit-done
 fi
 
 # Absolute global candidates from env overrides (covers custom config dirs).
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-  ENV_RUNTIME_DIRS+=( "antigravity:$(expand_home "$CLAUDE_CONFIG_DIR")" )
+if [ -n "$ANTIGRAVITY_CONFIG_DIR" ]; then
+  ENV_RUNTIME_DIRS+=( "antigravity:$(expand_home "$ANTIGRAVITY_CONFIG_DIR")" )
 fi
 if [ -n "$GEMINI_CONFIG_DIR" ]; then
   ENV_RUNTIME_DIRS+=( "gemini:$(expand_home "$GEMINI_CONFIG_DIR")" )
@@ -390,8 +390,8 @@ CACHE_DIRS=()
 if [ -n "$PREFERRED_CONFIG_DIR" ]; then
   CACHE_DIRS+=( "$(expand_home "$PREFERRED_CONFIG_DIR")" )
 fi
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-  CACHE_DIRS+=( "$(expand_home "$CLAUDE_CONFIG_DIR")" )
+if [ -n "$ANTIGRAVITY_CONFIG_DIR" ]; then
+  CACHE_DIRS+=( "$(expand_home "$ANTIGRAVITY_CONFIG_DIR")" )
 fi
 if [ -n "$GEMINI_CONFIG_DIR" ]; then
   CACHE_DIRS+=( "$(expand_home "$GEMINI_CONFIG_DIR")" )

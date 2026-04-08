@@ -22,7 +22,7 @@
 
 **Rating:** {{communication_style.rating}} | **Confidence:** {{communication_style.confidence}}
 
-**Directive:** {{communication_style.claude_instruction}}
+**Directive:** {{communication_style.antigravity_instruction}}
 
 {{communication_style.summary}}
 
@@ -36,7 +36,7 @@
 
 **Rating:** {{decision_speed.rating}} | **Confidence:** {{decision_speed.confidence}}
 
-**Directive:** {{decision_speed.claude_instruction}}
+**Directive:** {{decision_speed.antigravity_instruction}}
 
 {{decision_speed.summary}}
 
@@ -50,7 +50,7 @@
 
 **Rating:** {{explanation_depth.rating}} | **Confidence:** {{explanation_depth.confidence}}
 
-**Directive:** {{explanation_depth.claude_instruction}}
+**Directive:** {{explanation_depth.antigravity_instruction}}
 
 {{explanation_depth.summary}}
 
@@ -64,7 +64,7 @@
 
 **Rating:** {{debugging_approach.rating}} | **Confidence:** {{debugging_approach.confidence}}
 
-**Directive:** {{debugging_approach.claude_instruction}}
+**Directive:** {{debugging_approach.antigravity_instruction}}
 
 {{debugging_approach.summary}}
 
@@ -78,7 +78,7 @@
 
 **Rating:** {{ux_philosophy.rating}} | **Confidence:** {{ux_philosophy.confidence}}
 
-**Directive:** {{ux_philosophy.claude_instruction}}
+**Directive:** {{ux_philosophy.antigravity_instruction}}
 
 {{ux_philosophy.summary}}
 
@@ -92,7 +92,7 @@
 
 **Rating:** {{vendor_philosophy.rating}} | **Confidence:** {{vendor_philosophy.confidence}}
 
-**Directive:** {{vendor_philosophy.claude_instruction}}
+**Directive:** {{vendor_philosophy.antigravity_instruction}}
 
 {{vendor_philosophy.summary}}
 
@@ -106,7 +106,7 @@
 
 **Rating:** {{frustration_triggers.rating}} | **Confidence:** {{frustration_triggers.confidence}}
 
-**Directive:** {{frustration_triggers.claude_instruction}}
+**Directive:** {{frustration_triggers.antigravity_instruction}}
 
 {{frustration_triggers.summary}}
 
@@ -120,7 +120,7 @@
 
 **Rating:** {{learning_style.rating}} | **Confidence:** {{learning_style.confidence}}
 
-**Directive:** {{learning_style.claude_instruction}}
+**Directive:** {{learning_style.antigravity_instruction}}
 
 {{learning_style.summary}}
 

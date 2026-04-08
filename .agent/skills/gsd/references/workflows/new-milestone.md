@@ -140,7 +140,7 @@ Delete MILESTONE-CONTEXT.md if exists (consumed).
 Clear leftover phase directories from the previous milestone:
 
 ```bash
-.agent/skills/gsd/bin/gsd-tools.cjs" phases clear
+.agent/skills/gsd/bin/gsd-tools.cjs" phases clear --confirm
 ```
 
 ```bash

@@ -523,7 +523,7 @@ When a specific dimension has insufficient data (even if total messages exceed t
 
 - Set confidence to `UNSCORED`
 - Set summary to: "Insufficient data -- no clear signals detected for this dimension."
-- Set claude_instruction to a neutral fallback: "No strong preference detected. Ask the developer when this dimension is relevant."
+- Set antigravity_instruction to a neutral fallback: "No strong preference detected. Ask the developer when this dimension is relevant."
 - Set evidence_quotes to empty array `[]`
 - Set evidence_count to `0`
 
@@ -566,7 +566,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
         }
       ],
       "summary": "One to two sentence description of the observed pattern",
-      "claude_instruction": "Imperative directive for Antigravity: 'Match structured communication style' not 'You tend to provide structured context'"
+      "antigravity_instruction": "Imperative directive for Antigravity: 'Match structured communication style' not 'You tend to provide structured context'"
     },
     "decision_speed": {
       "rating": "fast-intuitive|deliberate-informed|research-first|delegator",
@@ -575,7 +575,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "explanation_depth": {
       "rating": "code-only|concise|detailed|educational",
@@ -584,7 +584,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "debugging_approach": {
       "rating": "fix-first|diagnostic|hypothesis-driven|collaborative",
@@ -593,7 +593,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "ux_philosophy": {
       "rating": "function-first|pragmatic|design-conscious|backend-focused",
@@ -602,7 +602,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "vendor_philosophy": {
       "rating": "pragmatic-fast|conservative|thorough-evaluator|opinionated",
@@ -611,7 +611,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "frustration_triggers": {
       "rating": "scope-creep|instruction-adherence|verbosity|regression",
@@ -620,7 +620,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     },
     "learning_style": {
       "rating": "self-directed|guided|documentation-first|example-driven",
@@ -629,7 +629,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
       "cross_project_consistent": true,
       "evidence_quotes": [],
       "summary": "string",
-      "claude_instruction": "string"
+      "antigravity_instruction": "string"
     }
   }
 }
@@ -644,7 +644,7 @@ The profiler agent must return JSON matching this exact schema, wrapped in `<ana
 - **`messages_analyzed`**: Total number of genuine user messages processed
 - **`message_threshold`**: Which threshold mode was triggered (`full`, `hybrid`, `insufficient`)
 - **`sensitive_excluded`**: Array of excluded sensitive content types with counts (empty array if none found)
-- **`claude_instruction`**: Must be written in imperative form directed at Antigravity. This field is how the profile becomes actionable.
+- **`antigravity_instruction`**: Must be written in imperative form directed at Antigravity. This field is how the profile becomes actionable.
   - Good: "Provide structured responses with headers and numbered lists to match this developer's communication style."
   - Bad: "You tend to like structured responses."
   - Good: "Ask before making changes beyond the stated request -- this developer values bounded execution."

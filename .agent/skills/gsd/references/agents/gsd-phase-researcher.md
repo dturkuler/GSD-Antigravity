@@ -461,6 +461,9 @@ Verified patterns from official sources:
 
 <execution_flow>
 
+At research decision points, apply structured reasoning:
+@references/docs/thinking-models-research.md
+
 ## Step 1: Receive Scope and Load Context
 
 Orchestrator provides: phase number/name, description/goal, requirements, constraints, output path.
