@@ -5,19 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.30.0] - 2026-03-28
 ## [2.0.0] - 2026-04-08
+
+### Added
+- **GSD Sync 1.34.2**: Synchronized with the latest GSD core (v1.34.2), featuring enhanced initialization signatures and improved state tracking.
+- **Interactive Skill Installer**: Restored and validated the `npx gsd-antigravity-kit` installer (bin/install.js) to be fully interactive. It now supports:
+    - **Smart Detection**: Identifies existing `.agent/skills/` and offers a safe removal/reinstall flow.
+    - **Granular Installation**: Users can choose to install only specific skills (`gsd` or `gsd-converter`).
+    - **Zero-Dependency Core**: Lightweight installation using only Node.js built-ins.
+- **Distribution Whitelisting**: Implemented a `"files"` whitelist in `package.json` to exclude non-essential development documentation and caches from the NPM package, resulting in a cleaner, faster download.
 
 ## [1.32.1] - 2026-04-08
 
-## [1.32.0] - 2026-04-05
-
 ### Changed
-- chore: finalize release orchestrator and update readme badges
+- **Release Orchestration**: Finalized the `release-manager` orchestrator for zero-manual distribution.
+- **Command Registry**: Synchronized `commands.json` with the latest skill-driven architecture.
 
-## [1.30.2] - 2026-04-05
-
-## [1.30.1] - 2026-04-05
 
 ### Added
 - feat: modernize release-manager with zero-manual automation
