@@ -6,6 +6,26 @@ This document tracks technical Root Cause Analysis (RCA) for bug fixes in the **
 
 ## Technical Analysis History
 
+### v2.0.1 (2026-04-08)
+*   **Context**: NPM Distribution & Package Optimization.
+*   **Issue**: The published NPM package was excessively large (~46 MB unpacked) and included development binaries (`gh.exe`).
+*   **Root Cause Analysis**: 
+    - The `package.json` "files" whitelist included the entire `.agent/` directory, which inadvertently included the `release-manager` skill and its 42 MB `gh.exe` binary.
+    - The `release.ps1` archive logic used `Get-ChildItem -Exclude`, which in PowerShell does not correctly handle recursive directory exclusion, leading to the inclusion of `__backup/` and `.claude/` folders.
+*   **How it was fixed**: 
+    - **Focused Whitelisting**: Refined `package.json` to only include essential skill paths (`gsd`, `gsd-converter`, and `rules`).
+    - **Robust Archiving**: Patched `release.ps1` to use `Where-Object` with regex path filtering for strictly accurate recursion exclusion.
+    - **Bloat Removal**: Successfully reduced the unpacked package size from 46.4 MB to **2.5 MB**.
+
+### v2.0.0 (2026-04-08)
+*   **Context**: Automated Release Regression.
+*   **Issue**: Critical file `bin/install.js` was deleted during the release process, breaking the `npx` installer.
+*   **Root Cause Analysis**: A collision occurred during the automated version sync cycle where the root `bin/` directory was mistakenly cleaned or overwritten during the GSD conversion phase.
+*   **How it was fixed**: 
+    - Restored `bin/install.js` from Git history.
+    - Validated the interactive installer logic to ensure it correctly manages skill selection and conflict resolution.
+    - Promoted to a new major version (v2.0.0) to signal the restored and enhanced installer experience.
+
 ### v1.30.0 (2026-03-28)
 *   **Context**: GSD Protocol Synchronization and Rebranding.
 *   **Issue**: Ensuring full parity with GSD 1.30.0 modular logic and consistent rebranding across all agent prompts.

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-04-08
+
+### Changed
+- **Distribution Optimization**: Refined `package.json` whitelist to exclude dev-only skills and the 42MB `gh.exe` binary. Reduced unpacked package size from 46MB to 2.5MB.
+- **Release Orchestrator Patch**: Improved archive logic in `release.ps1` to robustly exclude backup and temp directories using regex path filtering.
+
 ## [2.0.0] - 2026-04-08
 
 ### Added
