@@ -5,7 +5,9 @@
   "main": "index.js",
   "files": [
     "bin/",
-    ".agent/"
+    ".agent/rules/",
+    ".agent/skills/gsd/",
+    ".agent/skills/gsd-converter/"
   ],
   "bin": {
     "gsd-antigravity-kit": "bin/install.js"
