@@ -183,8 +183,8 @@ if (-not $dryRun) {
 Set-Verified "Phase 3: Archive & Package"
 $archiveName = "$($package.name)_v$newVersion.zip"
 if (-not $dryRun) {
-    $excludes = @("node_modules", ".git", "__tobedeleted", "*.zip", ".antigravity", ".planning", "*.bak", "gh.exe", ".agent/skills/release-manager/bin/gh.exe")
-    Get-ChildItem -Path . -Exclude $excludes -Recurse | Compress-Archive -DestinationPath $archiveName -Force
+    $excludes = @("node_modules", ".git", "__tobedeleted", "__backup", ".claude", "*.zip", ".antigravity", ".planning", "*.bak", "gh.exe", ".agent/skills/release-manager/bin/gh.exe")
+    Get-ChildItem -Path . -Recurse | Where-Object { $_.FullName -notmatch "__backup" -and $_.FullName -notmatch "node_modules" -and $_.FullName -notmatch ".git" -and $_.FullName -notmatch ".claude" -and $_.FullName -notmatch ".zip" -and $_.FullName -notmatch ".antigravity" -and $_.FullName -notmatch ".planning" } | Compress-Archive -DestinationPath $archiveName -Force
     Set-Verified "Create ZIP archive: gsd-antigravity-kit_v1.0.X.zip"
 }
 
