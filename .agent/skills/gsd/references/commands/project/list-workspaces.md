@@ -4,8 +4,8 @@ description: List active GSD workspaces and their status
 allowed-tools:
   - Bash
   - Read
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Scan `~/gsd-workspaces/` for workspace directories containing `WORKSPACE.md` manifests. Display a summary table with name, path, repo count, strategy, and GSD project status.

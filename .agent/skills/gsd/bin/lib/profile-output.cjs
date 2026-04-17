@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { output, error, safeReadFile } = require('./core.cjs');
+const { output, error, safeReadFile, loadConfig } = require('./core.cjs');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -177,11 +177,11 @@ const ANTIGRAVITY_MD_FALLBACKS = {
   stack: 'Technology stack not yet documented. Will populate after codebase mapping or first phase.',
   conventions: 'Conventions not yet established. Will populate as patterns emerge during development.',
   architecture: 'Architecture not yet mapped. Follow existing patterns found in the codebase.',
-  skills: 'No project skills found. Add skills to any of: `.antigravity/skills/`, `.agents/skills/`, `.cursor/skills/`, or `.github/skills/` with a `SKILL.md` index file.',
+  skills: 'No project skills found. Add skills to any of: `.antigravity/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.',
 };
 
 // Directories where project skills may live (checked in order)
-const SKILL_SEARCH_DIRS = ['.antigravity/skills', '.agents/skills', '.cursor/skills', '.github/skills'];
+const SKILL_SEARCH_DIRS = ['.antigravity/skills', '.agents/skills', '.cursor/skills', '.github/skills', '.codex/skills'];
 
 const ANTIGRAVITY_MD_WORKFLOW_ENFORCEMENT = [
   'Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.',
@@ -870,7 +870,13 @@ function cmdGenerateAntigravityProfile(cwd, options, raw) {
   } else if (options.output) {
   targetPath = path.isAbsolute(options.output) ? options.output : path.join(cwd, options.output);
   } else {
-  targetPath = path.join(cwd, 'ANTIGRAVITY.md');
+  // Read antigravity_md_path from config, default to ./ANTIGRAVITY.md
+  let configAntigravityMdPath = './ANTIGRAVITY.md';
+  try {
+    const config = loadConfig(cwd);
+    if (config.antigravity_md_path) configAntigravityMdPath = config.antigravity_md_path;
+  } catch { /* use default */ }
+  targetPath = path.isAbsolute(configAntigravityMdPath) ? configAntigravityMdPath : path.join(cwd, configAntigravityMdPath);
   }
 
   let action;
@@ -944,7 +950,13 @@ function cmdGenerateAntigravityMd(cwd, options, raw) {
 
   let outputPath = options.output;
   if (!outputPath) {
-  outputPath = path.join(cwd, 'ANTIGRAVITY.md');
+  // Read antigravity_md_path from config, default to ./ANTIGRAVITY.md
+  let configAntigravityMdPath = './ANTIGRAVITY.md';
+  try {
+    const config = loadConfig(cwd);
+    if (config.antigravity_md_path) configAntigravityMdPath = config.antigravity_md_path;
+  } catch { /* use default */ }
+  outputPath = path.isAbsolute(configAntigravityMdPath) ? configAntigravityMdPath : path.join(cwd, configAntigravityMdPath);
   } else if (!path.isAbsolute(outputPath)) {
   outputPath = path.join(cwd, outputPath);
   }

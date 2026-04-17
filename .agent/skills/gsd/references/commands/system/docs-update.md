@@ -11,8 +11,8 @@ allowed-tools:
   - Grep
   - Task
   - AskUserQuestion
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Generate and update up to 9 documentation files for the current project. Each doc type is written by a gsd-doc-writer subagent that explores the codebase directly — no hallucinated paths, phantom endpoints, or stale signatures.

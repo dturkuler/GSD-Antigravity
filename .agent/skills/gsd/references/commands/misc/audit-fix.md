@@ -12,8 +12,8 @@ allowed-tools:
   - Glob
   - Agent
   - AskUserQuestion
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Run an audit, classify findings as auto-fixable vs manual-only, then autonomously fix

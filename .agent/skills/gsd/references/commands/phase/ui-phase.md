@@ -12,8 +12,8 @@ allowed-tools:
   - WebFetch
   - AskUserQuestion
   - mcp__context7__*
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Create a UI design contract (UI-SPEC.md) for a frontend phase.

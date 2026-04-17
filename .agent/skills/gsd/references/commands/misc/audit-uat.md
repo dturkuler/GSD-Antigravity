@@ -6,8 +6,8 @@ allowed-tools:
   - Glob
   - Grep
   - Bash
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Scan all phases for pending, skipped, blocked, and human_needed UAT items. Cross-reference against codebase to detect stale documentation. Produce prioritized human test plan.

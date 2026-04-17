@@ -4,8 +4,8 @@ description: Display project statistics — phases, plans, requirements, git met
 allowed-tools:
   - Read
   - Bash
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Display comprehensive project statistics including phase progress, plan execution metrics, requirements completion, git history stats, and project timeline.

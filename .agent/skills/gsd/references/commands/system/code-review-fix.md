@@ -10,8 +10,8 @@ allowed-tools:
   - Write
   - Edit
   - Task
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Auto-fix issues found by code review. Reads REVIEW.md from the specified phase, spawns gsd-code-fixer agent to apply fixes, and produces REVIEW-FIX.md summary.
@@ -35,7 +35,7 @@ Optional flags parsed from $ARGUMENTS:
 - `--all` — Include Info findings in fix scope. Default behavior fixes Critical + Warning only.
 - `--auto` — Enable fix + re-review iteration loop. After applying fixes, re-run code-review at same depth. If new issues found, iterate. Cap at 3 iterations total. Without this flag, single fix pass only.
 
-Context files (ANTIGRAVITY.md, REVIEW.md, phase state) are resolved inside the workflow via `gsd-tools init phase-op` and delegated to agent via config blocks.
+Context files (ANTIGRAVITY.md, REVIEW.md, phase state) are resolved inside the workflow via `gsd-sdk query init.phase-op` and delegated to agent via config blocks.
 </context>
 
 <process>

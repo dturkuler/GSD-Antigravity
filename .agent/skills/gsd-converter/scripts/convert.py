@@ -490,7 +490,25 @@ def run_regression_tests(target_base):
     if not os.path.exists(test_script):
         # Create it if it doesn't exist (self-bootstrapping for this turn)
         with open(test_script, 'w', encoding='utf-8') as f:
-            f.write("""import os, re, sys
+            f.write("""import os, re, sys, io
+# Force UTF-8 for Windows
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+def get_command_category(cmd_name):
+    atomic = ['add-todo', 'check-todos', 'note', 'ship', 'cleanup', 'undo', 'help', 'do', 'stats', 'thread', 'session-report', 'join-discord']
+    phase = ['plan-phase', 'execute-phase', 'research-phase', 'validate-phase', 'discuss-phase', 'remove-phase', 'insert-phase', 'add-phase', 'list-phase-assumptions', 'secure-phase', 'ui-phase', 'ui-review', 'add-tests', 'workstreams']
+    milestone = ['new-milestone', 'complete-milestone', 'audit-milestone', 'milestone-summary', 'plan-milestone-gaps', 'review-backlog', 'add-backlog', 'plant-seed']
+    project = ['new-project', 'new-workspace', 'list-workspaces', 'remove-workspace', 'map-codebase', 'scan', 'intel', 'analyze-dependencies', 'explore', 'import']
+    system = ['gsd-tools', 'health', 'settings', 'profile-user', 'set-profile', 'update', 'pause-work', 'resume-work', 'reapply-patches', 'debug', 'forensics', 'manager', 'autonomous', 'fast', 'quick', 'code-review', 'code-review-fix', 'review', 'docs-update', 'pr-branch']
+    if cmd_name in atomic: return 'atomic'
+    if cmd_name in phase: return 'phase'
+    if cmd_name in milestone: return 'milestone'
+    if cmd_name in project: return 'project'
+    if cmd_name in system: return 'system'
+    return 'misc'
+
 def test_skill(base):
     print(f"  Checking {base}...")
     errors = []
@@ -508,19 +526,21 @@ def test_skill(base):
                     if 'gsd-source-version' not in content:
                         errors.append(f"Missing metadata in {f}")
                     # Check internal inclusions
-                    inclusions = re.findall(r"@references/commands/([^/]+?\\\\.md)", content)
-                    if inclusions:
-                        # Find where they should be
-                        cmd_name = inclusions[0][:-3]
-                        category = get_command_category(cmd_name)
-                        errors.append(f"Broken inclusive path in {f}: {inclusions[0]}. Should be {category}/{inclusions[0]}")
+                    inclusions = re.findall(r"@references/commands/([^/\\s]+?\.md)", content)
+                    for inc in inclusions:
+                        if not re.search(f"@references/commands/[^/]+/{inc}", content):
+                            cmd_name = inc[:-3]
+                            category = get_command_category(cmd_name)
+                            errors.append(f"Broken inclusive path in {f}: {inc}. Should be {category}/{inc}")
     return errors
 
 if __name__ == '__main__':
     target = sys.argv[1] if len(sys.argv) > 1 else '.'
     errs = test_skill(target)
     if errs:
-        for e in errs: print(f"  ❌ {e}")
+        for e in errs: 
+            try: print(f"  ❌ {e}")
+            except: print(f"  [ERR] {e}")
         sys.exit(1)
     print("  ✅ Regression tests passed.")
 """)
@@ -738,18 +758,12 @@ def main():
     # 2. Re-create the skill directory
     os.makedirs(target_base, exist_ok=True)
     
-    # 3. Perform migration and refactoring
+    # 3. Perform migration
     migrate_files(source_base, target_base, manifest)
     
-    refactor_content(target_base, new_version, manifest)
-    sync_mapping_docs(target_base, manifest)
-    optimize_gsd_tools(target_base)
-
-    # 4. Inject Dynamic Help Manifest
+    # 4. Inject Dynamic Help Manifest (Early for asset use)
     gsd_tools_source = os.path.join(source_base, 'get-shit-done/bin/gsd-tools.cjs')
     discovered_help = discover_commands(gsd_tools_source)
-    
-    # Dynamic gsd-tools help extraction for markdown
     gsd_tools_help_markdown = extract_gsd_tools_help(target_base)
 
     final_manifest = {
@@ -759,11 +773,12 @@ def main():
     }
     
     manifest_path = os.path.join(target_base, 'bin', 'help-manifest.json')
+    os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
     with open(manifest_path, 'w', encoding='utf-8') as f:
         json.dump(final_manifest, f, indent=2)
     print("  ✅ Generated help-manifest.json dynamically from source")
 
-    # 5. Inject custom assets
+    # 5. Inject custom assets (BEFORE refactoring)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Write VERSION file to skill root
@@ -785,6 +800,10 @@ def main():
             else:
                 shutil.copy2(asset_path, target_path)
 
+    # 6. Refactor and Optimize
+    refactor_content(target_base, new_version, manifest)
+    sync_mapping_docs(target_base, manifest)
+    optimize_gsd_tools(target_base)
     create_skill_md(target_base, skill_name, new_version)
     
     # 6. Final Verification

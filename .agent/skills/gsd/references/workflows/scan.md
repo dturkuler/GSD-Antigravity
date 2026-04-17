@@ -39,7 +39,7 @@ Exit.
 ## Step 2: Check for existing documents
 
 ```bash
-.agent/skills/gsd/bin/gsd-tools.cjs" init map-codebase 2>/dev/null || echo "{}")
+INIT=$(gsd-sdk query init.map-codebase 2>/dev/null || echo "{}")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
 ```
 

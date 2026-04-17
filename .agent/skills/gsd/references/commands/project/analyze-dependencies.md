@@ -8,8 +8,8 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Analyze the phase dependency graph for the current milestone. For each phase pair, determine if there is a dependency relationship based on:

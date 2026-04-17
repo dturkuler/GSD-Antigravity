@@ -7,8 +7,8 @@ allowed-tools:
   - Grep
   - Glob
   - SlashCommand
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 <objective>
 Detect the current project state and automatically invoke the next logical GSD workflow step.
@@ -16,7 +16,9 @@ No arguments needed — reads STATE.md, ROADMAP.md, and phase directories to det
 
 Designed for rapid multi-project workflows where remembering which phase/step you're on is overhead.
 
-Supports `--force` flag to bypass safety gates (checkpoint, error state, verification failures).
+Supports `--force` flag to bypass safety gates (checkpoint, error state, verification failures, and prior-phase completeness scan).
+
+Before routing to the next step, scans all prior phases for incomplete work: plans that ran without producing summaries, verification failures without overrides, and phases where discussion happened but planning never ran. When incomplete work is found, shows a structured report and offers three options: defer the gaps to the backlog and continue, stop and resolve manually, or force advance without recording. When prior phases are clean, routes silently with no interruption.
 </objective>
 
 <execution_context>

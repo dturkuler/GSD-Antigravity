@@ -1,7 +1,7 @@
 ---
 name: gsd:discuss-phase
-description: Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults). Use --chain for interactive discuss followed by automatic plan+execute. Use --power for bulk question generation into a file-based UI (answer at your own pace).
-argument-hint: "<phase> [--auto] [--chain] [--batch] [--analyze] [--text] [--power]"
+description: Gather phase context through adaptive questioning before planning. Use --all to skip area selection and discuss all gray areas interactively. Use --auto to skip interactive questions (Antigravity picks recommended defaults). Use --chain for interactive discuss followed by automatic plan+execute. Use --power for bulk question generation into a file-based UI (answer at your own pace).
+argument-hint: "<phase> [--all] [--auto] [--chain] [--batch] [--analyze] [--text] [--power]"
 allowed-tools:
   - Read
   - Write
@@ -12,8 +12,8 @@ allowed-tools:
   - Task
   - mcp__context7__resolve-library-id
   - mcp__context7__query-docs
-gsd-source-version: 1.34.2
-migration-date: 2026-04-08
+gsd-source-version: 1.37.1
+migration-date: 2026-04-18
 ---
 
 <objective>
@@ -50,7 +50,7 @@ Context files are resolved in-workflow using `init phase-op` and roadmap/state t
 <process>
 **Mode routing:**
 ```bash
-.agent/skills/gsd/bin/gsd-tools.cjs" config-get workflow.discuss_mode 2>/dev/null || echo "discuss")
+DISCUSS_MODE=$(gsd-sdk query config-get workflow.discuss_mode 2>/dev/null || echo "discuss")
 ```
 
 If `DISCUSS_MODE` is `"assumptions"`: Read and execute @references/workflows/discuss-phase-assumptions.md end-to-end.

@@ -1,6 +1,6 @@
 ---
 name: gsd
-version: 1.34.2
+version: 1.37.1
 description: "Antigravity GSD (Get Stuff Done) - A spec-driven hierarchical planning and execution system. Triggers on project planning, phase management, and GSD slash commands."
 ---
 
@@ -25,6 +25,7 @@ This skill should be used when:
 - `gsd:add-phase`
 - `gsd:add-tests`
 - `gsd:add-todo`
+- `gsd:ai-integration-phase`
 - `gsd:analyze-dependencies`
 - `gsd:audit-fix`
 - `gsd:audit-milestone`
@@ -39,14 +40,19 @@ This skill should be used when:
 - `gsd:discuss-phase`
 - `gsd:do`
 - `gsd:docs-update`
+- `gsd:eval-review`
 - `gsd:execute-phase`
 - `gsd:explore`
+- `gsd:extract_learnings`
 - `gsd:fast`
 - `gsd:forensics`
+- `gsd:from-gsd2`
+- `gsd:graphify`
 - `gsd:gsd-tools`
 - `gsd:health`
 - `gsd:help`
 - `gsd:import`
+- `gsd:inbox`
 - `gsd:insert-phase`
 - `gsd:intel`
 - `gsd:join-discord`
@@ -81,6 +87,11 @@ This skill should be used when:
 - `gsd:set-profile`
 - `gsd:settings`
 - `gsd:ship`
+- `gsd:sketch`
+- `gsd:sketch-wrap-up`
+- `gsd:spec-phase`
+- `gsd:spike`
+- `gsd:spike-wrap-up`
 - `gsd:stats`
 - `gsd:thread`
 - `gsd:ui-phase`
@@ -128,16 +139,27 @@ The following slash commands are available in this skill. Use them to drive the 
 - **[`gsd:review-backlog`](references/commands/milestone/review-backlog.md)**: Review and promote backlog items to active milestone
 
 ### Misc Commands
+- **[`gsd:ai-integration-phase`](references/commands/misc/ai-integration-phase.md)**: Generate AI design contract (AI-SPEC.md) for phases that involve building AI systems — framework selection, implementation guidance from official docs, and evaluation strategy
 - **[`gsd:audit-fix`](references/commands/misc/audit-fix.md)**: Autonomous audit-to-fix pipeline — find issues, classify, fix, test, commit
 - **[`gsd:audit-uat`](references/commands/misc/audit-uat.md)**: Cross-phase audit of all outstanding UAT and verification items
+- **[`gsd:eval-review`](references/commands/misc/eval-review.md)**: Retroactively audit an executed AI phase's evaluation coverage — scores each eval dimension as COVERED/PARTIAL/MISSING and produces an actionable EVAL-REVIEW.md with remediation plan
+- **[`gsd:extract_learnings`](references/commands/misc/extract_learnings.md)**: Extract decisions, lessons, patterns, and surprises from completed phase artifacts
+- **[`gsd:from-gsd2`](references/commands/misc/from-gsd2.md)**: Import a GSD-2 (.gsd/) project back to GSD v1 (.planning/) format
+- **[`gsd:graphify`](references/commands/misc/graphify.md)**: Build, query, and inspect the project knowledge graph in .planning/graphs/
+- **[`gsd:inbox`](references/commands/misc/inbox.md)**: Triage and review all open GitHub issues and PRs against project templates and contribution guidelines
 - **[`gsd:next`](references/commands/misc/next.md)**: Automatically advance to the next logical step in the GSD workflow
-- **[`gsd:progress`](references/commands/misc/progress.md)**: Check project progress, show context, and route to next action (execute or plan)
+- **[`gsd:progress`](references/commands/misc/progress.md)**: Check project progress, show context, and route to next action (execute or plan). Use --forensic to append a 6-check integrity audit after the standard report.
+- **[`gsd:sketch-wrap-up`](references/commands/misc/sketch-wrap-up.md)**: Package sketch design findings into a persistent project skill for future build conversations
+- **[`gsd:sketch`](references/commands/misc/sketch.md)**: Rapidly sketch UI/design ideas using throwaway HTML mockups with multi-variant exploration
+- **[`gsd:spec-phase`](references/commands/misc/spec-phase.md)**: Socratic spec refinement — clarify WHAT a phase delivers with ambiguity scoring before discuss-phase. Produces a SPEC.md with falsifiable requirements locked before implementation decisions begin.
+- **[`gsd:spike-wrap-up`](references/commands/misc/spike-wrap-up.md)**: Package spike findings into a persistent project skill for future build conversations
+- **[`gsd:spike`](references/commands/misc/spike.md)**: Rapidly spike an idea with throwaway experiments to validate feasibility before planning
 - **[`gsd:verify-work`](references/commands/misc/verify-work.md)**: Validate built features through conversational UAT
 
 ### Phase Commands
 - **[`gsd:add-phase`](references/commands/phase/add-phase.md)**: Add phase to end of current milestone in roadmap
 - **[`gsd:add-tests`](references/commands/phase/add-tests.md)**: Generate tests for a completed phase based on UAT criteria and implementation
-- **[`gsd:discuss-phase`](references/commands/phase/discuss-phase.md)**: Gather phase context through adaptive questioning before planning. Use --auto to skip interactive questions (Antigravity picks recommended defaults). Use --chain for interactive discuss followed by automatic plan+execute. Use --power for bulk question generation into a file-based UI (answer at your own pace).
+- **[`gsd:discuss-phase`](references/commands/phase/discuss-phase.md)**: Gather phase context through adaptive questioning before planning. Use --all to skip area selection and discuss all gray areas interactively. Use --auto to skip interactive questions (Antigravity picks recommended defaults). Use --chain for interactive discuss followed by automatic plan+execute. Use --power for bulk question generation into a file-based UI (answer at your own pace).
 - **[`gsd:execute-phase`](references/commands/phase/execute-phase.md)**: Execute all plans in a phase with wave-based parallelization
 - **[`gsd:insert-phase`](references/commands/phase/insert-phase.md)**: Insert urgent work as decimal phase (e.g., 72.1) between existing phases
 - **[`gsd:list-phase-assumptions`](references/commands/phase/list-phase-assumptions.md)**: Surface Antigravity's assumptions about a phase approach before planning
@@ -218,4 +240,4 @@ General documentation on the GSD philosophy, usage patterns, and configuration.
 5.  **CLI Invocation**: `gsd-tools` is **NOT** a global command. Always invoke it with the full node path: `node .agent/skills/gsd/bin/gsd-tools.cjs <command> [args]`. Never run `gsd-tools` bare.
 
 ---
-*Generated by gsd-converter on 2026-04-08*
+*Generated by gsd-converter on 2026-04-18*
