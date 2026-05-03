@@ -581,3 +581,7 @@ findNearbyButton.addEventListener('click', async () => {
 - [MDN Web Security](https://developer.mozilla.org/en-US/docs/Web/Security)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Web Quality Audit](../web-quality-audit/SKILL.md)
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

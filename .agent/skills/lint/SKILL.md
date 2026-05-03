@@ -143,3 +143,7 @@ For the most frequent issues, provide brief actionable guidance:
 7. **Exit cleanly**: After presenting results, do not take further action. Let the user decide next steps.
 
 </critical_rules>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

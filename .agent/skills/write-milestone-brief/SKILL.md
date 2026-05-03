@@ -30,7 +30,7 @@ Typical invocation points:
 
 Find the active milestone:
 
-1. Read `.gsd/STATE.md` — it names the active milestone.
+1. Read `.planning/STATE.md` — it names the active milestone.
 2. If no milestone is active, ask the user whether this is a new milestone (create directory + files) or appending to an existing one.
 3. For a new milestone, use `gsd_milestone_new` or the `/gsd new-milestone` flow — do not create directories by hand.
 
@@ -69,9 +69,9 @@ Populate `M###-CONTEXT.md` using the template. Key sections:
 
 ## Step 5: Write it
 
-Use the `write` tool to create or overwrite `.gsd/milestones/<MID>/<MID>-CONTEXT.md`. Do not ask for approval of the file contents before writing — the user will see the rendered file and can edit directly.
+Use the `write` tool to create or overwrite `.planning/milestones/<MID>/<MID>-CONTEXT.md`. Do not ask for approval of the file contents before writing — the user will see the rendered file and can edit directly.
 
-Then append a one-line summary to `.gsd/DECISIONS.md` for any genuinely hard-to-reverse architectural decision: `- YYYY-MM-DD [MID]: <decision> — <one-line rationale>`.
+Then append a one-line summary to `.planning/DECISIONS.md` for any genuinely hard-to-reverse architectural decision: `- YYYY-MM-DD [MID]: <decision> — <one-line rationale>`.
 
 ## Step 6: Offer next steps
 
@@ -108,7 +108,7 @@ After writing, offer the user (do not auto-execute):
 <any extra context>
 
 ---
-See `.gsd/milestones/<MID>/<MID>-CONTEXT.md` for the full brief.
+See `.planning/milestones/<MID>/<MID>-CONTEXT.md` for the full brief.
 ```
 
 </process>
@@ -130,6 +130,10 @@ See `.gsd/milestones/<MID>/<MID>-CONTEXT.md` for the full brief.
 - [ ] Completion Class is honest — no "just unit tests" when the milestone demands live integration.
 - [ ] Every architectural decision has a rationale and named alternatives.
 - [ ] Open Questions captures genuinely unresolved items — not decisions the user already made.
-- [ ] `.gsd/DECISIONS.md` has a dated one-liner for any hard-to-reverse decision.
+- [ ] `.planning/DECISIONS.md` has a dated one-liner for any hard-to-reverse decision.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

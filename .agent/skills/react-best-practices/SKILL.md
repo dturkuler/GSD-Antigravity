@@ -134,3 +134,7 @@ Each rule file contains:
 ## Full Compiled Document
 
 For the complete guide with all rules expanded: `AGENTS.md`
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

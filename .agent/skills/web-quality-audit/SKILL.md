@@ -166,3 +166,7 @@ For detailed guidelines on specific areas:
 - [Core Web Vitals](../core-web-vitals/SKILL.md)
 - [Accessibility](../accessibility/SKILL.md)
 - [Best Practices](../best-practices/SKILL.md)
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

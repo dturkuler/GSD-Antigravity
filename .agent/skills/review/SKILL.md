@@ -216,3 +216,7 @@ What would you like to do?
 This gate is MANDATORY. Never skip it. Never auto-implement fixes.
 
 </decision_gate>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

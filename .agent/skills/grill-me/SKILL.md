@@ -8,7 +8,7 @@ Interview the user one question at a time until every material branch of the dec
 </objective>
 
 <context>
-Planning conversations in GSD ship to `M###-CONTEXT.md`, `S##-CONTEXT.md`, or `.gsd/DECISIONS.md`. Those artifacts are only as good as the interview that produced them. This skill is the interview. It runs during the `discuss` phase, after `research`, or any time a plan has open branches the user has not actually thought through.
+Planning conversations in GSD ship to `M###-CONTEXT.md`, `S##-CONTEXT.md`, or `.planning/DECISIONS.md`. Those artifacts are only as good as the interview that produced them. This skill is the interview. It runs during the `discuss` phase, after `research`, or any time a plan has open branches the user has not actually thought through.
 
 Use this skill when:
 - The user asks to be grilled, stress-tested, or interrogated
@@ -29,7 +29,7 @@ Use this skill when:
 
 ## Step 1: Map the decision tree silently
 
-Before asking anything, read what the user has already said in this conversation plus any existing `M###-CONTEXT.md`, `S##-CONTEXT.md`, and `.gsd/DECISIONS.md`. Build a private list of every decision the plan depends on, in dependency order. Do not show this list — it is scaffolding.
+Before asking anything, read what the user has already said in this conversation plus any existing `M###-CONTEXT.md`, `S##-CONTEXT.md`, and `.planning/DECISIONS.md`. Build a private list of every decision the plan depends on, in dependency order. Do not show this list — it is scaffolding.
 
 If the plan touches unfamiliar code, spawn `Agent(subagent_type=Explore)` in parallel to map the relevant modules while you prepare Question 1. Do not wait for it to finish before starting the interview.
 
@@ -64,7 +64,7 @@ Stop the interview when:
 
 At the end, offer the user one of:
 
-1. Append resolved decisions to `.gsd/DECISIONS.md` (one line each, dated).
+1. Append resolved decisions to `.planning/DECISIONS.md` (one line each, dated).
 2. Write or update `M###-CONTEXT.md` or `S##-CONTEXT.md` for the active milestone/slice.
 3. Draft a GitHub issue via `mcp__github__issue_write` (only with explicit confirmation per the outward-action rule).
 4. Leave it as conversation context if the work is ephemeral.
@@ -91,3 +91,7 @@ Default: ask which they want. Do not auto-write.
 - [ ] Resolved decisions are captured in an enduring artifact or explicitly left ephemeral.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

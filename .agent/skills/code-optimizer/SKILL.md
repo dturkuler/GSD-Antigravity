@@ -158,3 +158,7 @@ Priority-ordered steps to implement the fixes:
 
 [... continue for all findings ...]
 ```
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

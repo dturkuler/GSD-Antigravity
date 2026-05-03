@@ -131,7 +131,7 @@ After all batches, produce a rollup:
 - <CVE> still open — not exploitable in our usage (see comment in package.json)
 ```
 
-Append to `.gsd/KNOWLEDGE.md` any non-obvious gotcha from the upgrade (API changes that tripped you up, migration rituals for this codebase).
+Append to `.planning/KNOWLEDGE.md` any non-obvious gotcha from the upgrade (API changes that tripped you up, migration rituals for this codebase).
 
 </process>
 
@@ -156,3 +156,7 @@ Append to `.gsd/KNOWLEDGE.md` any non-obvious gotcha from the upgrade (API chang
 - [ ] Summary report exists for the user to review.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

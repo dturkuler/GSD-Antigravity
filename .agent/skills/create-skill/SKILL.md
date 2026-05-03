@@ -184,3 +184,7 @@ A well-structured skill:
 - Asks minimal clarifying questions only when truly needed
 - Has been tested with real usage
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

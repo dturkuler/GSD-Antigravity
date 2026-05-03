@@ -1,6 +1,6 @@
 ---
 name: spike-wrap-up
-description: Package findings from a completed spike into a durable, project-local skill that auto-loads on future similar work. Reads the most recent `.gsd/workflows/spikes/` directory, interviews the user briefly on what's reusable, then writes `.claude/skills/<name>/SKILL.md`. Use when asked to "wrap up the spike", "package this as a skill", "make this reusable", "turn findings into a skill", or at the end of the synthesize phase of `/gsd start spike`. Closes the parity gap with GSD v1's `/gsd-spike-wrap-up`.
+description: Package findings from a completed spike into a durable, project-local skill that auto-loads on future similar work. Reads the most recent `.planning/workflows/spikes/` directory, interviews the user briefly on what's reusable, then writes `.claude/skills/<name>/SKILL.md`. Use when asked to "wrap up the spike", "package this as a skill", "make this reusable", "turn findings into a skill", or at the end of the synthesize phase of `/gsd start spike`. Closes the parity gap with GSD v1's `/gsd-spike-wrap-up`.
 ---
 
 <objective>
@@ -8,7 +8,7 @@ Convert the output of a research spike (`SCOPE.md`, `research/*.md`, `RECOMMENDA
 </objective>
 
 <context>
-GSD's spike workflow (`src/resources/extensions/gsd/workflow-templates/spike.md`) produces documents in `.gsd/workflows/spikes/<slug>/`. Those documents are useful once and then forgotten unless something packages them for reuse.
+GSD's spike workflow (`src/resources/extensions/gsd/workflow-templates/spike.md`) produces documents in `.planning/workflows/spikes/<slug>/`. Those documents are useful once and then forgotten unless something packages them for reuse.
 
 GSD already watches `.claude/skills/` (and `.agents/skills/`) at both user and project levels — see `src/resources/extensions/gsd/skill-discovery.ts`. Any skill written there is picked up on the next session without further wiring. This skill is the bridge from "spike done" to "skill available."
 
@@ -30,7 +30,7 @@ Invocation points:
 
 ## Step 1: Find the spike
 
-1. List directories under `.gsd/workflows/spikes/` — sort by mtime, newest first.
+1. List directories under `.planning/workflows/spikes/` — sort by mtime, newest first.
 2. If multiple exist, ask the user which to wrap up. Default: the most recent.
 3. If none exist, tell the user and stop. This skill requires a completed spike.
 
@@ -44,11 +44,11 @@ Read the core files:
 Ask the user — one round:
 
 1. **Is the conclusion reusable on future work, or was it specific to one decision?**
-   Recommendation: packaging is worth it if the findings include repeatable guidance (how to evaluate X, a pattern to follow, a library's gotchas). If the spike ended in "we chose library Y, end of story," it probably belongs in `.gsd/DECISIONS.md` instead.
+   Recommendation: packaging is worth it if the findings include repeatable guidance (how to evaluate X, a pattern to follow, a library's gotchas). If the spike ended in "we chose library Y, end of story," it probably belongs in `.planning/DECISIONS.md` instead.
 
 2. **What is the trigger?** When should a future agent load this skill? Give concrete keywords — "adding a new webhook handler", "writing a SQL migration", etc.
 
-If the user says it's not worth packaging, offer instead to append a summary to `.gsd/DECISIONS.md` and stop.
+If the user says it's not worth packaging, offer instead to append a summary to `.planning/DECISIONS.md` and stop.
 
 ## Step 3: Design the skill
 
@@ -106,9 +106,9 @@ If the spike produced a reusable template (a config file, a starter script), cop
 
 ## Step 5: Archive the spike, link from the skill
 
-1. In the new SKILL.md, reference the originating spike: "Derived from `.gsd/workflows/spikes/<slug>/RECOMMENDATION.md` (dated YYYY-MM-DD)."
+1. In the new SKILL.md, reference the originating spike: "Derived from `.planning/workflows/spikes/<slug>/RECOMMENDATION.md` (dated YYYY-MM-DD)."
 2. Do NOT delete the spike directory — spikes are research artifacts and retain value for forensics.
-3. Append one line to `.gsd/DECISIONS.md`: `- YYYY-MM-DD [spike]: packaged "<slug>" findings as skill <name>`.
+3. Append one line to `.planning/DECISIONS.md`: `- YYYY-MM-DD [spike]: packaged "<slug>" findings as skill <name>`.
 
 ## Step 6: Confirm pickup
 
@@ -132,7 +132,11 @@ Tell the user the skill will be surfaced on the next session via `skill-discover
 - [ ] The `description` field uses keywords that will plausibly match future agent work.
 - [ ] The skill body is executable on its own without re-reading the originating spike.
 - [ ] The originating spike is referenced from the skill.
-- [ ] `.gsd/DECISIONS.md` has a one-line entry recording the packaging.
+- [ ] `.planning/DECISIONS.md` has a one-line entry recording the packaging.
 - [ ] The spike directory itself is untouched.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

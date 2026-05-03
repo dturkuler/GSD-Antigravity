@@ -9,9 +9,9 @@ description: Create, debug, and iterate on GSD extensions (TypeScript modules th
 
 **GSD extension paths (community/user-installed extensions):**
 - Global: `~/.pi/agent/extensions/*.ts` or `~/.pi/agent/extensions/*/index.ts`
-- Project-local: `.gsd/extensions/*.ts` or `.gsd/extensions/*/index.ts`
+- Project-local: `.planning/extensions/*.ts` or `.planning/extensions/*/index.ts`
 
-Note: `~/.gsd/agent/extensions/` is reserved for bundled extensions synced from the gsd-pi package. Community extensions placed there are silently ignored by the loader.
+Note: `~/.planning/agent/extensions/` is reserved for bundled extensions synced from the gsd-pi package. Community extensions placed there are silently ignored by the loader.
 
 **The three primitives:**
 1. **Events** — Listen and react (`pi.on("event", handler)`). Can block tool calls, modify messages, inject context.
@@ -91,3 +91,7 @@ Extension is complete when:
 - State persists correctly across session restarts (if stateful)
 - Output is truncated to safe limits (if tools produce variable output)
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

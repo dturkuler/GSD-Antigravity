@@ -44,6 +44,10 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 
 Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
 ---
-Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+Ported from [tiarway/GSD-Antigravity](https://github.com/tiarway/GSD-Antigravity)
 for GSD-Antigravity by trymersi
+---
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
 ---

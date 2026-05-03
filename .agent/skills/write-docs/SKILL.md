@@ -54,7 +54,7 @@ One round of clarifying questions. Then proceed.
 ## Stage 4: Wire it in
 
 1. Link to the new doc from relevant entry points (README.md index, docs/ sidebar, mintlify-docs config, etc.).
-2. If it documents a decision, also append a one-line entry to `.gsd/DECISIONS.md` pointing at the doc.
+2. If it documents a decision, also append a one-line entry to `.planning/DECISIONS.md` pointing at the doc.
 3. If it's a public-facing change, flag for the next release notes / CHANGELOG update.
 
 </process>
@@ -80,3 +80,7 @@ One round of clarifying questions. Then proceed.
 - [ ] The named action is actually executable after reading.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

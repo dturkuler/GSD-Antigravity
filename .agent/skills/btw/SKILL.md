@@ -40,3 +40,7 @@ If the question cannot be answered from current context (requires reading a file
 - Questions needing a multi-step answer or follow-up
 - Starting a new task or changing direction
 </examples>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

@@ -76,7 +76,7 @@ Be opinionated. Pick one, or propose a hybrid that takes specific elements from 
 
 Once the user picks:
 
-- Append to `.gsd/DECISIONS.md` with the chosen shape and the reason.
+- Append to `.planning/DECISIONS.md` with the chosen shape and the reason.
 - If a slice is active, update `S##-CONTEXT.md` with the interface sketch.
 - Do not write the implementation — that happens during execute.
 
@@ -97,6 +97,10 @@ Once the user picks:
 - [ ] Each design shows a real usage example, not a type signature in isolation.
 - [ ] Trade-offs are named per design.
 - [ ] A specific recommendation (or hybrid) is on the page with a reason.
-- [ ] The decision is captured in `.gsd/DECISIONS.md` or the active `S##-CONTEXT.md`.
+- [ ] The decision is captured in `.planning/DECISIONS.md` or the active `S##-CONTEXT.md`.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

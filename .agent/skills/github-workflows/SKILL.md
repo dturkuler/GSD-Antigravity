@@ -88,3 +88,7 @@ EVIDENCE: [output from ci_monitor.cjs]
 ## References
 
 - `references/gh/SKILL.md` — gh CLI reference
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

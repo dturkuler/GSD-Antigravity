@@ -180,6 +180,10 @@ If the review found CRITICAL or HIGH issues:
 
 </success_criteria>
 ---
-Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+Ported from [tiarway/GSD-Antigravity](https://github.com/tiarway/GSD-Antigravity)
 for GSD-Antigravity by trymersi
+---
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
 ---

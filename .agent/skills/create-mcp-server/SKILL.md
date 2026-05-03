@@ -119,3 +119,7 @@ Write the project's `.mcp.json` entry using `/gsd mcp init` as a starting point.
 - [ ] Server is reachable from GSD via `.mcp.json` entry.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

@@ -439,3 +439,7 @@ startTransition(() => setExpensiveState(newValue));
 - [web.dev INP](https://web.dev/articles/inp)
 - [web.dev CLS](https://web.dev/articles/cls)
 - [Code Optimizer skill](../code-optimizer/SKILL.md)
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---

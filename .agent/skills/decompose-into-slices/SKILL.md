@@ -80,7 +80,7 @@ Once approved, write or update `M###-ROADMAP.md` matching the template exactly. 
 
 Fill the rest of the template: Vision, Success Criteria, Key Risks, Proof Strategy, Verification Classes, Definition of Done, Requirement Coverage, Horizontal Checklist (omit entirely for trivial milestones), and the Boundary Map (`S01 → S02` produces/consumes blocks — be specific, name real APIs/types/invariants).
 
-Use `write` to the path `.gsd/milestones/<MID>/<MID>-ROADMAP.md`. Do not edit checkboxes by hand during normal execution — the `gsd_*` tools own state.
+Use `write` to the path `.planning/milestones/<MID>/<MID>-ROADMAP.md`. Do not edit checkboxes by hand during normal execution — the `gsd_*` tools own state.
 
 ## Step 6: Optionally file as GitHub issues
 
@@ -108,7 +108,7 @@ If the user explicitly asks (and only if — outward actions need confirmation),
 <or "None - can start immediately">
 
 ---
-From milestone brief at `.gsd/milestones/<MID>/<MID>-CONTEXT.md`.
+From milestone brief at `.planning/milestones/<MID>/<MID>-CONTEXT.md`.
 ```
 
 Do NOT close or modify any parent issue.
@@ -137,3 +137,7 @@ Do NOT close or modify any parent issue.
 - [ ] GitHub issues, if filed, cite real issue numbers for blocked-by and reference the brief.
 
 </success_criteria>
+---
+Ported from [gsd-build/gsd-2](https://github.com/gsd-build/gsd-2)
+for GSD-Antigravity by tiarway
+---
