@@ -4,20 +4,20 @@ import globals from 'globals';
 export default [
   js.configs.recommended,
   {
-    files: ["**/*.cjs", "**/*.js"],
+    files: ['**/*.cjs', '**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'commonjs',
       globals: {
         ...globals.node,
-        ...globals.jest
-      }
+        ...globals.jest,
+      },
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-empty': ['error', { allowEmptyCatch: true }],
-      'no-useless-escape': 'off'
-    }
-  }
+      'no-useless-escape': 'off',
+    },
+  },
 ];

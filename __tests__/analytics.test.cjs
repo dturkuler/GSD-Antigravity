@@ -48,9 +48,15 @@ describe('analytics', () => {
         return '';
       });
 
-      const entry = { phase: '1', timestamp: '2026-05-03T00:00:00.000Z', duration_ms: 1000, plan_count: 1, error_count: 0 };
+      const entry = {
+        phase: '1',
+        timestamp: '2026-05-03T00:00:00.000Z',
+        duration_ms: 1000,
+        plan_count: 1,
+        error_count: 0,
+      };
       const res = analyticsModule.recordPhaseRun('/test', entry);
-      
+
       expect(res.recorded).toBe(true);
       expect(fs.writeFileSync).toHaveBeenCalled();
       const writeArgs = fs.writeFileSync.mock.calls[0];
@@ -67,7 +73,7 @@ describe('analytics', () => {
         if (filepath.includes('analytics.json')) {
           return JSON.stringify({
             analytics_version: '1.0',
-            entries: [{ phase: '1', duration_ms: 500 }]
+            entries: [{ phase: '1', duration_ms: 500 }],
           });
         }
         return '';
@@ -75,7 +81,7 @@ describe('analytics', () => {
 
       const entry = { phase: '2', duration_ms: 2000 };
       analyticsModule.recordPhaseRun('/test', entry);
-      
+
       const writeArgs = fs.writeFileSync.mock.calls[0];
       const writtenData = JSON.parse(writeArgs[1]);
       expect(writtenData.entries.length).toBe(2);
@@ -99,8 +105,8 @@ describe('analytics', () => {
           return JSON.stringify({
             entries: [
               { duration_ms: 1000, error_count: 1 },
-              { duration_ms: 3000, error_count: 0 }
-            ]
+              { duration_ms: 3000, error_count: 0 },
+            ],
           });
         }
         return '';
@@ -145,7 +151,8 @@ describe('analytics', () => {
     it('returns false when analytics.enabled is false', () => {
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'readFileSync').mockImplementation((filepath) => {
-        if (filepath.includes('config.json')) return JSON.stringify({ analytics: { enabled: false } });
+        if (filepath.includes('config.json'))
+          return JSON.stringify({ analytics: { enabled: false } });
         return '';
       });
       expect(analyticsModule.isEnabled('/test')).toBe(false);
@@ -154,7 +161,8 @@ describe('analytics', () => {
     it('returns true when analytics.enabled is true', () => {
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'readFileSync').mockImplementation((filepath) => {
-        if (filepath.includes('config.json')) return JSON.stringify({ analytics: { enabled: true } });
+        if (filepath.includes('config.json'))
+          return JSON.stringify({ analytics: { enabled: true } });
         return '';
       });
       expect(analyticsModule.isEnabled('/test')).toBe(true);
@@ -171,17 +179,17 @@ describe('analytics', () => {
     });
 
     it('returns ASCII string containing progress bar and recent runs', () => {
-      const data = { 
+      const data = {
         entries: [
           { phase: '1', duration_ms: 15000, plan_count: 2, error_count: 0 },
-          { phase: '2', duration_ms: 8200, plan_count: 1, error_count: 0 }
-        ], 
+          { phase: '2', duration_ms: 8200, plan_count: 1, error_count: 0 },
+        ],
         summary: { totalRuns: 2, avgDuration: 11600, errorRate: 0 },
-        // Simulate total_phases provided externally via state or something, 
-        // but for now the test will just check what renderDashboard outputs 
+        // Simulate total_phases provided externally via state or something,
+        // but for now the test will just check what renderDashboard outputs
         // assuming it handles state info internally or accepts it
       };
-      
+
       const dash = analyticsModule.renderDashboard(data, 'Delta changes');
       expect(dash).toContain('GSD Health Dashboard');
       expect(dash).toContain('Phase 1: 15.0s');

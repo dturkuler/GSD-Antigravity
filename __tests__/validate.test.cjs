@@ -5,8 +5,8 @@ const validator = require('../.agent/skills/gsd/bin/lib/validate.cjs');
 describe('Validator', () => {
   const mockState = {
     currentPhase: 'plan',
-    phases: { '2': { progress: 0.75, params: {} } },
-    history: []
+    phases: { 2: { progress: 0.75, params: {} } },
+    history: [],
   };
 
   describe('validatePhaseTransition', () => {
@@ -22,7 +22,7 @@ describe('Validator', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code: 'TRANSIT-001', severity: 'error' })
+          expect.objectContaining({ code: 'TRANSIT-001', severity: 'error' }),
         ])
       );
     });
@@ -31,29 +31,23 @@ describe('Validator', () => {
       const result = validator.validatePhaseTransition('plan', 'execute', null);
       expect(result.valid).toBe(false);
       expect(result.errors).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'STATE-001', severity: 'error' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'STATE-001', severity: 'error' })])
       );
     });
 
     it('returns PHASE-001 warn when phase is < 80% complete and transitioning', () => {
-      const state2 = { currentPhase: 'execute', phases: { 'execute': { progress: 0.75 } } };
+      const state2 = { currentPhase: 'execute', phases: { execute: { progress: 0.75 } } };
       const result = validator.validatePhaseTransition('execute', 'verify', state2);
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PHASE-001', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PHASE-001', severity: 'warn' })])
       );
     });
 
     it('returns PHASE-002 info when phase is >= 80% complete and transitioning', () => {
-      const state3 = { currentPhase: 'execute', phases: { 'execute': { progress: 0.85 } } };
+      const state3 = { currentPhase: 'execute', phases: { execute: { progress: 0.85 } } };
       const result = validator.validatePhaseTransition('execute', 'verify', state3);
       expect(result.suggestions).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PHASE-002', severity: 'info' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PHASE-002', severity: 'info' })])
       );
     });
   });
@@ -72,13 +66,11 @@ describe('Validator', () => {
       expect(result.valid).toBe(true); // Can continue after clamping
       expect(result.adjustedParams.iterationCount).toBe(1000);
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-001', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-001', severity: 'warn' })])
       );
       expect(result.adjustments).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-001', parameter: 'iterationCount' })
+          expect.objectContaining({ code: 'PARAM-001', parameter: 'iterationCount' }),
         ])
       );
     });
@@ -88,9 +80,7 @@ describe('Validator', () => {
       expect(result.valid).toBe(true);
       expect(result.adjustedParams.phaseCount).toBe(1);
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-002', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-002', severity: 'warn' })])
       );
     });
 
@@ -98,18 +88,14 @@ describe('Validator', () => {
       const result = validator.validateParameters({ iterationCount: 'not-a-number' }, {});
       expect(result.valid).toBe(false);
       expect(result.errors).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-003', severity: 'error' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-003', severity: 'error' })])
       );
     });
 
     it('returns warn PARAM-004 for unknown parameter', () => {
       const result = validator.validateParameters({ unknownParam: 42 }, {});
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-004', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-004', severity: 'warn' })])
       );
       expect(result.adjustedParams.unknownParam).toBe(42);
     });
@@ -117,9 +103,7 @@ describe('Validator', () => {
     it('returns info PARAM-006 when parameter is naturally at boundary without clamping', () => {
       const result = validator.validateParameters({ iterationCount: 1000 }, {});
       expect(result.suggestions).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-006', severity: 'info' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-006', severity: 'info' })])
       );
       expect(result.warnings).toHaveLength(0);
       expect(result.adjustedParams.iterationCount).toBe(1000);
@@ -133,13 +117,18 @@ describe('Validator', () => {
       // For testing, let's assume `gravity` is injected if we can mock it, or we use a custom instance if we could.
       // Since it's a singleton, we might have to pass an unknown param and it might just warn.
       // Actually, let's trust the logic will be tested with autoScale:true in later tests if we modify the singleton's config directly.
-      validator.config.parameterSchemas['testParam'] = { min: 10, max: 100, default: 50, autoScale: true };
+      validator.config.parameterSchemas['testParam'] = {
+        min: 10,
+        max: 100,
+        default: 50,
+        autoScale: true,
+      };
 
       const result = validator.validateParameters({ testParam: 40 }, { geometryScale: 2 });
-      
+
       expect(result.suggestions).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code: 'AUTOSCALE-001', severity: 'info' })
+          expect.objectContaining({ code: 'AUTOSCALE-001', severity: 'info' }),
         ])
       );
       expect(result.adjustedParams.testParam).toBe(80); // 40 * 2
@@ -147,33 +136,39 @@ describe('Validator', () => {
     });
 
     it('auto-scales then clamps, logging AUTOSCALE-001 and PARAM-001 separately', () => {
-      validator.config.parameterSchemas['testParam2'] = { min: 10, max: 100, default: 50, autoScale: true };
+      validator.config.parameterSchemas['testParam2'] = {
+        min: 10,
+        max: 100,
+        default: 50,
+        autoScale: true,
+      };
 
       const result = validator.validateParameters({ testParam2: 60 }, { geometryScale: 2 });
-      
+
       expect(result.suggestions).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code: 'AUTOSCALE-001', severity: 'info' })
+          expect.objectContaining({ code: 'AUTOSCALE-001', severity: 'info' }),
         ])
       );
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'PARAM-001', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'PARAM-001', severity: 'warn' })])
       );
       expect(result.adjustedParams.testParam2).toBe(100); // 60 * 2 = 120 -> clamped to 100
       expect(result.adjustments).toHaveLength(2); // One for scale, one for clamp
     });
 
     it('treats geometryScale=0 as geometryScale=1', () => {
-      validator.config.parameterSchemas['testParam3'] = { min: 10, max: 100, default: 50, autoScale: true };
+      validator.config.parameterSchemas['testParam3'] = {
+        min: 10,
+        max: 100,
+        default: 50,
+        autoScale: true,
+      };
       const result = validator.validateParameters({ testParam3: 40 }, { geometryScale: 0 });
-      
+
       expect(result.adjustedParams.testParam3).toBe(40);
       expect(result.suggestions).not.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'AUTOSCALE-001' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'AUTOSCALE-001' })])
       );
     });
   });
@@ -196,7 +191,7 @@ describe('Validator', () => {
       if (!result.met) {
         expect(result.errors).toEqual(
           expect.arrayContaining([
-            expect.objectContaining({ code: 'PREREQ-001', severity: 'error' })
+            expect.objectContaining({ code: 'PREREQ-001', severity: 'error' }),
           ])
         );
       }
@@ -208,14 +203,12 @@ describe('Validator', () => {
       const result = validator.checkDependencies('execute', mockState);
       expect(result).toHaveProperty('satisfied');
     });
-    
+
     it('returns DEPEND-001 error when dep missing', () => {
       const result = validator.checkDependencies('some-phase-missing', mockState);
       if (!result.satisfied) {
         expect(result.errors).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ code: 'DEPEND-001' })
-          ])
+          expect.arrayContaining([expect.objectContaining({ code: 'DEPEND-001' })])
         );
       }
     });
@@ -227,31 +220,23 @@ describe('Validator', () => {
 
   describe('analyzeConvergence', () => {
     it('returns converged:true for stable history', () => {
-      const history = [
-        { score: 0.96 }, { score: 0.97 }
-      ];
+      const history = [{ score: 0.96 }, { score: 0.97 }];
       const result = validator.analyzeConvergence(history, 0.95);
       expect(result.converged).toBe(true);
       expect(result.stabilityScore).toBeGreaterThanOrEqual(0.95);
     });
 
     it('returns isOscillating:true for oscillating history', () => {
-      const history = [
-        { score: 0.8 }, { score: 0.2 }, { score: 0.8 }, { score: 0.2 }
-      ];
+      const history = [{ score: 0.8 }, { score: 0.2 }, { score: 0.8 }, { score: 0.2 }];
       const result = validator.analyzeConvergence(history, 0.95);
       expect(result.isOscillating).toBe(true);
     });
 
     it('emits CONVERG-002 warn when within 10% of threshold', () => {
-      const history = [
-        { score: 0.88 }
-      ];
+      const history = [{ score: 0.88 }];
       const result = validator.analyzeConvergence(history, 0.95);
       expect(result.warnings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code: 'CONVERG-002', severity: 'warn' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ code: 'CONVERG-002', severity: 'warn' })])
       );
     });
 
@@ -268,10 +253,18 @@ describe('Validator', () => {
   describe('generateReport', () => {
     it('contains ## Errors section and code prefix [PREREQ-001]', () => {
       const mockResult = {
-        errors: [{ code: 'PREREQ-001', message: 'Missing file', severity: 'error', field: 'phase', fix: 'Add file' }],
+        errors: [
+          {
+            code: 'PREREQ-001',
+            message: 'Missing file',
+            severity: 'error',
+            field: 'phase',
+            fix: 'Add file',
+          },
+        ],
         warnings: [],
         suggestions: [],
-        adjustments: []
+        adjustments: [],
       };
       const report = validator.generateReport(mockResult);
       expect(typeof report).toBe('string');
@@ -286,7 +279,7 @@ describe('Validator', () => {
         errors: [],
         warnings: [{ code: 'PARAM-001', message: 'Clamped', severity: 'warn' }],
         suggestions: [],
-        adjustments: []
+        adjustments: [],
       };
       const report = validator.generateReport(mockResult);
       expect(report).toContain('## Warnings');
