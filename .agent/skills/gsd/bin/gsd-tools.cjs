@@ -650,6 +650,39 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     break;
   }
 
+  case 'validate-phase': {
+    const phaseNum = args[1];
+    if (!phaseNum) { error('Usage: validate-phase <phase-number>'); }
+    const fs = require('fs');
+    const path = require('path');
+    let stateObj = {};
+    try {
+      const statePath = path.join(core.planningDir(cwd), 'STATE.md');
+      if (fs.existsSync(statePath)) {
+        const rawState = fs.readFileSync(statePath, 'utf-8');
+        const currentPhaseMatch = rawState.match(/\*\*Current Phase:\*\*\s*(\S+)/i);
+        stateObj = { currentPhase: currentPhaseMatch?.[1] || 'unknown', raw: rawState };
+      }
+    } catch { /* intentionally empty */ }
+    const validator = require('./lib/validate.cjs');
+    const checks = {
+      transition: validator.validatePhaseTransition(stateObj.currentPhase || 'unknown', String(phaseNum), stateObj),
+      prerequisites: validator.checkPrerequisites(String(phaseNum), stateObj),
+      dependencies: validator.checkDependencies(String(phaseNum), stateObj),
+      parameters: validator.validateParameters(stateObj.phases?.[phaseNum]?.params || {}, {}),
+      convergence: (stateObj.history && stateObj.history.length > 0)
+        ? validator.analyzeConvergence(stateObj.history, 0.95)
+        : null
+    };
+    console.log(validator.generateReport(checks));
+    const allErrors = Object.values(checks).flatMap(r => r && r.errors ? r.errors : []);
+    const allWarnings = Object.values(checks).flatMap(r => r && r.warnings ? r.warnings : []);
+    if (allErrors.length > 0) process.exit(1);
+    if (allWarnings.length > 0) process.exit(2);
+    process.exit(0);
+    break;
+  }
+
   case 'progress': {
     const subcommand = args[1] || 'json';
     commands.cmdProgressRender(cwd, subcommand, raw);
