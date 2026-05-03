@@ -225,11 +225,32 @@ async function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
         fs.appendFileSync(logPath, logEntry, 'utf-8');
       } catch { /* intentionally empty */ }
 
+      // Auto-snapshot: capture state before execution (STATE-01)
+      try {
+        const { createSnapshot } = require('./snapshot.cjs');
+        const { buildStateObject } = require('./state.cjs');
+        const stateData = buildStateObject(cwd);
+        if (stateData) {
+          createSnapshot(cwd, stateData, { trigger: 'validate', phase: targetPhase });
+        }
+      } catch { /* snapshot failure must not block execution */ }
+
       console.log('Continuing with warnings acknowledged...');
     } else {
       console.log(`✓ Validation passed (${totalChecks} checks, 0 warnings)`);
       const checkNames = ['Phase transition', 'Prerequisites', 'Dependencies', 'Parameters'];
       checkNames.forEach(name => console.log(`  - ${name}: ✓`));
+
+      // Auto-snapshot: capture state before execution (STATE-01)
+      try {
+        const { createSnapshot } = require('./snapshot.cjs');
+        const { buildStateObject } = require('./state.cjs');
+        const stateData = buildStateObject(cwd);
+        if (stateData) {
+          createSnapshot(cwd, stateData, { trigger: 'validate', phase: targetPhase });
+        }
+      } catch { /* snapshot failure must not block execution */ }
+
       console.log('\nProceeding with phase execution...');
     }
   }

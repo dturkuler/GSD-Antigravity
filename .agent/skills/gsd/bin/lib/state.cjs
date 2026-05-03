@@ -607,12 +607,11 @@ function cmdStateRecordSession(cwd, options, raw) {
   }
 }
 
-function cmdStateSnapshot(cwd, raw) {
+function buildStateObject(cwd) {
   const statePath = planningPaths(cwd).state;
 
   if (!fs.existsSync(statePath)) {
-  output({ error: 'STATE.md not found' }, raw);
-  return;
+    return null;
   }
 
   const content = fs.readFileSync(statePath, 'utf-8');
@@ -685,7 +684,7 @@ function cmdStateSnapshot(cwd, raw) {
   if (resumeFileMatch) session.resume_file = resumeFileMatch[1].trim();
   }
 
-  const result = {
+  return {
   current_phase: currentPhase,
   current_phase_name: currentPhaseName,
   total_phases: totalPhases,
@@ -700,6 +699,15 @@ function cmdStateSnapshot(cwd, raw) {
   paused_at: pausedAt,
   session,
   };
+}
+
+function cmdStateSnapshot(cwd, raw) {
+  const result = buildStateObject(cwd);
+  
+  if (!result) {
+  output({ error: 'STATE.md not found' }, raw);
+  return;
+  }
 
   output(result, raw);
 }
@@ -1607,6 +1615,7 @@ module.exports = {
   cmdStateResolveBlocker,
   cmdStateRecordSession,
   cmdStateSnapshot,
+  buildStateObject,
   cmdStateJson,
   cmdStateBeginPhase,
   cmdStatePlannedPhase,

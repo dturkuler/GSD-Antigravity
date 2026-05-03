@@ -967,6 +967,21 @@ function cmdValidateHealth(cwd, options, raw) {
   }
   }
 
+  // ─── Check N: Last transition delta ───────────────────────────────────────
+  try {
+    const { loadSnapshots, diffSnapshots, renderDiffSummary } = require('./snapshot.cjs');
+    const snapshots = loadSnapshots(cwd, 2);
+    if (snapshots.length >= 2) {
+      const diff = diffSnapshots(snapshots[1].data, snapshots[0].data);
+      const details = renderDiffSummary(diff);
+      addIssue('info', 'I020', `Last transition delta:\n${details}`, null);
+    } else if (snapshots.length === 1) {
+      addIssue('info', 'I021', 'Only one snapshot found — no delta available yet', 'Run with --validate again to create a second snapshot');
+    } else {
+      addIssue('info', 'I022', 'No snapshots found — run with --validate to create one', null);
+    }
+  } catch { /* snapshot loading failure is non-critical */ }
+
   // ─── Determine overall status ─────────────────────────────────────────────
   let status;
   if (errors.length > 0) {
