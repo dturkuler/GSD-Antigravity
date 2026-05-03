@@ -67,6 +67,7 @@ async function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
   if (!phase) {
   error('phase required for init execute-phase');
   }
+  const executionStart = Date.now();
 
   const config = loadConfig(cwd);
   let phaseInfo = findPhaseInternal(cwd, phase);
@@ -254,6 +255,20 @@ async function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
       console.log('\nProceeding with phase execution...');
     }
   }
+
+  // Analytics: record execution timing (ANLYT-01)
+  try {
+    const analytics = require('./analytics.cjs');
+    if (analytics.isEnabled(cwd)) {
+      analytics.recordPhaseRun(cwd, {
+        phase: String(phase),
+        startTime: executionStart,
+        duration_ms: Date.now() - executionStart,
+        plan_count: result.plan_count || 0,
+        error_count: 0,
+      });
+    }
+  } catch { /* analytics failure must not block execution */ }
 
   output(withProjectRoot(cwd, result), raw);
 }
