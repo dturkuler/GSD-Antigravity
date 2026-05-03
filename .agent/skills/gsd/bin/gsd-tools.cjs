@@ -347,7 +347,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     } else if (subcommand === 'signal-resume') {
     state.cmdSignalResume(cwd, raw);
     } else if (subcommand === 'planned-phase') {
-    const { phase: p, name, plans } = parseNamedArgs(args, ['phase', 'name', 'plans']);
+    const { phase: p, name: _name, plans } = parseNamedArgs(args, ['phase', 'name', 'plans']);
     state.cmdStatePlannedPhase(cwd, p, plans !== null ? parseInt(plans, 10) : null, raw);
     } else if (subcommand === 'validate') {
     state.cmdStateValidate(cwd, raw);
@@ -588,7 +588,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     if (subcommand === 'next-decimal') {
     phase.cmdPhaseNextDecimal(cwd, args[2], raw);
     } else if (subcommand === 'add') {
-    const idIdx = args.indexOf('--id');
+    const _idIdx = args.indexOf('--id');
     let customId = null;
     const descArgs = [];
     for (let i = 2; i < args.length; i++) {
@@ -605,7 +605,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     const descFlagIdx = args.indexOf('--descriptions');
     let descriptions;
     if (descFlagIdx !== -1 && args[descFlagIdx + 1]) {
-      try { descriptions = JSON.parse(args[descFlagIdx + 1]); } catch (e) { error('--descriptions must be a JSON array'); }
+      try { descriptions = JSON.parse(args[descFlagIdx + 1]); } catch (_e) { error('--descriptions must be a JSON array'); }
     } else {
       descriptions = args.slice(2).filter(a => a !== '--raw');
     }
