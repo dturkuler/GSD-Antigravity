@@ -218,10 +218,10 @@ class Validator {
   generateReport(validationResults) {
     let report = '# Validation Report\n\n';
 
-    const errors = validationResults.errors || [];
-    const warnings = validationResults.warnings || [];
-    const suggestions = validationResults.suggestions || [];
-    const adjustments = validationResults.adjustments || [];
+    const errors = validationResults.errors || Object.values(validationResults).flatMap(r => r && r.errors ? r.errors : []);
+    const warnings = validationResults.warnings || Object.values(validationResults).flatMap(r => r && r.warnings ? r.warnings : []);
+    const suggestions = validationResults.suggestions || Object.values(validationResults).flatMap(r => r && r.suggestions ? r.suggestions : []);
+    const adjustments = validationResults.adjustments || Object.values(validationResults).flatMap(r => r && r.adjustments ? r.adjustments : []);
 
     // Helper for rendering messages
     const renderMessages = (list, title) => {

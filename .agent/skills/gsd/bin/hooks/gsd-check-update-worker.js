@@ -43,7 +43,7 @@ try {
 } catch (e) {}
 
 // Check for stale hooks — compare hook version headers against installed VERSION
-.agent/skills/gsd/bin/hooks/) (#1421)
+// .agent/skills/gsd/bin/hooks/) (#1421)
 // Only check hooks that GSD currently ships — orphaned files from removed features
 // (e.g., gsd-intel-*.js) must be ignored to avoid permanent stale warnings (#1750)
 const MANAGED_HOOKS = [
