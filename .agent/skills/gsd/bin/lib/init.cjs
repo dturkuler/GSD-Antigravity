@@ -63,10 +63,11 @@ function withProjectRoot(cwd, result) {
   return result;
 }
 
-function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
+async function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
   if (!phase) {
   error('phase required for init execute-phase');
   }
+  const executionStart = Date.now();
 
   const config = loadConfig(cwd);
   let phaseInfo = findPhaseInternal(cwd, phase);
@@ -163,31 +164,111 @@ function cmdInitExecutePhase(cwd, phase, includes, raw, options = {}) {
 
   // Optional --validate: run state validation and include warnings (#1627)
   if (options.validate) {
-  try {
-    const { cmdStateValidate } = require('./state.cjs');
-    // Capture validate output by temporarily redirecting
-    const statePath = path.join(planningDir(cwd), 'STATE.md');
-    if (fs.existsSync(statePath)) {
-    const stateContent = fs.readFileSync(statePath, 'utf-8');
-    const { stateExtractField } = require('./state.cjs');
-    const status = stateExtractField(stateContent, 'Status') || '';
-    result.state_validation_ran = true;
-    // Simple inline validation — check for obvious drift
-    const warnings = [];
-    const phasesPath = planningPaths(cwd).phases;
-    if (phaseInfo && phaseInfo.directory && fs.existsSync(path.join(cwd, phaseInfo.directory))) {
-      const files = fs.readdirSync(path.join(cwd, phaseInfo.directory));
-      const diskPlans = files.filter(f => f.match(/-PLAN\.md$/i)).length;
-      const totalPlansRaw = stateExtractField(stateContent, 'Total Plans in Phase');
-      const totalPlansInPhase = totalPlansRaw ? parseInt(totalPlansRaw, 10) : null;
-      if (totalPlansInPhase !== null && diskPlans !== totalPlansInPhase) {
-      warnings.push(`Plan count mismatch: STATE.md says ${totalPlansInPhase}, disk has ${diskPlans}`);
+    const validator = require('./validate.cjs'); // lazy require
+    const fs = require('fs');
+    const path = require('path');
+
+    let stateObj = {};
+    try {
+      const statePath = path.join(planningDir(cwd), 'STATE.md');
+      if (fs.existsSync(statePath)) {
+        const rawState = fs.readFileSync(statePath, 'utf-8');
+        const currentPhaseMatch = rawState.match(/\*\*Current Phase:\*\*\s*(\S+)/i);
+        stateObj = { currentPhase: currentPhaseMatch?.[1] || 'unknown', raw: rawState };
       }
+    } catch { /* intentionally empty */ }
+
+    const targetPhase = String(phase);
+    const checks = {
+      transition:    validator.validatePhaseTransition(stateObj.currentPhase || 'unknown', targetPhase, stateObj),
+      prerequisites: validator.checkPrerequisites(targetPhase, stateObj),
+      dependencies:  validator.checkDependencies(targetPhase, stateObj),
+      parameters:    validator.validateParameters(stateObj.phases?.[targetPhase]?.params || {}, {}),
+    };
+
+    const allErrors   = Object.values(checks).flatMap(r => r?.errors   || []);
+    const allWarnings = Object.values(checks).flatMap(r => r?.warnings  || []);
+    const totalChecks = 4;
+
+    if (allErrors.length > 0) {
+      console.error(validator.generateReport(checks));
+      console.error('Aborted before execution.');
+      process.exit(1);
     }
-    result.state_warnings = warnings;
+
+    if (allWarnings.length > 0) {
+      console.log(validator.generateReport(checks));
+      console.log(`⚠ Validation completed with warnings (${totalChecks} checks, ${allWarnings.length} warnings, 0 errors)`);
+
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise(resolve => {
+        rl.question('Continue anyway? (y/N): ', ans => { rl.close(); resolve(ans.trim().toLowerCase()); });
+      });
+
+      if (answer !== 'y' && answer !== 'yes') {
+        console.log('Aborted by user due to validation warnings.\nNo changes made.');
+        process.exit(0);
+      }
+
+      try {
+        const logPath = path.join(cwd, phaseInfo?.directory || `.planning/phases/${String(phase).padStart(2,'0')}-unknown`, 'VALIDATION-LOG.md');
+        const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
+        const logEntry = [
+          `\n# Validation Log - Phase ${phase}`,
+          `Timestamp: ${timestamp}`,
+          `Result: Continued with warnings`,
+          `\nWarnings acknowledged:`,
+          ...allWarnings.map(w => `- [${w.code}] ${w.message}`),
+          `\nUser decision: Continued (typed 'y')\n`
+        ].join('\n');
+        fs.mkdirSync(path.dirname(logPath), { recursive: true });
+        fs.appendFileSync(logPath, logEntry, 'utf-8');
+      } catch { /* intentionally empty */ }
+
+      // Auto-snapshot: capture state before execution (STATE-01)
+      try {
+        const { createSnapshot } = require('./snapshot.cjs');
+        const { buildStateObject } = require('./state.cjs');
+        const stateData = buildStateObject(cwd);
+        if (stateData) {
+          createSnapshot(cwd, stateData, { trigger: 'validate', phase: targetPhase });
+        }
+      } catch { /* snapshot failure must not block execution */ }
+
+      console.log('Continuing with warnings acknowledged...');
+    } else {
+      console.log(`✓ Validation passed (${totalChecks} checks, 0 warnings)`);
+      const checkNames = ['Phase transition', 'Prerequisites', 'Dependencies', 'Parameters'];
+      checkNames.forEach(name => console.log(`  - ${name}: ✓`));
+
+      // Auto-snapshot: capture state before execution (STATE-01)
+      try {
+        const { createSnapshot } = require('./snapshot.cjs');
+        const { buildStateObject } = require('./state.cjs');
+        const stateData = buildStateObject(cwd);
+        if (stateData) {
+          createSnapshot(cwd, stateData, { trigger: 'validate', phase: targetPhase });
+        }
+      } catch { /* snapshot failure must not block execution */ }
+
+      console.log('\nProceeding with phase execution...');
     }
-  } catch { /* intentionally empty */ }
   }
+
+  // Analytics: record execution timing (ANLYT-01)
+  try {
+    const analytics = require('./analytics.cjs');
+    if (analytics.isEnabled(cwd)) {
+      analytics.recordPhaseRun(cwd, {
+        phase: String(phase),
+        startTime: executionStart,
+        duration_ms: Date.now() - executionStart,
+        plan_count: result.plan_count || 0,
+        error_count: 0,
+      });
+    }
+  } catch { /* analytics failure must not block execution */ }
 
   output(withProjectRoot(cwd, result), raw);
 }

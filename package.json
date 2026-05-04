@@ -1,26 +1,71 @@
 {
-  "name": "gsd-antigravity-kit",
-  "version": "2.1.0",
-  "description": "Installer for GSD-Antigravity skills",
+  "name": "gsd-antigravity-kit-trymersi",
+  "version": "2.2.0",
+  "description": "Installer for GSD-Antigravity skills - Enhanced fork by trymersi",
   "main": "index.js",
   "files": [
     "bin/",
     ".agent/rules/",
     ".agent/skills/gsd/",
-    ".agent/skills/gsd-converter/"
+    ".agent/skills/gsd-converter/",
+    ".agent/skills/accessibility/",
+    ".agent/skills/agent-browser/",
+    ".agent/skills/api-design/",
+    ".agent/skills/best-practices/",
+    ".agent/skills/btw/",
+    ".agent/skills/code-optimizer/",
+    ".agent/skills/core-web-vitals/",
+    ".agent/skills/create-gsd-extension/",
+    ".agent/skills/create-mcp-server/",
+    ".agent/skills/create-skill/",
+    ".agent/skills/create-workflow/",
+    ".agent/skills/debug-like-expert/",
+    ".agent/skills/decompose-into-slices/",
+    ".agent/skills/dependency-upgrade/",
+    ".agent/skills/design-an-interface/",
+    ".agent/skills/forensics/",
+    ".agent/skills/frontend-design/",
+    ".agent/skills/github-workflows/",
+    ".agent/skills/grill-me/",
+    ".agent/skills/handoff/",
+    ".agent/skills/lint/",
+    ".agent/skills/make-interfaces-feel-better/",
+    ".agent/skills/observability/",
+    ".agent/skills/react-best-practices/",
+    ".agent/skills/review/",
+    ".agent/skills/security-review/",
+    ".agent/skills/spike-wrap-up/",
+    ".agent/skills/tdd/",
+    ".agent/skills/userinterface-wiki/",
+    ".agent/skills/verify-before-complete/",
+    ".agent/skills/web-design-guidelines/",
+    ".agent/skills/web-quality-audit/",
+    ".agent/skills/write-docs/",
+    ".agent/skills/write-milestone-brief/"
   ],
   "bin": {
-    "gsd-antigravity-kit": "bin/install.js"
+    "gsd-antigravity-kit-trymersi": "bin/install.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "antigravity",
     "gsd",
     "automation",
-    "skills"
+    "skills",
+    "trymersi"
   ],
-  "author": "DTurkuler",
-  "license": "MIT"
+  "author": "trymersi",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "globals": "^17.6.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.8.3"
+  }
 }

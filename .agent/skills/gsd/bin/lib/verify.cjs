@@ -967,6 +967,36 @@ function cmdValidateHealth(cwd, options, raw) {
   }
   }
 
+  // ─── Dashboard: Analytics + Snapshot Delta (ANLYT-02) ─────────────────────
+  let dashboardStr = null;
+  try {
+    const analytics = require('./analytics.cjs');
+    const { loadSnapshots, diffSnapshots, renderDiffSummary } = require('./snapshot.cjs');
+    
+    const analyticsData = analytics.loadAnalytics(cwd);
+    
+    // Get snapshot diff (reuse Phase 3 logic)
+    let snapshotDiff = 'No snapshots found — run with --validate to create one';
+    const snapshots = loadSnapshots(cwd, 2);
+    if (snapshots.length >= 2) {
+      const diff = diffSnapshots(snapshots[1].data, snapshots[0].data);
+      snapshotDiff = renderDiffSummary(diff);
+    } else if (snapshots.length === 1) {
+      snapshotDiff = 'Only one snapshot — no delta available yet';
+    }
+    
+    dashboardStr = analytics.renderDashboard(analyticsData, snapshotDiff);
+    
+    // Keep the I020/I021/I022 info items for backward compatibility
+    if (snapshots.length >= 2) {
+      addIssue('info', 'I020', `Last transition delta:\n${snapshotDiff}`, null);
+    } else if (snapshots.length === 1) {
+      addIssue('info', 'I021', 'Only one snapshot found — no delta available yet', 'Run with --validate again to create a second snapshot');
+    } else {
+      addIssue('info', 'I022', 'No snapshots found — run with --validate to create one', null);
+    }
+  } catch { /* dashboard rendering failure is non-critical */ }
+
   // ─── Determine overall status ─────────────────────────────────────────────
   let status;
   if (errors.length > 0) {
@@ -987,6 +1017,7 @@ function cmdValidateHealth(cwd, options, raw) {
   info,
   repairable_count: repairableCount,
   repairs_performed: repairActions.length > 0 ? repairActions : undefined,
+  dashboard: dashboardStr || undefined,
   }, raw);
 }
 

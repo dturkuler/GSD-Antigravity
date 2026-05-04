@@ -1,0 +1,6 @@
+node_modules/
+.planning/
+.agent/
+coverage/
+package-lock.json
+*.md

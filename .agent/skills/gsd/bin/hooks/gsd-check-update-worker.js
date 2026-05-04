@@ -40,10 +40,10 @@ try {
     installed = fs.readFileSync(globalVersionFile, 'utf8').trim();
     configDir = path.dirname(path.dirname(globalVersionFile));
   }
-} catch (e) {}
+} catch (_e) {}
 
 // Check for stale hooks — compare hook version headers against installed VERSION
-.agent/skills/gsd/bin/hooks/) (#1421)
+// .agent/skills/gsd/bin/hooks/) (#1421)
 // Only check hooks that GSD currently ships — orphaned files from removed features
 // (e.g., gsd-intel-*.js) must be ignored to avoid permanent stale warnings (#1750)
 const MANAGED_HOOKS = [
@@ -80,10 +80,10 @@ if (configDir) {
             // No version header at all — definitely stale (pre-version-tracking)
             staleHooks.push({ file: hookFile, hookVersion: 'unknown', installedVersion: installed });
           }
-        } catch (e) {}
+        } catch (_e) {}
       }
     }
-  } catch (e) {}
+  } catch (_e) {}
 }
 
 let latest = null;
@@ -93,7 +93,7 @@ try {
     timeout: 10000,
     windowsHide: true,
   }).trim();
-} catch (e) {}
+} catch (_e) {}
 
 const result = {
   update_available: latest && isNewer(latest, installed),
@@ -104,5 +104,5 @@ const result = {
 };
 
 if (cacheFile) {
-  try { fs.writeFileSync(cacheFile, JSON.stringify(result)); } catch (e) {}
+  try { fs.writeFileSync(cacheFile, JSON.stringify(result)); } catch (_e) {}
 }

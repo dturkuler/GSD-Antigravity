@@ -347,7 +347,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     } else if (subcommand === 'signal-resume') {
     state.cmdSignalResume(cwd, raw);
     } else if (subcommand === 'planned-phase') {
-    const { phase: p, name, plans } = parseNamedArgs(args, ['phase', 'name', 'plans']);
+    const { phase: p, name: _name, plans } = parseNamedArgs(args, ['phase', 'name', 'plans']);
     state.cmdStatePlannedPhase(cwd, p, plans !== null ? parseInt(plans, 10) : null, raw);
     } else if (subcommand === 'validate') {
     state.cmdStateValidate(cwd, raw);
@@ -588,7 +588,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     if (subcommand === 'next-decimal') {
     phase.cmdPhaseNextDecimal(cwd, args[2], raw);
     } else if (subcommand === 'add') {
-    const idIdx = args.indexOf('--id');
+    const _idIdx = args.indexOf('--id');
     let customId = null;
     const descArgs = [];
     for (let i = 2; i < args.length; i++) {
@@ -605,7 +605,7 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     const descFlagIdx = args.indexOf('--descriptions');
     let descriptions;
     if (descFlagIdx !== -1 && args[descFlagIdx + 1]) {
-      try { descriptions = JSON.parse(args[descFlagIdx + 1]); } catch (e) { error('--descriptions must be a JSON array'); }
+      try { descriptions = JSON.parse(args[descFlagIdx + 1]); } catch (_e) { error('--descriptions must be a JSON array'); }
     } else {
       descriptions = args.slice(2).filter(a => a !== '--raw');
     }
@@ -647,6 +647,39 @@ async function runCommand(command, args, cwd, raw, defaultValue) {
     } else {
     error('Unknown validate subcommand. Available: consistency, health, agents');
     }
+    break;
+  }
+
+  case 'validate-phase': {
+    const phaseNum = args[1];
+    if (!phaseNum) { error('Usage: validate-phase <phase-number>'); }
+    const fs = require('fs');
+    const path = require('path');
+    let stateObj = {};
+    try {
+      const statePath = path.join(core.planningDir(cwd), 'STATE.md');
+      if (fs.existsSync(statePath)) {
+        const rawState = fs.readFileSync(statePath, 'utf-8');
+        const currentPhaseMatch = rawState.match(/\*\*Current Phase:\*\*\s*(\S+)/i);
+        stateObj = { currentPhase: currentPhaseMatch?.[1] || 'unknown', raw: rawState };
+      }
+    } catch { /* intentionally empty */ }
+    const validator = require('./lib/validate.cjs');
+    const checks = {
+      transition: validator.validatePhaseTransition(stateObj.currentPhase || 'unknown', String(phaseNum), stateObj),
+      prerequisites: validator.checkPrerequisites(String(phaseNum), stateObj),
+      dependencies: validator.checkDependencies(String(phaseNum), stateObj),
+      parameters: validator.validateParameters(stateObj.phases?.[phaseNum]?.params || {}, {}),
+      convergence: (stateObj.history && stateObj.history.length > 0)
+        ? validator.analyzeConvergence(stateObj.history, 0.95)
+        : null
+    };
+    console.log(validator.generateReport(checks));
+    const allErrors = Object.values(checks).flatMap(r => r && r.errors ? r.errors : []);
+    const allWarnings = Object.values(checks).flatMap(r => r && r.warnings ? r.warnings : []);
+    if (allErrors.length > 0) process.exit(1);
+    if (allWarnings.length > 0) process.exit(2);
+    process.exit(0);
     break;
   }
 

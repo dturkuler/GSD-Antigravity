@@ -64,7 +64,7 @@ process.stdin.on('end', () => {
         if (config.hooks?.context_warnings === false) {
           process.exit(0);
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore config read/parse errors (config may not exist in .planning/)
       }
     }
@@ -102,7 +102,7 @@ process.stdin.on('end', () => {
       try {
         warnData = JSON.parse(fs.readFileSync(warnPath, 'utf8'));
         firstWarn = false;
-      } catch (e) {
+      } catch (_e) {
         // Corrupted file, reset
       }
     }
@@ -185,7 +185,7 @@ process.stdin.on('end', () => {
     };
 
     process.stdout.write(JSON.stringify(output));
-  } catch (e) {
+  } catch (_e) {
     // Silent fail -- never block tool execution
     process.exit(0);
   }
